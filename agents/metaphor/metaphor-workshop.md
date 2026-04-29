@@ -9,7 +9,7 @@ Generates replacement candidates for WORKSHOP-marked entries where the human has
 - `xx-yy-metaphors.md` — the human-reviewed working file
 - `xx-yy-draft.md` — the current prose
 - `xx-yy-zzz-storyboard.md` — for scene register, emotional tone, and POV
-- `agents/voice.md` — for sentence rhythm and diction constraints
+- The selected voice file or profile — for sentence rhythm and diction constraints
 
 Workshop goes back to primary sources because candidate generation depends on constraints that cannot be inherited from a potentially flawed identify entry.
 
@@ -37,7 +37,7 @@ Establish internally, without outputting:
 - The surrounding paragraph's diction level and figurative density
 - What image families are already active in the chapter
 
-On the last point: scan the chapter for recurring image families before generating. For this chapter they include cloth and thread, household procedure, pressure and containment, the body as instrument, architecture and enclosure, light and glass. Candidates should draw from these families where possible. A figure that fits the chapter's existing vocabulary will feel inevitable; one that doesn't will feel imported.
+On the last point: scan the chapter for recurring image families before generating. Candidates should draw from those families where possible. A figure that fits the chapter's existing vocabulary will feel inevitable; one that does not will feel imported.
 
 ### Generating candidates
 
@@ -71,7 +71,7 @@ D. "[candidate sentence]"
    - Vehicle:
    - Borrowed property:
    - Uninvited properties:
-   - Family: [cloth and thread | household procedure | pressure and containment | body as instrument | architecture and enclosure | light and glass]
+   - Family: [chapter image family]
 
 E. "[candidate sentence]"
    - Vehicle:
@@ -140,7 +140,7 @@ Ask what the candidates got wrong — uninvited properties that appeared, borrow
 - Do not combine candidates or blend two without human instruction.
 - Do not import the uninvited properties of the original into any candidate.
 - Do not generate candidates requiring a significantly longer sentence unless the beat warrants it — note it explicitly if so.
-- Preserve POV. The perceiving mind is Louise's, thirteen years old.
+- Preserve the project's established POV and voice constraints.
 - Candidates in the same group must use different vehicle classes.
 
 ---

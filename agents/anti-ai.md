@@ -134,7 +134,7 @@ Format:
 
 When the prose rotates through multiple synonyms for the same noun within a short passage to avoid repetition. Common in AI output because models are trained to avoid word repetition.
 
-Example: referring to the same character as "the girl," "the young woman," "the princess," "the child," and "Louise" within a single paragraph.
+Example: referring to the same character as "the girl," "the young woman," "the princess," "the child," and the character's proper name within a single paragraph.
 
 Flag the passage and list the synonyms being cycled.
 

@@ -61,7 +61,7 @@ For each figure collected, produce one entry:
 
 Do not editorialize in `Register fit` or `Implication`. State what the metaphor does, not whether you like it. The flag is where judgment lands.
 
-Leave the `Human Assessment` line empty. It will be compelted by the human reviewer.
+Leave the `Human Assessment` line empty. It will be completed by the human reviewer.
 
 ---
 

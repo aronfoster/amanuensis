@@ -1,101 +1,84 @@
-# Prompt File
-This file contains text for copy-pasting as prompts. It is intended for use by humans, not agents.
+# Prompt File Examples
+
+This file contains copy-paste prompt templates for humans. It is not loaded automatically by agents.
+
+Replace bracketed placeholders before use.
 
 ## Create Scene Draft
 
-```
-You are drafting Chapter 1 of Book 1. See `agents/drafting.md` and `agents/voice.md` for directions.
+```text
+You are drafting [Scene Name], Chapter [YY] of Book [N]. Follow the project `AGENTS.md`, the drafting workflow, and the selected voice file or profile.
 
-Write to `plot/book1/chapter01/drafts/attempt07/01-01-draft.md`.
+Write to `[chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]`.
 
-Do not read any other files. Do not consult the scene list, canon files, or earlier draft attempts. If something feels missing from the storyboards, note it in `plot/book1/chapter01/drafts/attempt07/notes.md` after drafting rather than reaching for other files.
-
-Storyboard files:
-- plot/book1/chapter01/01-01-001-storyboard.md
-- plot/book1/chapter01/01-01-002-storyboard.md
-- plot/book1/chapter01/01-01-003-storyboard.md
-- plot/book1/chapter01/01-01-004-storyboard.md
-
-After writing the prose, write your model name and any observations about what the storyboards gave you versus what you had to infer to `plot/book1/chapter01/drafts/attempt07/notes.md`.
-```
-
-```
-You are drafting Scene 1, Chapter 1 of Book 1. See `agents/drafting.md` and `agents/voice.md` for directions.
-
-Write to your standard output stream, despite what `agents/drafting.md` says.
+Do not read any other files. Do not consult the scene list, canon files, or earlier draft attempts. If something feels missing from the storyboards, note it in `[chapter-dir]/drafts/[attempt]/notes.md` after drafting rather than reaching for other files.
 
 Storyboard files:
-- plot/book1/chapter01/01-01-001-storyboard.md
-- plot/book1/chapter01/01-01-002-storyboard.md
+- [chapter-dir]/storyboards/[NN-YY-ZZZ-storyboard.md]
+- [chapter-dir]/storyboards/[NN-YY-ZZZ-storyboard.md]
 
-After writing the prose, write your model name and any observations about what the storyboards gave you versus what you had to infer to the end of your output.
+After writing the prose, write your model name and any observations about what the storyboards gave you versus what you had to infer to `[chapter-dir]/drafts/[attempt]/notes.md`.
 ```
-
 
 ## Create Storyboard
 
-```
-See agents/storyboarding.md, plot/book1/chapter01/01-01-storyboards-planning.md, plot/book1/chapter01/01-01-scene-list.md, and any other files you deem appropriate. Create the storyboard.md file for Book 1 Chapter 1 SB 004 — The Memory of Last Time of Scene 1 — Managed Morning. Break this into a few steps: plan the whole file contents, write the first part of the file, check it in, write the remainder of the file, review the file and update anything that needs alignment or revision, and finish with your last check in.
-```
+```text
+Follow the project `AGENTS.md` and the storyboarding workflow.
 
+Inputs:
+- Chapter summary: [chapter-dir]/[NN-YY-summary.md]
+- Scene list: [chapter-dir]/[NN-YY-scene-list.md]
+- Storyboard planning notes: [chapter-dir]/[NN-YY-storyboards-planning.md]
+- Relevant character knowledge files: [paths]
+- Relevant canon or reference files linked from the scene list: [paths]
+
+Create storyboard block [NN-YY-ZZZ] for [scene name / beat name].
+
+Break this into steps: plan the file contents, write the file, review it against the storyboard schema, revise anything that needs alignment, and finish with a short report of uncertainties.
+```
 
 ## Metaphor Identify
 
+```text
+See `agents/metaphor/metaphor-identify.md` for directions, or the equivalent path in the project's Amanuensis submodule.
+
+Draft: [chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]
+Storyboards: [chapter-dir]/storyboards/ (all relevant [NN-YY-ZZZ-storyboard.md] files)
+
+Output to: [chapter-dir]/drafts/[attempt]/[NN-YY-metaphors.md]
 ```
-See agents/metaphor/metaphor-identify.md for directions.
-
-Draft: plot/book1/chapter01/drafts/attempt09/01-01-draft.md
-Storyboards: plot/book1/chapter01/ (all 01-01-*-storyboard.md files)
-
-Output to: plot/book1/chapter01/drafts/attempt09/01-01-metaphors.md
-```
-
 
 ## Metaphor Flatten
 
-```
-See agents/metaphor/metaphor-flatten.md for directions.
+```text
+See `agents/metaphor/metaphor-flatten.md` for directions, or the equivalent path in the project's Amanuensis submodule.
 
-Working file: plot/book1/chapter01/drafts/attempt09/01-01-metaphors.md
-Draft: plot/book1/chapter01/drafts/attempt09/01-01-draft.md
+Working file: [chapter-dir]/drafts/[attempt]/[NN-YY-metaphors.md]
+Draft: [chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]
 
 Process all FLATTEN-marked entries. Append variants to each entry in the working file.
 ```
 
-
 ## Metaphor Replace
 
-```
-See agents/metaphor/metaphor-replace.md for directions.
+```text
+See `agents/metaphor/metaphor-replace.md` for directions, or the equivalent path in the project's Amanuensis submodule.
 
-Working file: plot/book1/chapter01/drafts/attempt09/01-01-metaphors.md
-Draft: plot/book1/chapter01/drafts/attempt09/01-01-draft.md
+Working file: [chapter-dir]/drafts/[attempt]/[NN-YY-metaphors.md]
+Draft: [chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]
 
 Process all REPLACE-marked entries. Append integration versions to each entry in the working file.
 ```
 
-
 ## Metaphor Workshop
 
-```
-See agents/metaphor/metaphor-workshop.md for directions.
+```text
+See `agents/metaphor/metaphor-workshop.md` for directions, or the equivalent path in the project's Amanuensis submodule.
 
-Working file: plot/book1/chapter01/drafts/attempt09/01-01-metaphors.md
-Draft: plot/book1/chapter01/drafts/attempt09/01-01-draft.md
-Storyboards: plot/book1/chapter01/ (all 01-01-*-storyboard.md files)
-Voice: agents/voice.md
+Working file: [chapter-dir]/drafts/[attempt]/[NN-YY-metaphors.md]
+Draft: [chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]
+Storyboards: [chapter-dir]/storyboards/ (all relevant [NN-YY-ZZZ-storyboard.md] files)
+Voice: [selected voice file or profile]
 
 Work the next WORKSHOP-marked entry. Append candidates to the working file and stop.
-```
-
-
-## Metaphor Apply
-
-```
-See agents/metaphor/metaphor-apply.md for directions.
-
-Working file: plot/book1/chapter01/drafts/attempt09/01-01-metaphors.md
-Draft: plot/book1/chapter01/drafts/attempt09/01-01-draft.md
-
-Output to: plot/book1/chapter01/drafts/attempt09/01-01-draft-metaphor.md
 ```

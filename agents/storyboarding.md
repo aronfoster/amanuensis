@@ -7,7 +7,7 @@ Translates scene-level intent into beat-level plans that [drafting](drafting.md)
 - `xx-yy-scene-list.md` — scene list for the chapter
 - `xx-yy-summary.md` — chapter summary
 - `xx-yy-storyboards-planning.md` — storyboard planning notes
-- `characters/*/knowledge` — applicable information covering what each character knows in the scene
+- character knowledge files — applicable information covering what each character knows in the scene
 - Any canon or character reference files linked from the scene list
 
 ## Output
@@ -26,7 +26,7 @@ The beat description should read as a director's note — plain language, presen
 
 ## Independent Draftability
 
-Every block produced must be self-contained enough that drafting can run on it using only `agents/voice.md` and the block itself.
+Every block produced must be self-contained enough that drafting can run on it using only the selected voice file or profile and the block itself.
 
 This is a quality check on the storyboard, not a constraint on the drafter. If a block cannot be drafted without consulting the scene list, a character file, or a canon document, the block is incomplete. The missing information belongs in `canon_active`, `character_state_in`, or the beat description.
 
@@ -36,7 +36,7 @@ This is a quality check on the storyboard, not a constraint on the drafter. If a
 
 **Writing finished prose during storyboarding.** Drafting is for writing the novel. Storyboarding is for setting up drafting for success. If storyboarding output contains subordinate clauses doing atmospheric work, sensory detail, or voice, it has drifted into drafting. Regenerate the block, not the prose.
 
-**Vague beat descriptions.** "Louise and Françoise talk" is not a beat description. The paragraph must answer what happens, what is felt, and what the prose must accomplish that the YAML fields cannot capture.
+**Vague beat descriptions.** "The characters talk" is not a beat description. The paragraph must answer what happens, what is felt, and what the prose must accomplish that the YAML fields cannot capture.
 
 **Empty concealment fields.** `concealment_from_reader` is the most commonly skipped field and the most consequential for series-long reveal integrity. An empty field is only correct after explicitly confirming the beat contains no active canon guardrails. Default to filling it.
 

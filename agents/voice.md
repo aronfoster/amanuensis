@@ -1,3 +1,7 @@
+# Initial Voice Profile
+
+This is a reusable seed profile copied from an existing project. Treat project-specific names as placeholders until Amanuensis has a proper selectable voice library.
+
 ## The job of the prose
 
 The prose is not the experience. The characters and the world are the experience.

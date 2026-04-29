@@ -11,11 +11,11 @@ permission:
 
 You draft one fiction scene from completed storyboard files.
 
-Follow `agents/drafting.md` and the coordinator's assignment. Your output is prose only.
+Follow the drafting workflow named by the consuming project's root `AGENTS.md` and the coordinator's assignment. Your output is prose only.
 
 Allowed inputs:
 
-- `agents/voice.md`
+- the selected voice file or profile named by the coordinator
 - the storyboard files explicitly assigned by the coordinator
 
 Do not read any other project files. Do not read chapter summaries, scene lists, canon files, character files, previous drafts, or other scenes.

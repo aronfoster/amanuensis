@@ -10,7 +10,6 @@ Pipeline for identifying, reviewing, and fixing figurative language in drafted p
 - `metaphor-flatten.md` — generates literal rewrites for FLATTEN-marked entries
 - `metaphor-replace.md` — integrates a human-supplied image for REPLACE-marked entries
 - `metaphor-workshop.md` — generates constrained candidates for WORKSHOP-marked entries; one entry per session
-- `metaphor-apply.md` — reads the reviewed working file and writes the metaphor-corrected draft
 
 ---
 
@@ -60,8 +59,8 @@ Run `metaphor-workshop.md` for each WORKSHOP-marked entry. Candidates are append
 ### Step 6 — Human selection
 For each entry with multiple variants, delete the variants you are not using. Leave exactly one variant per entry — the one to be written into the draft.
 
-### Step 7 — Apply (LLM)
-Run `metaphor-apply.md`. Reads `xx-yy-metaphors.md`, substitutes surviving variants into the prose, writes `xx-yy-draft-metaphor.md`.
+### Step 7 — Apply (human or future workflow)
+Apply the surviving variants to the draft after human selection. A dedicated apply workflow is planned but not yet included.
 
 ---
 

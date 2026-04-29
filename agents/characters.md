@@ -56,7 +56,7 @@ This is one of the most important systems in the repository.
 
 ## Knowledge file format
 
-Each knowledge entry is a discrete fact with a short searchable heading and structured fields. See the [knowledge-book.md](/templates/knowledge-book.md) template for details.
+Each knowledge entry is a discrete fact with a short searchable heading and structured fields. See the [knowledge-book.md](templates/knowledge-book.md) template for details.
 
 Knowledge items are only written to these files during the **scene knowledge update** workflow, after drafting confirms what the scene committed. Storyboarding reads these files as inputs; it does not write to them.
 

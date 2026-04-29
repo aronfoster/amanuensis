@@ -12,21 +12,15 @@ The coordinator manages scene assignment, output paths, ordering, and assembly. 
 
 ## Inputs
 
-- `agents/voice.md`
+- The project's selected voice file or Amanuensis voice profile
 - The chapter storyboard files in `plot/bookN/chapterYY/storyboards/`
-
-For book 1 chapter 1, the storyboard files live in:
-
-```text
-plot/book1/chapter01/storyboards/
-```
 
 ## Outputs
 
 Each run should create a dedicated attempt folder under the chapter's `drafts/` directory. Use the existing `attemptXX` naming pattern:
 
 ```text
-plot/book1/chapter01/drafts/attempt01/
+plot/bookN/chapterYY/drafts/attempt01/
   scene01.md
   scene01-notes.md
   scene02.md
@@ -34,7 +28,7 @@ plot/book1/chapter01/drafts/attempt01/
   scene03.md
   scene03-notes.md
   notes.md
-  01-01-draft.md
+  NN-YY-draft.md
 ```
 
 Scene files and scene notes files are temporary working outputs. The combined draft file is the assembled chapter draft for that run. The run-level `notes.md` is the combined notes record for the chapter generation attempt.
@@ -43,7 +37,7 @@ Do not write planning notes into scene files or into the combined draft.
 
 ## Coordinator Responsibilities
 
-1. Read this file, `agents/update-rules.md`, `agents/drafting.md`, and `agents/voice.md`.
+1. Read this file, `update-rules.md`, `drafting.md`, and the selected voice file or profile.
 2. Identify all storyboard files for the chapter.
 3. Group storyboard files by scene using their `scene_ref` values.
 4. Create a new `attemptXX` run folder under the chapter's `drafts/` directory.
@@ -63,7 +57,7 @@ Each subagent drafts one scene.
 
 The subagent must:
 
-- read `agents/voice.md`
+- read the selected voice file or profile
 - read all storyboard files assigned to its scene, in beat order
 - treat the assigned storyboard files as production notes for one dramatic arc
 - write prose only to its assigned scene file
@@ -88,7 +82,7 @@ The coordinator should give each subagent a constrained prompt with this shape:
 Draft one scene for [chapter path].
 
 Allowed inputs:
-- agents/voice.md
+- [selected voice file or profile]
 - [list of storyboard files for this scene]
 
 Do not read any other project files.
@@ -99,7 +93,7 @@ Write prose only to:
 Write generation notes only to:
 [attempt folder]/sceneXX-notes.md
 
-Treat the storyboard files as production notes for one continuous dramatic arc. Follow agents/drafting.md: pace against the scene arc, not against individual beat boundaries. Preserve Must Preserve, Concealment from reader, Concealment from characters, Canon active, Character state in/out, and Craft signal constraints.
+Treat the storyboard files as production notes for one continuous dramatic arc. Follow the drafting workflow: pace against the scene arc, not against individual beat boundaries. Preserve Must Preserve, Concealment from reader, Concealment from characters, Canon active, Character state in/out, and Craft signal constraints.
 
 Do not include planning notes, summaries, commentary, or markdown headings in the scene prose file. Do not assemble the chapter.
 
@@ -140,7 +134,7 @@ The coordinator combines those files into the attempt's `notes.md` after scene d
 ## Run
 
 - Attempt: attempt01
-- Chapter: plot/book1/chapter01
+- Chapter: plot/bookN/chapterYY
 - Model: openai/gpt-5.5
 
 ## Scene 1

@@ -23,12 +23,12 @@ This file defines when and why each workflow runs, and what order to follow. For
 Run this during chapter planning if a character expected in the chapter does not yet have a folder.
 
 1. Check `characters/` for an existing folder
-2. If absent, create the folder and minimum required files per `agents/characters.md`
+2. If absent, create the folder and minimum required files per `characters.md`
 3. Fill in what is known; leave unknown fields blank and mark `status: stub` if role is unsettled
 
 ## Workflow: storyboarding
 
-Follow `agents/storyboarding.md`.
+Follow `storyboarding.md`.
 
 Before storyboarding a scene, read the current knowledge files for all characters who appear in it. These are the inputs that determine what each character can plausibly know, suspect, or believe at scene-start.
 
@@ -43,11 +43,11 @@ Include the scene reference so the source is traceable if the storyboard changes
 
 ## Workflow: drafting
 
-Follow `agents/drafting.md`. Draft at scene level: read all storyboard blocks for a scene before writing, and treat them as production notes for a single dramatic arc. Pace against the arc, not against beat boundaries.
+Follow `drafting.md`. Draft at scene level: read all storyboard blocks for a scene before writing, and treat them as production notes for a single dramatic arc. Pace against the arc, not against beat boundaries.
 
 ## Workflow: agentic chapter drafting
 
-Follow `agents/agentic-drafting.md`. Use this only after storyboard files are complete. A coordinator assigns each scene to a subagent, subagents write per-scene markdown files and per-scene notes files in an `attemptXX` folder, and the coordinator mechanically assembles those files into one chapter draft and one notes file for that attempt.
+Follow `agentic-drafting.md`. Use this only after storyboard files are complete. A coordinator assigns each scene to a subagent, subagents write per-scene markdown files and per-scene notes files in an `attemptXX` folder, and the coordinator mechanically assembles those files into one chapter draft and one notes file for that attempt.
 
 ## Workflow: compliance pass
 
@@ -68,7 +68,7 @@ Review the drafted prose and fix any deviations from storyboard requirements (es
 
 ## Workflow: metaphor check
 
-* Write xx-yy-metaphors.md to list all metaphors and similes of the chapter: exact text, what thing is written down, what it represents, what we want to say about the thing it represents, whether this metaphor does that.
+* Write `xx-yy-metaphors.md` to list all metaphors and similes of the chapter: exact text, what thing is written down, what it represents, what we want to say about the thing it represents, whether this metaphor does that.
 
 ## Workflow: Anti-AI update
 
@@ -85,9 +85,9 @@ Run this after all scenes in a chapter are drafted and knowledge files are curre
 
 ---
 
-# Consdier workflows:
+## Workflow Backlog
 
-**POV-age pass.** Scan for reference points, comparisons, and abstractions that a thirteen-year-old wouldn't reach for — narrator-adult language, institutional vocabulary used unironically, interpretive frames. Closely related to #2 but a different failure mode: #2 catches imported labels; this catches unearned sophistication.  
+**POV-age pass.** Scan for reference points, comparisons, and abstractions outside the POV character's plausible frame — narrator-adult language, institutional vocabulary used unironically, interpretive frames. Closely related to line-level voice, but a different failure mode: this catches unearned sophistication.  
 **Line-level voice pass.** Sentence rhythm, subordination doing real work vs. sideways qualification, cutting any clause the sentence would be more accurate without. Last because it's least leveraged — it polishes prose that's already structurally sound, and does nothing for prose that isn't.
 **Chapter-boundary continuity** the next chapter's storyboards need to know what
    the previous chapter committed to in its drafts (active concern flags, pending

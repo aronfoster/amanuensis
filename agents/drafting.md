@@ -4,7 +4,7 @@ This workflow generates the prose of the story for a single scene. It has no kno
 
 ## Inputs
 
-- `agents/voice.md` — stable voice anchor; does not change between scenes
+- The project's selected voice file or Amanuensis voice profile; this should not change between scenes within one run
 - A group of storyboard blocks (`xx-yy-zzz-storyboard.md`) covering a scene
 
 Do not read any other files before writing prose.
@@ -17,7 +17,7 @@ Scene breaks are indicated with a horizontal line (`---`).
 
 ## What Goes in the LLM Call
 
-**System message:** `agents/voice.md` in full. Placing it in the system message allows it to be cached and keeps the user message focused on the specific beat.
+**System message:** the selected voice file in full. Placing it in the system message allows it to be cached and keeps the user message focused on the specific beat.
 
 **User message:** all storyboard blocks for the scene in order. Treat them as production notes for a single dramatic arc. Pace against the arc, not against beat boundaries.
 
@@ -31,21 +31,21 @@ When finding a voice and process that will work, each drafting run goes into its
 
 Each attempt is a self-contained record of what produced it:
 
-```
-plot/book1/chapter01/drafts/
+```text
+plot/bookN/chapterYY/drafts/
   attempt01/
-    01-01-001-storyboard.md   ← storyboard block used
-    voice.md                  ← voice spec used
-    01-01-draft.md            ← prose output
-    notes.md                  ← model and any other run notes
+    NN-YY-ZZZ-storyboard.md   # storyboard block used
+    voice.md                  # voice spec used
+    NN-YY-draft.md            # prose output
+    notes.md                  # model and any other run notes
   attempt02/
-    01-01-001-storyboard.md
+    NN-YY-ZZZ-storyboard.md
     voice.md
-    01-01-draft.md
+    NN-YY-draft.md
     notes.md
 ```
 
-The `voice.md` and `notes.md` in each attempt folder are the specific versions used for that run, not references to `agents/voice.md`.
+The `voice.md` and `notes.md` in each attempt folder are the specific versions used for that run, not references to the source voice file.
 
 Set up a new attempt by copying the source files — do not move them, and do not retype their contents:
 
@@ -54,9 +54,10 @@ BOOK=01
 CHAPTER=01
 SCENE=01
 CHAPTER_DIR=plot/book$BOOK/chapter$CHAPTER
-ATTEMPT=$CHAPTER_DIR/drafts/attempt07
+VOICE_FILE=amanuensis/agents/voice.md
+ATTEMPT=$CHAPTER_DIR/drafts/attemptXX
 mkdir -p $ATTEMPT
-cp agents/voice.md $ATTEMPT/voice.md
+cp $VOICE_FILE $ATTEMPT/voice.md
 cp $CHAPTER_DIR/storyboards/$BOOK-$CHAPTER-$SCENE-*-storyboard.md $ATTEMPT/
 ```
 
@@ -64,7 +65,7 @@ Then write the model name into `notes.md` and write your output going to `$ATTEM
 
 ### Subsequent runs
 
-Write your output in `$ATTEMPT/$BOOK-$CHAPTER-draft.md` and copy the `$BLOCK` sotryboard into the folder.
+Write your output in `$ATTEMPT/$BOOK-$CHAPTER-draft.md` and copy the `$BLOCK` storyboard into the folder.
 
 ---
 

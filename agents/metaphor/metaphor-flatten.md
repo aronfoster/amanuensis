@@ -68,7 +68,7 @@ Show each variant inside the full paragraph it belongs to. Minimal collateral ch
 - Do not introduce new figurative comparisons. Variant B's specificity must come from concrete detail, not analogy.
 - Do not lengthen the sentence significantly unless compression is the root of the problem.
 - Match the diction level of surrounding prose.
-- Preserve POV. The perceiving mind is Louise's, thirteen years old.
+- Preserve the project's established POV and voice constraints.
 - Preserve block comment markers and scene breaks in any quoted paragraph context.
 
 ---

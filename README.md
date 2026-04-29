@@ -38,3 +38,26 @@ Amanuensis owns:
 OpenCode automatically loads agents from a project's root `.opencode/` directory. Amanuensis keeps canonical source files under `opencode/`; consuming projects should sync or copy those files into their own `.opencode/` runtime directory.
 
 The sync script is planned but not implemented yet.
+
+## Submodule Integration
+
+Recommended consuming project layout:
+
+```text
+story-project/
+  amanuensis/      # git submodule
+  .opencode/      # OpenCode runtime files synced from amanuensis/opencode/
+  AGENTS.md       # project-local adapter
+  canon/
+  characters/
+  locations/
+  plot/
+```
+
+Add Amanuensis as a submodule from the consuming project root:
+
+```sh
+git submodule add git@github.com:aronfoster/amanuensis.git amanuensis
+```
+
+The local `AGENTS.md` should tell agents where the story files live and point them to `amanuensis/agents/` for reusable workflows. See `examples/project-AGENTS.md`.

@@ -1,5 +1,7 @@
 # Storyboard Block Schema
 
+Examples in this document are illustrative. Some use names and constraints from the project that originally produced the workflow; replace them with project-local equivalents when applying the schema elsewhere.
+
 Each storyboard file contains one or more blocks. Each block is independently
 draftable — it should contain everything an LLM needs to write its prose without
 access to any other file.

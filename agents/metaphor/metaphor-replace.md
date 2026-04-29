@@ -47,7 +47,7 @@ From the tenor, implication, and register fit — corrected if necessary — and
 - The diction level of surrounding sentences
 - Whether surrounding lines are figurative or plain — do not crowd the new figure
 - The sentence's rhythmic position in the paragraph
-- POV register — the perceiving mind is Louise's, thirteen years old
+- POV register — the project's established POV and voice constraints
 
 **Step 3: Produce three versions at different levels of integration intensity.**
 
