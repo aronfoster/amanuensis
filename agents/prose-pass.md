@@ -1,0 +1,290 @@
+# Prose Pass
+
+## Purpose
+
+This pass improves prose quality without turning revision into a sentence-by-sentence art tribunal.
+
+It is **not** a copy edit.
+It is **not** a full style workshop.
+It is **not** a metaphor census.
+
+It does three things:
+
+1. makes scenes more concrete
+2. catches broken or distracting figurative language
+3. improves rhythm, emphasis, and readability
+
+This pass should be **selective**. It does not try to perfect every line. It identifies the places where prose is actively costing the chapter clarity, force, or pleasure.
+
+---
+
+## Inputs
+
+- chapter draft
+- storyboards
+- voice.md
+- optional outputs from other passes
+
+---
+
+## Output
+
+Write a report in markdown.
+
+For each issue:
+- quote the line or short passage
+- identify the problem
+- explain why it matters in context
+- recommend one of:
+  - `KEEP`
+  - `TIGHTEN`
+  - `FLATTEN`
+  - `REWRITE`
+
+Do **not** rewrite the whole chapter.
+Do **not** produce line edits for every issue.
+Do **not** praise at length.
+Do **not** fix spelling, punctuation, or grammar unless they materially affect rhythm or clarity.
+
+End with:
+- `Top priorities`
+- `Lines worth preserving`
+- `Chapter-level diagnosis`
+
+---
+
+## Review stance
+
+You are not here to reward sentences for sounding literary.
+You are here to judge whether the prose is helping the scene.
+
+Prefer:
+- specificity over vagueness
+- precision over ornamental language
+- vividness over abstraction
+- coherence over cleverness
+- rhythm that matches the moment
+- imagery that belongs to the POV and scene
+
+Be skeptical of prose that sounds impressive on first read but becomes fuzzy, inflated, or physically incoherent when examined.
+
+---
+
+## What to look for
+
+### 1. Concrete detail
+
+Flag passages where the prose becomes abstract when the scene needs something visible, audible, tactile, spatial, or bodily specific.
+
+Common problems:
+- emotional summary where concrete perception would be stronger
+- vague sensory language
+- generic bodily signals
+- placeholder description
+- repeated abstraction words like pressure, tension, feeling, awareness, presence, weight, edge, distance, silence, shape without enough concrete support
+
+Questions:
+- What can the reader actually picture here?
+- What does the character physically notice?
+- Is this moment being described, or merely labeled?
+
+Use `TIGHTEN` when the sentence is close but needs sharper detail.
+Use `REWRITE` when the passage is mostly abstraction.
+Use `FLATTEN` when the prose is trying to sound meaningful without showing anything.
+
+---
+
+### 2. Figurative language
+
+Flag figurative language only when it is causing real trouble.
+
+Trouble includes:
+- mixed or conflicting implications
+- wrong connotations for the scene
+- excessive drama for a small moment
+- decorative metaphor with no real gain
+- image logic that does not survive literal attention
+- comparisons that feel imported from nowhere
+- too many live metaphors clustered together
+- metaphors that sound literary but do not clarify perception
+
+Do **not** assume all metaphors should be reduced.
+Do **not** reward metaphors merely for being novel.
+Do **not** excuse a bad metaphor because the intended meaning is recoverable.
+
+Questions:
+- What exact property is the image borrowing?
+- What else does the image smuggle in?
+- Do those extra connotations help or hurt?
+- Does this image feel native to the POV and chapter?
+- Would the sentence be stronger if made literal or simpler?
+
+Use `KEEP` for imagery that is vivid, apt, and tonally right.
+Use `TIGHTEN` for imagery that is almost right.
+Use `FLATTEN` for imagery that adds decoration but not value.
+Use `REWRITE` for imagery that is broken, misleading, or tonally damaging.
+
+---
+
+### 3. Rhythm and sentence movement
+
+Flag local prose that is monotonous, clogged, shapeless, or mismatched to scene energy.
+
+Common problems:
+- too many sentences of similar length and cadence
+- clauses stacked without clear emphasis
+- overuse of hedging or throat-clearing
+- overwritten transitions
+- every sentence carrying the same weight
+- high-tension moments slowed by decorative phrasing
+- reflective moments written too flatly or abruptly
+
+Questions:
+- Does the sentence move the way the moment moves?
+- Where does the stress naturally fall?
+- Is the prose making the reader work for the wrong reasons?
+- Is this paragraph all one tempo?
+
+Use `TIGHTEN` for sentences that need compression or cleaner emphasis.
+Use `REWRITE` when the rhythm is consistently fighting the scene.
+Use `FLATTEN` when flourish is obscuring motion.
+
+---
+
+### 4. POV and voice consistency
+
+Flag prose that does not feel like this character, this narrator, or this book.
+
+Common problems:
+- imagery from an alien register
+- descriptive choices the POV would not plausibly make
+- sudden lyrical inflation
+- generic "novelist voice" replacing actual voice
+- cleverness that breaks character consciousness
+
+Questions:
+- Would this mind naturally think or notice this?
+- Does this diction belong here?
+- Is the line arising from the scene, or from the model trying to impress?
+
+Use `REWRITE` when the voice breaks immersion.
+Use `FLATTEN` when the line feels imported or performative.
+Use `KEEP` when the prose feels inseparable from the POV.
+
+---
+
+### 5. Density and clustering
+
+Do not judge lines only in isolation.
+Sometimes a fine sentence becomes a problem because of its neighbors.
+
+Flag zones where there is:
+- too much figurative pressure in a short span
+- too many emphasized lines together
+- repeated image families without escalation or variation
+- too much "special" prose around routine action
+- lyrical stacking that blurs scene function
+
+Questions:
+- Are too many sentences asking to be admired at once?
+- Has the prose forgotten to breathe?
+- Would one strong line survive better if two nearby lines were reduced?
+
+Use `FLATTEN` aggressively here.
+A chapter does not need every paragraph to shimmer.
+
+---
+
+## What not to do
+
+- Do not nitpick every sentence.
+- Do not require all prose to be plain.
+- Do not treat metaphor count as the primary metric.
+- Do not confuse familiarity with failure.
+- Do not confuse novelty with success.
+- Do not recommend cuts merely because a passage is lyrical.
+- Do not reward "writerly" sound if the underlying sense is weak.
+- Do not fix problems that are really plot or scene-design problems unless the prose is worsening them.
+
+---
+
+## Severity guide
+
+### KEEP
+The line is doing its job well. It may be vivid, restrained, lyrical, or plain. Leave it alone.
+
+### TIGHTEN
+The line is basically sound but needs more precision, cleaner rhythm, or less drag.
+
+### FLATTEN
+The prose is trying too hard, drawing attention away from the scene, or adding decorative language without enough payoff. A simpler line would likely work better.
+
+### REWRITE
+The line is actively failing: broken image, wrong tone, generic abstraction, voice break, or rhythm that damages readability.
+
+---
+
+## Output format
+
+### Top priorities
+List the 5 to 10 highest-value prose problems in the chapter.
+
+### Findings
+
+For each finding, use this template:
+
+#### [short label]
+- Quote: "..."
+- Problem: ...
+- Why it matters: ...
+- Action: `KEEP | TIGHTEN | FLATTEN | REWRITE`
+
+Keep explanations brief and concrete.
+
+---
+
+## Chapter-level diagnosis
+
+Conclude with short sections:
+
+### What the prose is already doing well
+Name genuine strengths.
+
+### Repeated failure modes
+List patterns, not isolated lines.
+
+### Best revision strategy
+Choose one or two:
+- sharpen concrete detail
+- reduce abstraction
+- repair broken imagery
+- lower figurative density in crowded passages
+- improve sentence variation
+- restore POV-specific diction
+
+### Lines worth preserving
+Quote a few lines or moments that feel alive and should guide revision.
+
+---
+
+## Prioritization rules
+
+When in doubt, prioritize:
+1. broken imagery
+2. generic abstraction in emotionally important moments
+3. rhythm problems in action or tension sequences
+4. voice breaks
+5. decorative excess in crowded passages
+
+Ignore minor imperfections unless they are part of a pattern.
+
+---
+
+## Decision rule
+
+The goal is not "beautiful prose everywhere."
+The goal is prose that makes the chapter vivid, coherent, and pleasurable to read.
+
+A plain sentence that lands is better than a fancy sentence that wobbles.
+A strong lyrical sentence is worth keeping when it truly belongs.
+Be selective, concrete, and unsentimental.
