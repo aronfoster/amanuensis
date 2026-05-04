@@ -1,10 +1,23 @@
 # Amanuensis Agent Guide
 
-Use the guidance in `agents/` for reusable long-form writing workflows.
+## How Amanuensis works
 
-## Where to look
+Amanuensis is an orchestrator-driven pipeline for long-form writing. Each project advances one step at a time: a host-specific dispatcher reads `pipeline-state.md` at the project root, locates the next step, runs that step's workflow file as a fresh agent invocation, advances the marker, and exits. State lives entirely in files — there is no in-memory context carried between steps. Humans review artifacts between steps; the dispatcher does not enforce review. Step workflow files declare their inputs, outputs, and review expectations in frontmatter and describe their behavior in the body. Folder layout, including how path placeholders resolve, depends on the project's declared `project_type`.
 
-- `agents/update-rules.md` — start here for safety rules around canon integrity, reveal timing, and downstream updates.
+## Core documents
+
+- `agents/orchestrator.md` — orchestrator contract and dispatcher behavior.
+- `agents/project-layouts.md` — folder conventions per project type (`short_story`, `book`, `series`).
+- `templates/step-workflow.md` — template for new step files.
+- `templates/pipeline-state.md` — template state file.
+- `templates/amanuensis-project.yaml` — project-level config template.
+- `templates/project-AGENTS.md` — adapter template for consuming repositories.
+
+## Legacy workflow documents
+
+The files below predate the step contract and will be refactored into `agents/steps/` during Milestone 2. They remain authoritative until that refactor lands.
+
+- `agents/update-rules.md` — safety rules around canon integrity, reveal timing, and downstream updates.
 - `agents/workflows.md` — workflow order for book setup, chapter planning, drafting, continuity review, and post-chapter updates.
 - `agents/canon.md` — rules for world-level truth files.
 - `agents/books.md` — rules for book-level planning folders.
