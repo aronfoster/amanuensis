@@ -65,9 +65,9 @@ Goal: every workflow that already exists becomes a conforming step. No new step 
 10. [ ] Split `agents/compliance.md` into two step workflows: `compliance_report.md` (`review_required: true`) and `compliance_fix.md` (`review_required: false`, runs against the annotated report).
 11. [ ] Refactor `agents/prose-pass.md` to the step contract. `review_required: true`.
 12. [ ] Refactor the metaphor pipeline:
-    - `agents/metaphor/metaphor-identify.md` becomes step `metaphor_identify`. `review_required: true`.
-    - Create `agents/metaphor/metaphor-fix.md` as a single step that reads the working file, dispatches flatten / replace / workshop logic per entry annotation, and appends variants. `review_required: true`. Remove workshop's Milestone 2 (integration) entirely; integration is metaphor_apply's job.
-    - `agents/metaphor/metaphor-apply.md` becomes step `metaphor_apply`. `review_required: false`.
+    - [ ] `agents/metaphor/metaphor-identify.md` becomes step `metaphor_identify`. `review_required: true`.
+    - [ ] Create `agents/metaphor/metaphor-fix.md` as a single step that reads the working file, dispatches flatten / replace / workshop logic per entry annotation, and appends variants. `review_required: true`. Remove workshop's Milestone 2 (integration) entirely; integration is metaphor_apply's job.
+    - [ ] `agents/metaphor/metaphor-apply.md` becomes step `metaphor_apply`. `review_required: false`.
 13. [ ] Refactor `agents/line-pass.md` to the step contract. `review_required: true`.
 14. [ ] Refactor `agents/anti-ai.md` to the step contract. `review_required: true`. Anti-AI is always last in the pipeline.
 
