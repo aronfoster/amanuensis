@@ -8,9 +8,8 @@ Amanuensis keeps planning, drafting, continuity, reveal timing, and prose-qualit
 
 - `agents/` — reusable workflow guidance for canon, character state, chapter planning, storyboarding, drafting, compliance, prose review, and related passes.
 - `agents/metaphor/` — metaphor identification and revision workflow.
-- `templates/` — reusable markdown templates for story-state files.
+- `templates/` — reusable markdown templates for story-state files, prompt examples, and project-integration examples.
 - `opencode/` — source templates for OpenCode runtime files. Consuming projects sync these into their root `.opencode/` directory.
-- `examples/` — prompt examples and project-integration examples.
 
 ## Intended Use
 
@@ -60,4 +59,4 @@ Add Amanuensis as a submodule from the consuming project root:
 git submodule add git@github.com:aronfoster/amanuensis.git amanuensis
 ```
 
-The local `AGENTS.md` should tell agents where the story files live and point them to `amanuensis/agents/` for reusable workflows. See `examples/project-AGENTS.md`.
+The local `AGENTS.md` should tell agents where the story files live and point them to `amanuensis/agents/` for reusable workflows. See `templates/project-AGENTS.md`.
