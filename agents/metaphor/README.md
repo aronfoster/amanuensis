@@ -1,69 +1,40 @@
 # Metaphor Subsystem
 
-Pipeline for identifying, reviewing, and fixing figurative language in drafted prose.
+The metaphor pipeline consists of three orchestrator steps and three subagent prompt contracts.
 
 ---
 
-## Files
+## Roles
 
-- `metaphor-identify.md` — extracts all live metaphors and similes from the draft; produces `xx-yy-metaphors.md`
-- `metaphor-flatten.md` — generates literal rewrites for FLATTEN-marked entries
-- `metaphor-replace.md` — integrates a human-supplied image for REPLACE-marked entries
-- `metaphor-workshop.md` — generates constrained candidates for WORKSHOP-marked entries; one entry per session
+**Step workflows** (invoked by the dispatcher; live under `agents/steps/`):
+
+- `agents/steps/metaphor-identify.md` — extracts every live metaphor and simile from the latest prose into `<chapter-folder>/drafts/<latest-attempt>/metaphors.md`. `review_required: true`.
+- `agents/steps/metaphor-fix.md` — coordinator step. Reads the human-annotated `metaphors.md`, dispatches one subagent per annotated entry in parallel against the contracts below, and appends each subagent's variants to its entry. `review_required: true`.
+- `agents/steps/metaphor-apply.md` — applies the human-selected variant to the prose, producing `<chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md`. `review_required: false`.
+
+**Subagent prompt contracts** (not steps; live in this directory and are dispatched by `metaphor_fix`):
+
+- `metaphor-flatten.md` — generates literal rewrites for `FLATTEN`-annotated entries.
+- `metaphor-replace.md` — integrates a human-supplied target image for `REPLACE: [target image]`-annotated entries.
+- `metaphor-workshop.md` — generates replacement candidates for `WORKSHOP`-annotated entries where the human has not supplied an image. The integration phase that previously lived in this contract has been removed; integration is `metaphor_apply`'s job.
 
 ---
 
 ## Pipeline
 
-### Step 1 — Identify (LLM)
-Run `metaphor-identify.md`. Output: `xx-yy-metaphors.md` with full entries for every live figure in the draft.
-
-### Step 2 — Human review
-Go through `xx-yy-metaphors.md`. For each entry:
-
-- **Delete the entry** if the metaphor is sound and no action is needed.
-- **Add `FLATTEN`** below the flag line if the figure should be removed.
-- **Add `REPLACE: [target image]`** below the flag line if you already know the replacement.
-- **Add `WORKSHOP`** below the flag line if you want candidates generated.
-
-If any of the identify fields are wrong — tenor, implication, register fit — correct them inline or add a note below the action word. The fix passes will read your corrections and use them in place of the original assessment. You do not need to use a special format; plain language is sufficient.
-
-Examples:
-
-```
-FLATTEN
-tenor: the lie passes without scrutiny but doesn't disappear — it persists
-```
-
-```
-REPLACE: [image]
-register fit: this beat is colder than assessed — procedural, not intimate
-```
-
-```
-WORKSHOP
-implication: the model has this backwards — the sensation is expansive, not contracting
-```
-
-What remains in the file after this pass is the action queue.
-
-### Step 3 — Flatten (LLM)
-Run `metaphor-flatten.md` on all FLATTEN-marked entries. Variants are appended to each entry in `xx-yy-metaphors.md`.
-
-### Step 4 — Replace (LLM)
-Run `metaphor-replace.md` on all REPLACE-marked entries. Integration versions are appended to each entry.
-
-### Step 5 — Workshop (LLM, one entry per session)
-Run `metaphor-workshop.md` for each WORKSHOP-marked entry. Candidates are appended to the entry. Human selects or rejects. Integration versions follow.
-
-### Step 6 — Human selection
-For each entry with multiple variants, delete the variants you are not using. Leave exactly one variant per entry — the one to be written into the draft.
-
-### Step 7 — Apply (human or future workflow)
-Apply the surviving variants to the draft after human selection. A dedicated apply workflow is planned but not yet included.
+1. **`metaphor_identify`** runs against the latest prose and writes `metaphors.md` with one entry per live figure.
+2. **Human review.** The human edits `metaphors.md` directly. For each entry, they:
+   - Delete it (the figure is sound, no action).
+   - Add `FLATTEN` (remove the figure).
+   - Add `REPLACE: [target image]` (the human supplies the replacement image).
+   - Add `WORKSHOP` (the human wants candidates generated).
+   Inline corrections to identify fields (tenor, implication, register fit) are accepted; the fix subagents will use them.
+3. **`metaphor_fix`** runs as a coordinator. It reads `metaphors.md`, identifies every annotated entry, and dispatches one subagent per entry in parallel — `FLATTEN` against `metaphor-flatten.md`, `REPLACE` against `metaphor-replace.md`, `WORKSHOP` against `metaphor-workshop.md`. Each subagent receives only what its prompt contract requires (the entry block, the surrounding paragraph from the latest prose, and — for workshop — the storyboard block plus the voice file). Each subagent appends variants directly below its assigned entry.
+4. **Human selection.** The human deletes the variants they are not using, leaving exactly one variant per entry — the one to be written into the draft.
+5. **`metaphor_apply`** runs against the post-selection `metaphors.md`, applies the surviving variants to the latest prose, and writes `draft-metaphor.md`. Workshop entries arrive as bare sentences (since workshop's integration phase was removed); the apply step's existing sentence-variant branch handles them.
 
 ---
 
 ## Working document
 
-`xx-yy-metaphors.md` is the working document for the entire pipeline. It begins as the identify output and accumulates fix options through steps 3–5. After human selection in step 6 it becomes the apply input. Do not discard it after the pipeline completes — it is the audit record of every figurative decision made in the chapter.
+`metaphors.md` is the working document for the entire pipeline. It begins as the identify output, accumulates variants in the fix step, and becomes the apply input after human selection. Do not discard it after the pipeline completes — it is the audit record of every figurative decision made in the chapter.

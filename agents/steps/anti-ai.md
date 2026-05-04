@@ -1,34 +1,37 @@
+---
+step_id: anti_ai
+review_required: true
+inputs:
+  - <chapter-folder>/drafts/<latest-attempt>/draft-line.md
+outputs:
+  - <chapter-folder>/drafts/<latest-attempt>/anti-ai.md
+---
+
+See `agents/orchestrator.md` for the step workflow contract.
+
 # Anti-AI Pass
+
+## Purpose
 
 Hygiene workflow. Identifies patterns that signal AI-generated prose to trained readers. Reports findings; does not fix.
 
-This pass runs after compliance and metaphor check. It operates on surface and structural signals only — it has no awareness of canon, storyboard requirements, or voice spec. Do not use it to evaluate whether prose is good. Use it to find patterns that will get a reader's guard up.
-
----
+This pass is the last step in the pipeline. It runs against the line-pass output (`draft-line.md`), the latest prose available in the attempt folder. It operates on surface and structural signals only — it has no awareness of canon, storyboard requirements, or voice spec. Do not use it to evaluate whether prose is good. Use it to find patterns that will get a reader's guard up.
 
 ## Inputs
 
-- The drafted prose (`xx-yy-draft.md`)
+- `<chapter-folder>/drafts/<latest-attempt>/draft-line.md` — the latest prose, after line pass. This is the only file this step reads. The pass is context-free by design.
 
-No other files. This pass is context-free by design.
+## Behavior
 
----
+Scan the input prose for the eight pattern categories below and the flagged-words list. Report every instance found. Do not evaluate whether a pattern's use seems intentional or defensible — that is a human judgment downstream.
 
-## Output
-
-`xx-yy-anti-ai.md` in the chapter folder. One file per chapter; append across scenes with a scene header.
+The output file is one report per chapter; append across scenes with a scene header.
 
 Begin each scene's section with:
 
 ```markdown
 ## Anti-AI Report — Scene xx-yy
 ```
-
----
-
-## What to scan for
-
-Seven pattern categories. Scan for all of them. Report every instance found.
 
 ---
 
@@ -209,3 +212,11 @@ Flag each with its quote, under a separate section:
 **Flagging transition words in non-opener positions.** Category 6 targets openers only. "However" mid-sentence is not a flag.
 
 **Fixing.** This pass reports. Nothing else.
+
+## Outputs
+
+- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — one report per chapter, with a `## Anti-AI Report — Scene xx-yy` header per scene, the per-category flag sections (only those with hits), a `### Flagged Words` section, and a `### Summary — Scene xx-yy` block at the end of each scene tallying counts per category and a total.
+
+## Open questions handling
+
+If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. Anti-AI is unusual in that it is a context-free pass against a single file; blockers are rare (effectively limited to `draft-line.md` being missing or empty), but the same handling applies.

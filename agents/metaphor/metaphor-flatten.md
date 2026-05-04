@@ -1,5 +1,7 @@
 # Metaphor Flatten
 
+> This file is a subagent prompt contract used by the `metaphor_fix` step (`agents/steps/metaphor-fix.md`). It is not a top-level workflow. The `metaphor_fix` coordinator dispatches one subagent against this contract for each `FLATTEN`-annotated entry in the working metaphors file.
+
 Generates literal rewrites for FLATTEN-marked entries in the working metaphors file. Does not write to the draft — that is the apply step's job.
 
 ---

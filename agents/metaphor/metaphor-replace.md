@@ -1,5 +1,7 @@
 # Metaphor Replace
 
+> This file is a subagent prompt contract used by the `metaphor_fix` step (`agents/steps/metaphor-fix.md`). It is not a top-level workflow. The `metaphor_fix` coordinator dispatches one subagent against this contract for each `REPLACE`-annotated entry in the working metaphors file.
+
 Integrates a human-supplied replacement image for REPLACE-marked entries. Does not invent the replacement. Does not write to the draft — that is the apply step's job.
 
 ---
