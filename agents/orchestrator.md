@@ -27,7 +27,7 @@ outputs:
 
 **`step_id`** is the canonical name of the step. Must match the corresponding entry in `pipeline-state.md` exactly. snake_case.
 
-**`review_required`** indicates whether the human is expected to review the step's output before the next step runs. The dispatcher does not enforce this — it always advances the marker after a step body completes. `review_required: true` is a signal to the human reading the state file that the next dispatcher invocation will assume the artifact has been reviewed. If the human invokes the dispatcher without reviewing, the next step runs against unreviewed output, and the consequences are the human's problem.
+**`review_required`** indicates whether the human is expected to review the step's output before the next step runs. The dispatcher does not enforce this — it always advances the marker after a step body completes. `review_required: true` is a signal to the human reading the state file that the next dispatcher invocation will assume the artifact has been reviewed. If the human invokes the dispatcher without reviewing, the next step runs against unreviewed output and the consequences are the human's problem.
 
 **`inputs`** lists the files the step reads. Path conventions use `<chapter-folder>` and `<latest-attempt>` placeholders that the step body resolves based on project_type and current state. The list is descriptive; nothing enforces it. Its purpose is documentation and review.
 
@@ -39,7 +39,7 @@ The body of a step workflow file describes what the step does. Existing workflow
 - write only to the declared outputs
 - treat the file system as the only state
 - produce no notes or logs about what was done — the artifacts themselves are the record
-- if blocked, write to the project's `open-questions.md` and exit; do not invent missing canon
+- if blocked, write to the project's `open-questions.md` and exit; do not invent missing canon (TODO: we **do** want agents to invent missing canon. They must make sense, and they cannot conflict with existing canon. If canon doesn't specify what John ordered during the breakfast scene, the drafter should be free to invent it instead of halting. The drafter should not have him eat pop tarts if it's medieval fantasy. Figure out how to word this here and in the agent files.)
 
 ## State file format
 
@@ -96,7 +96,7 @@ The dispatcher does not:
 - track per-step notes or logs
 - handle errors beyond exiting cleanly
 
-If a step body cannot complete (missing inputs, unrecoverable error), the step writes to the project's `open-questions.md` (or the chapter's, as appropriate) and exits without advancing the marker. The next dispatcher invocation re-runs the step. The human resolves the blocker by editing files.
+If a step body cannot complete (missing inputs, unrecoverable error), the step writes to the project's `open-questions.md` (or the chapter's, as appropriate) and exits without advancing the marker. The next dispatcher invocation re-runs the step. The human resolves the blocker by editing files. (TODO: create centralized and organized location for questions to the human)
 
 ## Re-running a step
 
@@ -105,7 +105,7 @@ The human edits `pipeline-state.md` directly:
 - Move the `[>]` marker up to the step to redo.
 - Change all downstream `[x]` markers back to `[ ]`.
 
-The next dispatcher invocation runs from the new position.
+The next dispatcher invocation runs from the new position. Any existing output files from the current step are overwritten.
 
 ## Path resolution by project type
 
@@ -118,6 +118,8 @@ Step workflows that read or write files use placeholders that resolve based on `
 `<latest-attempt>` resolves to the highest-numbered `attemptNN` directory under the chapter's `drafts/`. If none exists and the step expects one, the step creates `attempt01`.
 
 How a step knows which chapter is "the current chapter" for book and series projects is an open question deferred to the book/series rollout phase. For short_story projects there is only one chapter and the question doesn't arise.
+
+TODO: this doesn't feel ideal but I should see it in practice before proposing a new solution
 
 ## What the orchestrator does not do
 
