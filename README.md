@@ -8,7 +8,7 @@ Amanuensis keeps planning, drafting, continuity, reveal timing, and prose-qualit
 
 - `agents/` — reusable workflow guidance for canon, character state, chapter planning, storyboarding, drafting, compliance, prose review, and related passes.
 - `agents/metaphor/` — metaphor identification and revision workflow.
-- `agents/templates/` — reusable markdown templates for story-state files.
+- `templates/` — reusable markdown templates for story-state files.
 - `opencode/` — source templates for OpenCode runtime files. Consuming projects sync these into their root `.opencode/` directory.
 - `examples/` — prompt examples and project-integration examples.
 
