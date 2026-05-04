@@ -47,9 +47,9 @@ The roadmap is grouped by Milestone. Milestones are ordered such that finishing 
 Goal: define the contract every step workflow must satisfy, and the project structure every consuming repository must have.
 
 1. [x] Write `agents/orchestrator.md` defining the dispatcher behavior, the state file format, the step workflow contract (frontmatter fields, input/output conventions, exit semantics), and the rules for advancing markers and handling errors.
-2. [ ] Write `agents/templates/step-workflow.md` as the template for individual step workflow files.
-3. [x] Write `agents/templates/pipeline-state.md` as the template state file.
-4. [ ] Write `agents/templates/amanuensis-project.yaml` defining `project_type` and any other project-level configuration the dispatcher needs.
+2. [ ] Write `templates/step-workflow.md` as the template for individual step workflow files.
+3. [x] Write `templates/pipeline-state.md` as the template state file.
+4. [ ] Write `templates/amanuensis-project.yaml` defining `project_type` and any other project-level configuration the dispatcher needs.
 5. [ ] Document the project_type-dependent folder conventions in `agents/project-layouts.md`. Cover short_story, book, and series. Include the rule that folder paths replace filename prefixes.
 6. [ ] Update `AGENTS.md` to be up to date, including the new orchestrator and project-layout documents.
 
