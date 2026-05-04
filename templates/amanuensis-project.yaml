@@ -1,0 +1,12 @@
+# Project-level configuration for an Amanuensis-consuming repository.
+# When copied into a project, this file lives at <project-root>/amanuensis-project.yaml.
+# The dispatcher and step workflows read it to resolve project-type-dependent paths.
+
+# project_type: one of `short_story`, `book`, `series`.
+# See `agents/project-layouts.md` for the folder layout and path-resolution
+# implications of each choice.
+project_type: short_story
+
+# Additional fields are anticipated in later milestones but are intentionally
+# not part of the MVP. Do not add fields here speculatively; the schema will
+# grow as the pipeline does.

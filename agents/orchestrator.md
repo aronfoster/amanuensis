@@ -75,6 +75,8 @@ To redo a step, move the `[>]` marker to that step and change downstream `[x]` m
 
 The frontmatter carries `project_type` (read by step workflows that need to resolve folder layout) and `last_updated` (updated by the dispatcher on every advance). No other fields are required at MVP.
 
+`project_type` is set in `amanuensis-project.yaml` at the project root; the template lives at `templates/amanuensis-project.yaml`.
+
 The step list is the project's plan. It may differ between project types, or be customized per project. The dispatcher does not assume a fixed sequence — it reads whatever list is in the file.
 
 ## Dispatcher behavior
