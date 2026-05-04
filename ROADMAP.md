@@ -59,17 +59,17 @@ Goal: define the contract every step workflow must satisfy, and the project stru
 
 Goal: every workflow that already exists becomes a conforming step. No new step bodies yet, only contract conformance.
 
-7. [ ] Refactor `agents/storyboarding.md` to the step-workflow contract. Add frontmatter, declare inputs and outputs, mark `review_required: true`.
-8. [ ] Refactor `agents/drafting.md` similarly. Mark `review_required: true`.
-9. [ ] Refactor `agents/agentic-drafting.md` so the chapter coordinator is invokable as a single orchestrator step that internally dispatches subagents. The orchestrator does not see the subagents; it sees one step that produces a draft.
-10. [ ] Split `agents/compliance.md` into two step workflows: `compliance_report.md` (`review_required: true`) and `compliance_fix.md` (`review_required: false`, runs against the annotated report).
-11. [ ] Refactor `agents/prose-pass.md` to the step contract. `review_required: true`.
-12. [ ] Refactor the metaphor pipeline:
-    - [ ] `agents/metaphor/metaphor-identify.md` becomes step `metaphor_identify`. `review_required: true`.
-    - [ ] Create `agents/metaphor/metaphor-fix.md` as a single step that reads the working file, dispatches flatten / replace / workshop logic per entry annotation, and appends variants. `review_required: true`. Remove workshop's Milestone 2 (integration) entirely; integration is metaphor_apply's job.
-    - [ ] `agents/metaphor/metaphor-apply.md` becomes step `metaphor_apply`. `review_required: false`.
-13. [ ] Refactor `agents/line-pass.md` to the step contract. `review_required: true`.
-14. [ ] Refactor `agents/anti-ai.md` to the step contract. `review_required: true`. Anti-AI is always last in the pipeline.
+7. [x] Refactor `agents/storyboarding.md` to the step-workflow contract. Add frontmatter, declare inputs and outputs, mark `review_required: true`.
+8. [x] Refactor `agents/drafting.md` similarly. Mark `review_required: true`.
+9. [x] Refactor `agents/agentic-drafting.md` so the chapter coordinator is invokable as a single orchestrator step that internally dispatches subagents. The orchestrator does not see the subagents; it sees one step that produces a draft.
+10. [x] Split `agents/compliance.md` into two step workflows: `compliance_report.md` (`review_required: true`) and `compliance_fix.md` (`review_required: false`, runs against the annotated report).
+11. [x] Refactor `agents/prose-pass.md` to the step contract. `review_required: true`.
+12. [x] Refactor the metaphor pipeline:
+    - [x] `agents/metaphor/metaphor-identify.md` becomes step `metaphor_identify`. `review_required: true`.
+    - [x] Create `agents/metaphor/metaphor-fix.md` as a single step that reads the working file, dispatches flatten / replace / workshop logic per entry annotation, and appends variants. `review_required: true`. Remove workshop's Milestone 2 (integration) entirely; integration is metaphor_apply's job.
+    - [x] `agents/metaphor/metaphor-apply.md` becomes step `metaphor_apply`. `review_required: false`.
+13. [x] Refactor `agents/line-pass.md` to the step contract. `review_required: true`.
+14. [x] Refactor `agents/anti-ai.md` to the step contract. `review_required: true`. Anti-AI is always last in the pipeline.
 
 ---
 

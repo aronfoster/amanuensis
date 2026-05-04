@@ -40,7 +40,7 @@ Break this into steps: plan the file contents, write the file, review it against
 ## Metaphor Identify
 
 ```text
-See `agents/metaphor/metaphor-identify.md` for directions, or the equivalent path in the project's Amanuensis submodule.
+See `agents/steps/metaphor-identify.md` for directions, or the equivalent path in the project's Amanuensis submodule.
 
 Draft: [chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]
 Storyboards: [chapter-dir]/storyboards/ (all relevant [NN-YY-ZZZ-storyboard.md] files)

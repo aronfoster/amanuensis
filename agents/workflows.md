@@ -28,7 +28,7 @@ Run this during chapter planning if a character expected in the chapter does not
 
 ## Workflow: storyboarding
 
-Follow `storyboarding.md`.
+Follow `steps/storyboarding.md`.
 
 Before storyboarding a scene, read the current knowledge files for all characters who appear in it. These are the inputs that determine what each character can plausibly know, suspect, or believe at scene-start.
 
@@ -43,15 +43,11 @@ Include the scene reference so the source is traceable if the storyboard changes
 
 ## Workflow: drafting
 
-Follow `drafting.md`. Draft at scene level: read all storyboard blocks for a scene before writing, and treat them as production notes for a single dramatic arc. Pace against the arc, not against beat boundaries.
-
-## Workflow: agentic chapter drafting
-
-Follow `agentic-drafting.md`. Use this only after storyboard files are complete. A coordinator assigns each scene to a subagent, subagents write per-scene markdown files and per-scene notes files in an `attemptXX` folder, and the coordinator mechanically assembles those files into one chapter draft and one notes file for that attempt.
+Follow `steps/drafting.md`. The drafting step is a chapter coordinator: it dispatches per-scene subagents (each treating its storyboard blocks as production notes for a single dramatic arc and pacing against the arc, not beat boundaries), then assembles their per-scene files into one chapter draft and one notes file for the attempt.
 
 ## Workflow: compliance pass
 
-Review the drafted prose and fix any deviations from storyboard requirements (especially Must Preserve) and `canon/`. See [compliance.md](compliance.md) for details.
+Review the drafted prose and fix any deviations from storyboard requirements (especially Must Preserve) and `canon/`. See [steps/compliance-report.md](steps/compliance-report.md) for the report phase and [steps/compliance-fix.md](steps/compliance-fix.md) for the apply phase.
 
 ## Workflow: continuity review
 
@@ -94,4 +90,4 @@ Run this after all scenes in a chapter are drafted and knowledge files are curre
    appointments, named characters, scheduled obligations). Currently: storyboards
    only commit generic shapes ("the household concern flag"); specifics emerge in
    drafting. Create `aftermath.md` as a drafter input for
-   the next chapter's chapter-boundary blocks, and update `drafting.md` files to read the previous chapter's boundary notes as appropriate.
+   the next chapter's chapter-boundary blocks, and update `steps/drafting.md` files to read the previous chapter's boundary notes as appropriate.

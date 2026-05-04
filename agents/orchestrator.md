@@ -6,7 +6,7 @@ The orchestrator is how a project advances through the Amanuensis pipeline one s
 
 The orchestrator has three pieces:
 
-1. **Step workflow files** — one markdown file per step, defining what that step does, what files it reads, what files it writes, and whether it requires human review. These live under `amanuensis/agents/steps/`, with one file per step. The file path for a step is derived from its `step_id` by replacing underscores with dashes: `step_id: metaphor_identify` resolves to `amanuensis/agents/steps/metaphor-identify.md`. Existing top-level workflow files (e.g. `agents/storyboarding.md`, `agents/metaphor/metaphor-identify.md`) will be relocated into `agents/steps/` during Milestone 2; until that move, the dispatcher cannot resolve them. This is acceptable because the dispatcher is not implemented until Milestone 5.
+1. **Step workflow files** — one markdown file per step, defining what that step does, what files it reads, what files it writes, and whether it requires human review. These live under `amanuensis/agents/steps/`, with one file per step. The file path for a step is derived from its `step_id` by replacing underscores with dashes: `step_id: metaphor_identify` resolves to `amanuensis/agents/steps/metaphor-identify.md`.
 2. **State file** — `pipeline-state.md` at the project root. Tracks which step runs next and which steps are complete. Format defined below.
 3. **Dispatcher** — a host-specific entry point (a Claude Code slash command, an OpenCode agent, or equivalent) that reads the state file, identifies the next step, runs that step's workflow as a fresh agent invocation, advances the marker, and exits.
 
@@ -33,7 +33,7 @@ outputs:
 
 **`outputs`** lists the files the step writes. Same conventions as inputs.
 
-The body of a step workflow file describes what the step does. Existing workflows in `agents/` (storyboarding, drafting, compliance, etc.) are the model. Step bodies should:
+The body of a step workflow file describes what the step does. Existing step workflows in `agents/steps/` (storyboarding, drafting, compliance-report, etc.) are the model. Step bodies should:
 
 - read only the declared inputs
 - write only to the declared outputs
