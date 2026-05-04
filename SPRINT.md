@@ -1,4 +1,4 @@
-# Sprint 1 — Milestone 1: Foundations
+# Sprint 1 — Milestone 1: Foundations [x] Complete
 
 This Sprint delivers the contract every step workflow must satisfy and the project structure every consuming repository must have. After this Sprint, Amanuensis has the artifacts a developer needs to refactor existing workflows (Milestone 2) and write new ones (Milestone 3) against a stable contract.
 
@@ -16,7 +16,7 @@ The Sprint is complete when:
 
 ## Tasks
 
-### Task 1 — Consolidate templates directory and update ROADMAP paths
+### Task 1 — Consolidate templates directory and update ROADMAP paths [x]
 
 **Goal.** Eliminate the `agents/templates/` directory so all templates live at repo-root `templates/`. Update the roadmap so its Milestone 1 task paths match reality.
 
@@ -31,7 +31,7 @@ The Sprint is complete when:
 
 ---
 
-### Task 2 — Resolve step file path convention in `agents/orchestrator.md`
+### Task 2 — Resolve step file path convention in `agents/orchestrator.md` [x]
 
 **Goal.** Replace the "TBD in roadmap Milestone 1" language in `agents/orchestrator.md` with the locked convention.
 
@@ -47,7 +47,7 @@ The Sprint is complete when:
 
 ---
 
-### Task 3 — Write `templates/step-workflow.md`
+### Task 3 — Write `templates/step-workflow.md` [x]
 
 **Goal.** Provide the canonical template a developer copies when authoring a new step workflow file. Anyone refactoring an existing workflow (Milestone 2) or writing a new one (Milestone 3) should start from this template.
 
@@ -69,7 +69,7 @@ The Sprint is complete when:
 
 ---
 
-### Task 4 — Write `templates/amanuensis-project.yaml`
+### Task 4 — Write `templates/amanuensis-project.yaml` [x]
 
 **Goal.** Provide the template every consuming repository copies to its project root to declare project-level configuration the dispatcher needs.
 
@@ -84,7 +84,7 @@ The Sprint is complete when:
 
 ---
 
-### Task 5 — Write `agents/project-layouts.md`
+### Task 5 — Write `agents/project-layouts.md` [x]
 
 **Goal.** Single canonical document describing how project folder structure differs by `project_type`. The dispatcher and step bodies that resolve path placeholders should be able to point at this document.
 
@@ -104,7 +104,7 @@ The Sprint is complete when:
 
 ---
 
-### Task 6 — Reorganize root `AGENTS.md` around the orchestrator model
+### Task 6 — Reorganize root `AGENTS.md` around the orchestrator model [x]
 
 **Goal.** Make `AGENTS.md` the entry point a new developer (or new agent) reads first. After reading it once, they should know the orchestrator exists, where the contract is documented, where templates live, and what project layouts are available. Older per-document references are kept but demoted.
 
