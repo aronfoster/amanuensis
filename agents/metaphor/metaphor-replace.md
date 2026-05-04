@@ -9,7 +9,7 @@ Integrates a human-supplied replacement image for REPLACE-marked entries. Does n
 - `xx-yy-metaphors.md` — the human-reviewed working file; each REPLACE entry carries the target image supplied by the human inline
 - `xx-yy-draft.md` — the current prose, for the flagged sentence's surrounding paragraph
 
-Do not read storyboard blocks, canon files, or voice.md. The identify entry plus the surrounding paragraph contains everything needed.
+Do not read storyboard blocks, canon files, or the selected voice file or profile. The identify entry plus the surrounding paragraph contains everything needed.
 
 ---
 
@@ -25,6 +25,8 @@ Append integration versions directly below each REPLACE entry in `xx-yy-metaphor
 - **Version B (balanced):** "[paragraph with rewritten sentence]"
 - **Version C (fuller):** "[paragraph with rewritten sentence]"
 ```
+
+Each version is the full paragraph with the rewrite in place, so the human can assess the change in context. The substitution is sentence-level — keep collateral edits to surrounding sentences to the minimum the rewrite demands. Note any such adjustment in brackets.
 
 Do not write to the draft. Do not select a version. The human deletes the versions not wanted and leaves one.
 
@@ -57,7 +59,7 @@ From the tenor, implication, and register fit — corrected if necessary — and
 
 **Step 4: Embed each version in its paragraph.**
 
-Show each version inside the full paragraph. Note any collateral adjustments to adjacent sentences in brackets.
+Show each version inside the full paragraph so the human can assess the integration in context. Keep collateral change to surrounding sentences to the minimum the rewrite demands. Note any such adjustment in brackets.
 
 ---
 
@@ -66,7 +68,7 @@ Show each version inside the full paragraph. Note any collateral adjustments to 
 - Do not modify the target image. Integrate it as given.
 - Do not introduce additional figures elsewhere in the paragraph.
 - If the target image does not fit the sentence's grammatical structure, reshape the sentence around the image — not the image around the sentence.
-- Preserve POV.
+- Preserve the project's established POV and voice constraints.
 - Preserve block comment markers and scene breaks in any quoted paragraph context.
 
 ---

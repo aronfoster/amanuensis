@@ -9,7 +9,7 @@ Generates literal rewrites for FLATTEN-marked entries in the working metaphors f
 - `xx-yy-metaphors.md` — the human-reviewed working file
 - `xx-yy-draft.md` — the current prose, for the flagged sentence's surrounding paragraph
 
-Do not read storyboard blocks, canon files, or voice.md. The identify entry plus the surrounding paragraph contains everything needed.
+Do not read storyboard blocks, canon files, or the selected voice file or profile. The identify entry plus the surrounding paragraph contains everything needed.
 
 ---
 
@@ -24,6 +24,8 @@ Append variants directly below each FLATTEN entry in `xx-yy-metaphors.md`:
 - **Variant B (textured):** "[paragraph with rewritten sentence]"
 - **Variant C (rhythmic):** "[paragraph with rewritten sentence]"
 ```
+
+Each variant is the full paragraph with the rewrite in place, so the human can assess the change in context. The substitution is sentence-level — keep collateral edits to surrounding sentences to the minimum the rewrite demands (pronoun continuity, a conjunction that no longer scans). Note any such adjustment in brackets.
 
 Do not write to the draft. Do not select a variant. The human deletes the variants not wanted and leaves one.
 
@@ -59,7 +61,7 @@ Each variant removes the figurative comparison entirely. No new vehicles. The va
 
 **Step 4: Embed each variant in its paragraph.**
 
-Show each variant inside the full paragraph it belongs to. Minimal collateral change to surrounding sentences. If a variant requires a small adjustment to an adjacent sentence for rhythm, make it and note it in brackets.
+Show each variant inside the full paragraph it belongs to so the human can assess the rewrite in context. Keep collateral change to surrounding sentences to the minimum the rewrite demands. Note any such adjustment in brackets.
 
 ---
 
