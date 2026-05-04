@@ -82,7 +82,7 @@ The step list is the project's plan. It may differ between project types, or be 
 On invocation, the dispatcher:
 
 1. Reads `pipeline-state.md`. Locates the `[>]` line.
-2. Resolves the step workflow file path from `step_id`. (Convention TBD in roadmap Phase 1: likely `amanuensis/agents/steps/<step_id-with-dashes>.md` or similar.)
+2. Resolves the step workflow file path from `step_id`. (Convention TBD in roadmap Milestone 1: likely `amanuensis/agents/steps/<step_id-with-dashes>.md` or similar.)
 3. Reads the step workflow file. Treats its body as the agent's instructions.
 4. Runs the step body to completion. The step body reads `pipeline-state.md` frontmatter for `project_type` if it needs path resolution. Otherwise the step ignores the state file.
 5. On step completion: changes the `[>]` line to `[x]`, changes the next `[ ]` line to `[>]`, updates `last_updated` to the current ISO 8601 datetime with timezone offset.
