@@ -6,7 +6,7 @@ The orchestrator is how a project advances through the Amanuensis pipeline one s
 
 The orchestrator has three pieces:
 
-1. **Step workflow files** — one markdown file per step, defining what that step does, what files it reads, what files it writes, and whether it requires human review. These live under `amanuensis/agents/` (existing workflow files) and `amanuensis/agents/steps/` (new workflow files added in roadmap Phase 3, or wherever Phase 1 settles the convention).
+1. **Step workflow files** — one markdown file per step, defining what that step does, what files it reads, what files it writes, and whether it requires human review. These live under `amanuensis/agents/steps/`, with one file per step. The file path for a step is derived from its `step_id` by replacing underscores with dashes: `step_id: metaphor_identify` resolves to `amanuensis/agents/steps/metaphor-identify.md`. Existing top-level workflow files (e.g. `agents/storyboarding.md`, `agents/metaphor/metaphor-identify.md`) will be relocated into `agents/steps/` during Milestone 2; until that move, the dispatcher cannot resolve them. This is acceptable because the dispatcher is not implemented until Milestone 5.
 2. **State file** — `pipeline-state.md` at the project root. Tracks which step runs next and which steps are complete. Format defined below.
 3. **Dispatcher** — a host-specific entry point (a Claude Code slash command, an OpenCode agent, or equivalent) that reads the state file, identifies the next step, runs that step's workflow as a fresh agent invocation, advances the marker, and exits.
 
@@ -82,7 +82,7 @@ The step list is the project's plan. It may differ between project types, or be 
 On invocation, the dispatcher:
 
 1. Reads `pipeline-state.md`. Locates the `[>]` line.
-2. Resolves the step workflow file path from `step_id`. (Convention TBD in roadmap Milestone 1: likely `amanuensis/agents/steps/<step_id-with-dashes>.md` or similar.)
+2. Resolves the step workflow file path from `step_id` by replacing underscores with dashes: `amanuensis/agents/steps/<step-id-with-dashes>.md`. Example: `metaphor_identify` → `amanuensis/agents/steps/metaphor-identify.md`.
 3. Reads the step workflow file. Treats its body as the agent's instructions.
 4. Runs the step body to completion. The step body reads `pipeline-state.md` frontmatter for `project_type` if it needs path resolution. Otherwise the step ignores the state file.
 5. On step completion: changes the `[>]` line to `[x]`, changes the next `[ ]` line to `[>]`, updates `last_updated` to the current ISO 8601 datetime with timezone offset.
@@ -109,13 +109,7 @@ The next dispatcher invocation runs from the new position. Any existing output f
 
 ## Path resolution by project type
 
-Step workflows that read or write files use placeholders that resolve based on `project_type`:
-
-- **short_story**: project root is the chapter equivalent. `<chapter-folder>` resolves to `plot/<story-id>/`. `<book-folder>` is undefined; steps that reference book-level files must handle this gracefully or be inapplicable to short stories.
-- **book**: `<chapter-folder>` resolves to `plot/<book-id>/<chapter-id>/`. `<book-folder>` resolves to `plot/<book-id>/`.
-- **series**: same as book. The series wrapper is just `plot/` containing multiple book folders.
-
-`<latest-attempt>` resolves to the highest-numbered `attemptNN` directory under the chapter's `drafts/`. If none exists and the step expects one, the step creates `attempt01`.
+See `agents/project-layouts.md`.
 
 How a step knows which chapter is "the current chapter" for book and series projects is an open question deferred to the book/series rollout phase. For short_story projects there is only one chapter and the question doesn't arise.
 
