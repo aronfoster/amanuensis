@@ -8,8 +8,8 @@ Generates literal rewrites for FLATTEN-marked entries in the working metaphors f
 
 ## Inputs
 
-- `xx-yy-metaphors.md` — the human-reviewed working file
-- `xx-yy-draft.md` — the current prose, for the flagged sentence's surrounding paragraph
+- The entry block from the working metaphors file — the human-reviewed FLATTEN entry assigned to this subagent
+- The surrounding paragraph from the latest prose, supplied by the coordinator — the flagged sentence in its paragraph context
 
 Do not read storyboard blocks, canon files, or the selected voice file or profile. The identify entry plus the surrounding paragraph contains everything needed.
 
@@ -17,7 +17,7 @@ Do not read storyboard blocks, canon files, or the selected voice file or profil
 
 ## Output
 
-Append variants directly below each FLATTEN entry in `xx-yy-metaphors.md`:
+Append variants directly below the FLATTEN entry in the working metaphors file:
 
 ```markdown
 ### Flatten Options
@@ -41,7 +41,7 @@ For each FLATTEN entry in the working file:
 
 Read the identify fields: tenor, implication, register fit. If the human has added corrections or notes below the action word, those take precedence over the original field values. Use the corrected understanding, not the original.
 
-Then locate the flagged sentence in the draft and read its surrounding paragraph.
+Then read the surrounding paragraph supplied by the coordinator and locate the flagged sentence within it.
 
 **Step 2: Establish what the line must do.**
 

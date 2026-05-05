@@ -8,8 +8,8 @@ Integrates a human-supplied replacement image for REPLACE-marked entries. Does n
 
 ## Inputs
 
-- `xx-yy-metaphors.md` — the human-reviewed working file; each REPLACE entry carries the target image supplied by the human inline
-- `xx-yy-draft.md` — the current prose, for the flagged sentence's surrounding paragraph
+- The entry block from the working metaphors file — the human-reviewed REPLACE entry assigned to this subagent, carrying the target image supplied by the human inline
+- The surrounding paragraph from the latest prose, supplied by the coordinator — the flagged sentence in its paragraph context
 
 Do not read storyboard blocks, canon files, or the selected voice file or profile. The identify entry plus the surrounding paragraph contains everything needed.
 
@@ -17,7 +17,7 @@ Do not read storyboard blocks, canon files, or the selected voice file or profil
 
 ## Output
 
-Append integration versions directly below each REPLACE entry in `xx-yy-metaphors.md`:
+Append integration versions directly below the REPLACE entry in the working metaphors file:
 
 ```markdown
 ### Replace Options

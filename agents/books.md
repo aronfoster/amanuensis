@@ -40,23 +40,21 @@ Use this file for:
 - escalation
 - major turning points
 
-This file explains **what happens in order**.
+This file explains **what happens in order**. Under the current convention there is a single `outline.md` per book — the sequential plan above; projects that want a separate scratch file for early planning may keep one under any name they like, and the support doc no longer prescribes one.
 
-### Numbered planning artifacts (`01-*.md` for Book 1, `02-*.md` for Book 2, etc.)
+### Planning artifacts
 Book-specific working files used during iterative planning passes.
 
 These are planning artifacts, not settled canon. They exist to preserve uncertainty, support reorganization, and make LLM/agent iteration easier before details are locked.
 
 Common optional files include:
-- `01-beats.md` — unordered or loosely ordered major beats and story fragments
-- `01-cast.md` — book-specific cast working sheet, lighter than full character templates
-- `01-outline.md` — current best sequential structure for the book
-- `01-open-questions.md` — unresolved issues blocking stronger planning
-- `01-continuity.md` — book-specific reveal timing and consistency risks
+- `beats.md` — unordered or loosely ordered major beats and story fragments
+- `cast.md` — book-specific cast working sheet, lighter than full character templates
+- `outline.md` — current best sequential structure for the book (the same `outline.md` documented above; one per book)
+- `open-questions.md` — unresolved issues blocking stronger planning (book-scoped; distinct from project-root and chapter-scoped open-questions)
+- `continuity.md` — book-specific reveal timing and consistency risks
 
-Naming convention note:
-- The leading two digits identify the **book** (for example, all Book 1 planning files start with `01-`).
-- Chapter-level files use `xx-yy-...` where `xx` is the book number and `yy` is the chapter number.
+Book and chapter identity come from folder structure rather than filename prefixes; see `agents/project-layouts.md` for how book and chapter folders resolve per project type.
 
 ### `continuity.md` if present
 Book-level continuity notes.
@@ -79,5 +77,5 @@ They are structured workspaces for one book.
 
 Keep the distinction clear:
 - strategic files (`overview.md`, `outline.md`) capture the current stable plan
-- numbered planning artifacts capture provisional scaffolding and unresolved alternatives
+- planning artifacts capture provisional scaffolding and unresolved alternatives
 - chapter folders handle scene-level execution workflow

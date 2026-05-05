@@ -39,11 +39,11 @@ Before storyboarding a scene, read the current knowledge files for all character
 After completing all storyboard blocks for a scene, produce a **knowledge delta** — a compact list of facts that at least one character has newly learned, confirmed, or falsely come to believe by the scene's end. Format one line per item:
 
 ```
-[CharacterName] now knows: [fact] [from xx-yy]
-[CharacterName] falsely believes: [fact] [from xx-yy]
+[CharacterName] now knows: [fact] [from <book-id>/<chapter-id>/<scene-id>]
+[CharacterName] falsely believes: [fact] [from <book-id>/<chapter-id>/<scene-id>]
 ```
 
-Include the scene reference so the source is traceable if the storyboard changes later. Attach the delta to the storyboard output. Do not apply it to character knowledge files yet — that happens after drafting.
+Use the folder-style scene citation: `[from <book-id>/<chapter-id>/<scene-id>]` (for example, `[from book1/chapter02/scene03]`). For `short_story` projects `<book-id>` is omitted, giving `[from <chapter-id>/<scene-id>]`. Include the scene reference so the source is traceable if the storyboard changes later. Attach the delta to the storyboard output. Do not apply it to character knowledge files yet — that happens after drafting.
 
 ## Workflow: drafting
 
@@ -68,7 +68,9 @@ Review the drafted prose and fix any deviations from storyboard requirements (es
 
 ## Workflow: metaphor check
 
-* Write `xx-yy-metaphors.md` to list all metaphors and similes of the chapter: exact text, what thing is written down, what it represents, what we want to say about the thing it represents, whether this metaphor does that.
+* List all metaphors and similes of the chapter: exact text, what thing is written down, what it represents, what we want to say about the thing it represents, whether this metaphor does that. The canonical file is `metaphors.md` at `<chapter-folder>/drafts/<latest-attempt>/metaphors.md`.
+
+For projects on the orchestrator, this file is produced by [`steps/metaphor-identify.md`](steps/metaphor-identify.md).
 
 ## Workflow: Anti-AI update
 

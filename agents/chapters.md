@@ -1,8 +1,10 @@
 # Chapter Folder Rules
 
-Chapter folders are named `chapter01`, `chapter02`, `chapter03`, and so on. Each file within a chapter folder will start with book number (xx) and chapter number (yy)
+Chapter folders are named `chapter01`, `chapter02`, `chapter03`, and so on. Files inside a chapter folder use unprefixed canonical names; folder structure carries the book and chapter identity.
 
 Each chapter folder is a workflow unit.
+
+See `agents/project-layouts.md` for how `<chapter-folder>` resolves per `project_type` (e.g., for `short_story` the project root is the chapter equivalent, while `book` and `series` projects nest chapters under a `<book-folder>`). That document is the canonical reference for turning a name like `summary.md` into a real path.
 
 ## Purpose of a chapter folder
 
@@ -10,7 +12,7 @@ A chapter folder contains the files needed to move a chapter from intent to plan
 
 ## Expected chapter files
 
-### `xx-yy-summary.md`
+### `summary.md`
 High-level intent of the chapter.
 
 Use this file for:
@@ -21,7 +23,7 @@ Use this file for:
 
 This file is brief and strategic.
 
-### `xx-yy-scene-list.md`
+### `scene-list.md`
 Covers all the scenes that make up a chapter
 
 Use this file for:
@@ -33,19 +35,26 @@ Use this file for:
 - reveal or concealment
 - consequences
 
-scene lists will also include links to every reference file that should be considered when writing the scene
+Scene lists will also include links to every reference file that should be considered when writing the scene.
 
-### `xx-yy-zzz-storyboard.md`
-A sequence of independently draftable blocks.
+### Storyboards
+Per-beat storyboards live in the `storyboards/` subdirectory of the chapter folder, one file per beat:
 
-Each block follows the schema defined in `storyboard-schema.md`. The prose generation workflow — how blocks are produced from the scene list and how prose is generated from a single block — is defined in `steps/drafting.md`.
+```text
+<chapter-folder>/storyboards/<scene-id>-<beat-id>-storyboard.md
+```
+
+Each file is an independently draftable block. There is no longer a single chapter-level storyboard file; the per-beat files together cover the chapter.
+
+- The schema for an individual storyboard file is defined in `agents/storyboard-schema.md`.
+- The generation step that produces these files from the scene list is defined in `agents/steps/storyboarding.md`.
 
 ### `draft.md`
 Actual prose.
 
-Use this file for story text only.
+Use this file for story text only. Planning notes should not live here.
 
-Planning notes should not live here.
+The assembled chapter prose for a given attempt lives at `drafts/attemptNN/draft.md` inside the chapter folder. Per-attempt working artifacts (per-scene files, notes, reviewer reports, compliance and prose-pass outputs, metaphor working files, line-pass and anti-AI outputs) all live alongside it under the same `drafts/attemptNN/` directory.
 
 ### `aftermath.md`
 Post-chapter delta record.
@@ -62,11 +71,12 @@ This file is critical for safe downstream updates.
 ### `open-questions.md` if present
 Explicit unresolved issues exposed by the chapter.
 
-Use this file when a chapter surfaces unanswered questions that should not be silently guessed.
+Use this file when a chapter surfaces unanswered questions that should not be silently guessed. This is the chapter-scoped open-questions file; the project-root `open-questions.md` defined in `agents/project-layouts.md` is a separate file.
 
 ## Important distinctions
 
 - `summary.md` = chapter intent
-- `storyboard.md` = scene plan
-- `draft.md` = prose
+- `scene-list.md` = scene plan
+- `storyboards/<scene-id>-<beat-id>-storyboard.md` = per-beat draftable block
+- `draft.md` (under `drafts/attemptNN/`) = prose
 - `aftermath.md` = what changed after the chapter

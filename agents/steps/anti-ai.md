@@ -30,7 +30,7 @@ The output file is one report per chapter; append across scenes with a scene hea
 Begin each scene's section with:
 
 ```markdown
-## Anti-AI Report — Scene xx-yy
+## Anti-AI Report — Scene <scene-id>
 ```
 
 ---
@@ -180,7 +180,7 @@ Flag each with its quote, under a separate section:
 ## At the end of each chapter
 
 ```markdown
-### Summary — Scene xx-yy
+### Summary — Scene <scene-id>
 
 - Em dashes: N
 - Negative parallelism: N
@@ -215,7 +215,7 @@ Flag each with its quote, under a separate section:
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — one report per chapter, with a `## Anti-AI Report — Scene xx-yy` header per scene, the per-category flag sections (only those with hits), a `### Flagged Words` section, and a `### Summary — Scene xx-yy` block at the end of each scene tallying counts per category and a total.
+- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — one report per chapter, with a `## Anti-AI Report — Scene <scene-id>` header per scene, the per-category flag sections (only those with hits), a `### Flagged Words` section, and a `### Summary — Scene <scene-id>` block at the end of each scene tallying counts per category and a total.
 
 ## Open questions handling
 
