@@ -1,176 +1,209 @@
-# Sprint 4 — Milestone 4: Drop filename prefixes
+# Sprint 5 — Milestone 5: Dispatcher implementation
 
-This Sprint finishes the rename Milestone 4 promises: support docs and metaphor subagent contracts catch up to the unprefixed convention the step bodies in `agents/steps/` already use. After this Sprint, no tracked text in this repo refers to `xx-yy-`, `zzz-`, or `01-`/`02-` book-numbered planning files; every chapter-folder file is documented under its canonical unprefixed name; and `ROADMAP.md` no longer references the consuming project `mgp-story`, whose adoption is its own concern.
+This Sprint delivers a runnable dispatcher for both Claude Code and OpenCode, an `install.sh` that places the dispatcher into a consuming project's host folders, and an end-to-end smoke test on a trivial `short_story` fixture committed to this repo. After this Sprint, a human can clone a consuming project, run `./amanuensis/install.sh`, type `/next-step` (or its OpenCode equivalent), and watch the pipeline state advance one step per invocation.
 
 ## Definition of done
 
 The Sprint is complete when:
 
-1. ROADMAP.md tasks 18 and 19 (Milestone 4) are checked. Task 20 has been deleted from the roadmap as part of the mgp-story cleanup; it is not a thing to mark done.
-2. `git grep -nE 'xx-yy-|\bzzz-'` returns nothing in tracked text.
-3. `git grep -nE '01-beats|01-cast|01-outline|01-open-questions|01-continuity'` returns nothing in tracked text.
-4. `git grep -n 'mgp-story\|mgp_story'` returns nothing in tracked text.
-5. `agents/chapters.md` and `agents/books.md` describe their files using the unprefixed canonical names. Storyboarding is documented as per-beat files inside `<chapter-folder>/storyboards/`, not as a single chapter-level file.
-6. The metaphor subagent contracts (`agents/metaphor/metaphor-flatten.md`, `metaphor-replace.md`, `metaphor-workshop.md`) describe their inputs conceptually, not as legacy prefixed paths.
-7. `agents/workflows.md` and `agents/steps/anti-ai.md` use the unprefixed conventions: canonical chapter-folder paths, fuller scene citations, and `Scene <scene-id>` labels in report content.
-8. `agents/project-layouts.md` no longer carries the "until then existing projects retain their prefixed filenames" caveat — Milestone 4 has landed.
+1. ROADMAP.md tasks 20–23 (Milestone 5) are checked.
+2. `agents/orchestrator.md` documents the locked dispatcher behavior: same-session model, stop-and-ask on malformed state, marker advancement as the step body's final action, blocked-step path writes to `open-questions.md` and exits without advancing.
+3. `templates/dispatcher/.claude/commands/next-step.md` exists and is a working Claude Code slash command that implements the orchestrator's dispatcher behavior end-to-end.
+4. `templates/dispatcher/.opencode/agents/next-step.md` exists and is a working OpenCode agent definition that implements the same behavior at parity with the Claude Code version.
+5. `install.sh` exists at the repo root, is idempotent, copies both dispatcher files into a target project's `.claude/commands/` and `.opencode/agents/` folders, creates missing parents, and is invocable as `./amanuensis/install.sh` from a consuming project root.
+6. `examples/smoke/` contains a minimal `short_story` fixture (project config, pipeline state, empty story plan, `open-questions.md`) sufficient to exercise the dispatcher running `character_extraction`.
+7. The smoke-test recipe documented in `examples/smoke/README.md` runs cleanly: install dispatcher into the smoke project; first invocation runs `character_extraction` (or stops with a question if blocked); a second invocation advances the marker accordingly. The recipe describes both Claude Code and OpenCode invocations.
+8. `AGENTS.md` references the dispatcher source files and `install.sh` in its Core documents / setup section so a future agent can locate them without searching.
 
 ## Conventions adopted by this Sprint
 
 These choices are locked at the start of the Sprint so individual tasks don't rediscover them.
 
-**Canonical chapter-folder filenames.** Inside any `<chapter-folder>/`, files use unprefixed names. Files that contain prose all start with `draft`. The full list of canonical names this Sprint will lock into the support docs:
+**Hosts at parity.** Both Claude Code and OpenCode are first-class for MVP. The two dispatcher files have equivalent behavior; only host-specific frontmatter and invocation details differ. Neither host is a stub.
 
-- `summary.md` — chapter intent.
-- `scene-list.md` — scene-by-scene plan.
-- `storyboards/<scene-id>-<beat-id>-storyboard.md` — one storyboard file per beat, inside the `storyboards/` subdirectory. There is no longer a single chapter-level `*-storyboard.md` file.
-- `drafts/attemptNN/draft.md` — assembled chapter prose for the attempt.
-- `drafts/attemptNN/sceneNN.md` and `drafts/attemptNN/sceneNN-notes.md` — per-scene working artifacts inside the attempt folder.
-- `drafts/attemptNN/notes.md` — combined run notes for the attempt.
-- `drafts/attemptNN/reviewer-actions.md` — compliance report.
-- `drafts/attemptNN/draft-compliance.md` — prose after compliance fixes.
-- `drafts/attemptNN/prose-pass.md` — advisory prose-quality report.
-- `drafts/attemptNN/metaphors.md` — metaphor working file.
-- `drafts/attemptNN/draft-metaphor.md` — prose after metaphor apply.
-- `drafts/attemptNN/draft-line.md` — prose after line pass.
-- `drafts/attemptNN/anti-ai.md` — anti-AI report.
-- `aftermath.md` — post-chapter delta record.
-- `open-questions.md` — chapter-scoped questions, if used. (The project-root `open-questions.md` defined in `agents/project-layouts.md` is unchanged.)
+**Dispatcher model: same-session.** The dispatcher *is* the step body. When the human invokes `/next-step` in a fresh host session, the dispatcher prompt reads `pipeline-state.md`, loads the resolved step workflow file, follows that file's body in the same session, then advances the marker before exiting. The dispatcher does not spawn a subagent for the step body. The "fresh agent invocation" guarantee is honored because the human invokes the dispatcher fresh, not by host-side context isolation.
 
-This Sprint does not invent new files; it only reconciles the support-doc names with what the step files already produce. If a support doc lists a file the step files do not produce (or vice versa), defer to the step files.
+**Marker advancement is the step body's final action.** The step body, on successful completion, edits `pipeline-state.md` itself: flips the current `[>]` to `[x]`, flips the next `[ ]` to `[>]`, updates `last_updated`. If the step exits early (blocked, error), the marker is not advanced and the next dispatcher invocation re-runs the same step. The dispatcher does not advance the marker on the step body's behalf; nor does the step body advance it speculatively before the work is done.
 
-**Canonical book-folder planning files.** Inside any `<book-folder>/`, the optional planning artifacts documented in `agents/books.md` lose their `01-` prefix and become:
+**Blocked-step path.** A step that cannot complete writes a question to the project-root `open-questions.md` and exits without advancing the marker. The human resolves the blocker by editing files; the next dispatcher invocation re-runs the same step.
 
-- `beats.md`
-- `cast.md`
-- `outline.md`
-- `open-questions.md` (book-scoped; distinct from project-root and chapter-scoped)
-- `continuity.md`
+**Stop and ask on confusion.** If `pipeline-state.md` is missing, malformed, has no `[>]` marker, or the resolved step file does not exist on disk, the dispatcher stops and asks the human. It does not guess, does not invent state, does not advance anything. No automatic recovery.
 
-`overview.md` and `outline.md` are the strategic files and were already unprefixed. Note: the old doc had both `01-outline.md` (planning) and `outline.md` (strategic); under the new convention there is one `outline.md` per book — the sequential plan. Projects that want a separate scratch file for early planning may keep one under any name they like; the support doc no longer prescribes one.
+**Step-id → file path.** `step_id` snake_case is converted to dashes and resolves to `amanuensis/agents/steps/<step-id-with-dashes>.md`. This is already documented in `agents/orchestrator.md`; this Sprint treats it as an existing convention to be referenced consistently, not a new design decision.
 
-**Scene citations in cross-file references.** Where the old convention used `xx-yy` as a scene tag (e.g., the knowledge-delta example in `agents/workflows.md`), the new form is a folder-style citation: `[from <book-id>/<chapter-id>/<scene-id>]`, e.g. `[from book1/chapter02/scene03]`. For `short_story` projects, `<book-id>` is omitted: `[from <chapter-id>/<scene-id>]`. This is a documentation convention; nothing in the pipeline parses it.
+**Slash-command / agent name.** `next-step`. The Claude Code human types `/next-step`. The OpenCode equivalent is invoked under the same name.
 
-**Anti-AI report scene labels.** Headers inside the anti-AI report use `Scene <scene-id>` (e.g., `Scene 01`) rather than `Scene xx-yy`. The chapter context lives in the file path; the headers identify only the scene within the chapter.
+**Source of truth: mirror destination paths.** Dispatcher source files live at:
+- `templates/dispatcher/.claude/commands/next-step.md`
+- `templates/dispatcher/.opencode/agents/next-step.md`
 
-**Metaphor subagent contracts: conceptual inputs.** The flatten, replace, and workshop contracts under `agents/metaphor/` are subagent prompts dispatched by `metaphor_fix`, not standalone steps. Their `Inputs` sections will describe what the subagent receives conceptually ("the working metaphors entry block", "the surrounding paragraph from the latest prose", and for workshop "the storyboard block for the entry's beat") rather than naming legacy paths. The coordinator (`agents/steps/metaphor-fix.md`) is where canonical paths are declared, and that's where they stay.
+The install script copies these verbatim into the target project at the same relative paths under the project root. Mirroring keeps the install step a near-trivial copy and makes the destination obvious from the source location.
 
-**No mgp-story.** This repo is pure tooling. References to the consuming project `mgp-story` are removed from `ROADMAP.md` in this Sprint's wrap-up task. mgp-story has its own migration path independent of this repo's roadmap. Nothing in this Sprint depends on, blocks, or coordinates with mgp-story.
+**Install script.** `install.sh` at the repo root, POSIX-sh-compatible, idempotent. Default target is the current working directory; the consuming-project flow is `cd <project-root> && ./amanuensis/install.sh`. Re-running refreshes the copies (overwrite). No symlink mode in MVP. No uninstall.
 
-**Idempotency.** This Sprint edits documentation only. No file renames, no project state, no migrations of consuming projects. The work is purely textual within `agents/` and `ROADMAP.md`.
+**Smoke fixture lives in this repo.** `examples/smoke/` is a committed `short_story` project with the bare minimum to invoke `character_extraction`. The dispatcher files copied in by `install.sh` are *not* committed inside `examples/smoke/.claude/` or `examples/smoke/.opencode/` — running the install script is part of the smoke-test recipe and proves the script works.
+
+**Timezone.** `last_updated` uses whatever local timezone the host produces, with offset, in ISO 8601. Not normalized to UTC.
+
+**No re-run convenience.** Re-running a step is the human editing `pipeline-state.md` by hand, as already documented in `agents/orchestrator.md`. No `--redo` flag, no extra slash command.
+
+**No concurrency safety.** MVP does not address concurrent dispatcher invocations. Out of scope.
+
+**Idempotency, scope.** This Sprint adds files (dispatcher sources, install script, smoke fixture, README) and edits a small number of docs (`agents/orchestrator.md`, `AGENTS.md`, `ROADMAP.md`). No renames, no migrations, no changes to existing step workflow bodies.
 
 ---
 
 ## Tasks
 
-### Task 1 — Update `agents/chapters.md` [x]
+### Task 1 — Lock dispatcher behavior in `agents/orchestrator.md` [ ]
 
-**Goal.** Rewrite `agents/chapters.md` so it documents chapter-folder files under their canonical unprefixed names and describes storyboarding as per-beat files inside `storyboards/`, matching what the step bodies in `agents/steps/` already produce.
+**Goal.** Bring `agents/orchestrator.md` into alignment with the locked Conventions above so that the implementation tasks have a single authoritative spec to point at.
 
 **Requirements.**
 
-- Replace section headings that use `xx-yy-` prefixes with their unprefixed canonical names. At minimum:
-  - `### xx-yy-summary.md` → `### summary.md`
-  - `### xx-yy-scene-list.md` → `### scene-list.md`
-  - `### xx-yy-zzz-storyboard.md` → rewrite as a `### Storyboards` (or equivalent) section that describes the per-beat-file convention: one file per beat at `storyboards/<scene-id>-<beat-id>-storyboard.md` inside the chapter folder, schema in `agents/storyboard-schema.md`, generation defined in `agents/steps/storyboarding.md`. There is no single chapter-level storyboard file.
-- Drop the opening sentence "Each file within a chapter folder will start with book number (xx) and chapter number (yy)" (or equivalent wording) — the new convention is that folder structure carries that identity.
-- Confirm the existing sections for `draft.md`, `aftermath.md`, and `open-questions.md` remain accurate. If their wording implies any prefix or numbering, fix it.
-- Add a brief note (one or two sentences) cross-referencing `agents/project-layouts.md` for how `<chapter-folder>` resolves per project_type. The reader should be able to resolve `summary.md` to a real path without leaving the documentation.
-- Do not introduce new files or sections beyond what the canonical-filename list in this Sprint's Conventions section enumerates.
+- The "Dispatcher behavior" section currently describes the dispatcher as if it advances the marker after the step body completes. Rewrite it to match the same-session, step-body-owns-the-advance model:
+  - Dispatcher reads `pipeline-state.md`, locates `[>]`.
+  - Resolves step file path via the existing `step_id` → dashes convention.
+  - Loads the step file and follows its body in the same session.
+  - The step body's last successful action is to edit `pipeline-state.md` (flip `[>]` to `[x]`, flip next `[ ]` to `[>]`, update `last_updated`).
+  - On block, the step writes to `open-questions.md` and exits without touching the marker.
+- Add an explicit "Failure modes" subsection listing the stop-and-ask conditions: missing or malformed `pipeline-state.md`, no `[>]` marker, resolved step file does not exist. The dispatcher surfaces the problem to the human and exits; it does not attempt recovery.
+- Resolve the existing `TODO: create centralized and organized location for questions to the human` by either (a) confirming `open-questions.md` at the project root is that location and removing the TODO, or (b) leaving the TODO with a note that this Sprint did not address it. Pick (a) unless there is a reason to defer.
+- The `TODO` about agents inventing missing canon (in the step workflow contract section) is **not** in scope for this Sprint. Leave it as-is.
+- The step_id → path mapping paragraph is already correct. Confirm it reads cleanly after the edits and that the dispatcher source files (Tasks 2 and 3) will be able to cite it verbatim.
+- Do not introduce a host-specific section. The orchestrator doc stays host-agnostic; host wiring lives in the dispatcher source files.
 
-**Done when.** `agents/chapters.md` describes the chapter-folder contents using only unprefixed names; the storyboard section describes the per-beat-file layout under `storyboards/`; and `git grep -nE 'xx-yy-|\bzzz-' agents/chapters.md` returns nothing.
+**Done when.** `agents/orchestrator.md` reflects the locked Conventions with no contradictions, the failure-modes subsection exists, and the open-questions TODO is either resolved or explicitly deferred.
 
 ---
 
-### Task 2 — Update `agents/books.md` [x]
+### Task 2 — Claude Code dispatcher [ ]
 
-**Goal.** Rewrite `agents/books.md` so book-level planning artifacts are documented with unprefixed names, and remove the paragraph prescribing `xx-yy-` chapter-file naming.
+**Goal.** Author `templates/dispatcher/.claude/commands/next-step.md` as a working Claude Code slash command that implements the dispatcher behavior locked in Task 1.
 
 **Requirements.**
 
-- Replace the "Numbered planning artifacts (`01-*.md` for Book 1, `02-*.md` for Book 2, etc.)" section with an unprefixed enumeration. Keep the same set of optional files, just drop the `01-`:
-  - `beats.md`
-  - `cast.md`
-  - `outline.md` (note: this is the same name as the strategic `outline.md` already documented above; clarify in one sentence that under the new convention there is a single `outline.md` per book — the sequential plan — and projects that want a separate early-planning scratch file may keep one under any name they like)
-  - `open-questions.md` (book-scoped)
-  - `continuity.md`
-- Delete the "Naming convention note" paragraph (the one that says "The leading two digits identify the book…" and "Chapter-level files use `xx-yy-...`"). That convention is gone. Replace with one sentence stating that book and chapter identity come from folder structure, with a pointer to `agents/project-layouts.md`.
-- The strategic `overview.md` and `outline.md` sections at the top stay; no edit needed beyond resolving the duplicate `outline.md` reference described above.
-- The "Book folder expectations" section already describes chapter folders as `chapter01`, `chapter02`, etc. Confirm it does not imply any file-prefix convention.
+- File path is exactly `templates/dispatcher/.claude/commands/next-step.md` so the install script's copy operation is structurally trivial.
+- File uses Claude Code's slash-command format (markdown, optional frontmatter as the host expects). The developer chooses the exact frontmatter; what matters is that typing `/next-step` in Claude Code from a project where this file has been installed at `.claude/commands/next-step.md` runs the dispatcher.
+- The body of the file must, at a minimum:
+  - Read `pipeline-state.md` from the project root, parse its frontmatter and the step list, locate the `[>]` line.
+  - Stop and ask the human on any of the failure-mode conditions from Task 1.
+  - Read `amanuensis-project.yaml` for `project_type` if path resolution requires it.
+  - Resolve the step workflow file at `amanuensis/agents/steps/<step-id-with-dashes>.md`. Stop and ask if missing.
+  - Load and follow that step file's body in the same session.
+  - Specify that the step body's final action is to edit `pipeline-state.md` (flip `[>]` to `[x]`, flip next `[ ]` to `[>]`, update `last_updated`) before exiting.
+  - On a blocked step, append to project-root `open-questions.md` and exit without touching the marker.
+- The file must point readers at `agents/orchestrator.md` for the canonical contract; it does not redefine the contract. Treat the dispatcher source as a thin host adapter over the orchestrator spec.
+- Keep the file short. The goal is a clear procedure the host can follow, not a re-derivation of orchestrator.md.
 
-**Done when.** `agents/books.md` enumerates book-level planning artifacts without prefixes; the chapter-file naming paragraph is gone; and `git grep -nE 'xx-yy-|01-(beats|cast|outline|open-questions|continuity)' agents/books.md` returns nothing.
+**Done when.** The file exists at the specified path; invoking `/next-step` in a Claude Code session inside a project that has installed it advances the pipeline by one step (or stops cleanly per the failure modes). Verified during Task 5's smoke test, not during this task.
 
 ---
 
-### Task 3 — Update metaphor subagent contracts [x]
+### Task 3 — OpenCode dispatcher [ ]
 
-**Goal.** Rewrite the `Inputs` sections of `agents/metaphor/metaphor-flatten.md`, `metaphor-replace.md`, and `metaphor-workshop.md` to describe inputs conceptually rather than as legacy `xx-yy-...md` paths. Body references to the working file are reworded the same way.
+**Goal.** Author `templates/dispatcher/.opencode/agents/next-step.md` as a working OpenCode agent that implements the same dispatcher behavior at parity with Task 2.
 
 **Requirements.**
 
-- For each of the three subagent contracts, replace `xx-yy-metaphors.md`, `xx-yy-draft.md`, and (workshop only) `xx-yy-zzz-storyboard.md` references with conceptual phrasing such as:
-  - "the entry block from the working metaphors file"
-  - "the surrounding paragraph from the latest prose, supplied by the coordinator"
-  - (workshop only) "the storyboard block for the entry's beat, supplied by the coordinator"
-- Make the conceptual phrasing consistent across the three files so a reader switching between them sees the same vocabulary.
-- In the `Output` and body sections, replace any remaining `xx-yy-metaphors.md` mentions with "the working metaphors file" (or an equivalent neutral phrase). The subagents append to that file in place; what matters is the location of their output relative to the assigned entry, not the filename.
-- Do **not** add canonical paths to these contracts. The canonical paths live in `agents/steps/metaphor-fix.md` (the coordinator), which is the authoritative declaration. The contracts intentionally stay path-agnostic.
-- Preserve all existing behavior, format specifications, anti-pattern guidance, and step-by-step instructions. This task is a vocabulary swap, not a behavioral rewrite.
-- The opening "subagent prompt contract" framing block at the top of each file is correct as-is; do not remove it.
+- File path is exactly `templates/dispatcher/.opencode/agents/next-step.md`.
+- File uses OpenCode's agent definition format. Existing prior art under `opencode/agents/` (chapter-coordinator, scene-drafter) is the reference for frontmatter shape; match its style.
+- Behavior is identical to Task 2's Claude Code dispatcher. Same procedure, same stop-and-ask conditions, same hand-off to the resolved step file's body in the same session, same final-action contract for marker advancement.
+- Any host-specific differences (model selection, mode, tool grants) are the developer's call. They must not change the dispatcher's observable behavior.
+- The file must point readers at `agents/orchestrator.md` for the canonical contract; it does not redefine the contract.
+- Where the Claude Code and OpenCode dispatcher bodies overlap (the procedural steps), the wording should be substantially the same so a future maintainer reading both files sees them as parallel implementations of one spec.
 
-**Done when.** The three contracts no longer reference `xx-yy-` paths anywhere; their `Inputs` sections describe what the coordinator supplies in conceptual terms; and `git grep -nE 'xx-yy-|\bzzz-' agents/metaphor/` returns nothing.
+**Done when.** The file exists at the specified path; invoking `next-step` in an OpenCode session inside a project that has installed it advances the pipeline by one step (or stops cleanly). Verified during Task 5's smoke test, not during this task.
 
 ---
 
-### Task 4 — Update `agents/workflows.md` and `agents/steps/anti-ai.md` [x]
+### Task 4 — `install.sh` [ ]
 
-**Goal.** Clean up the last two files that still mix legacy prefix conventions into otherwise current text: `agents/workflows.md` (one filename mention, one knowledge-delta citation example) and `agents/steps/anti-ai.md` (output report headers).
+**Goal.** Write `install.sh` at the repo root that copies both dispatcher files into a consuming project's host folders, creating parent directories as needed, idempotent on re-run.
 
 **Requirements.**
 
-- In `agents/workflows.md`:
-  - Replace the line "Write `xx-yy-metaphors.md` to list all metaphors and similes of the chapter…" so it no longer carries a prefixed filename. Keep the descriptive sentence about what the file contains; if a filename is retained at all, it is the canonical `metaphors.md` at `<chapter-folder>/drafts/<latest-attempt>/metaphors.md`. Add a one-line pointer to `agents/steps/metaphor-identify.md` as the step that produces the file for projects on the orchestrator.
-  - In the "Workflow: storyboarding" knowledge-delta example, replace `[from xx-yy]` with the fuller citation form locked in this Sprint's Conventions: `[from <book-id>/<chapter-id>/<scene-id>]`. Note that for `short_story` projects `<book-id>` is omitted, giving `[from <chapter-id>/<scene-id>]`. Show one literal example like `[from book1/chapter02/scene03]` so the convention is unambiguous.
-- In `agents/steps/anti-ai.md`:
-  - Replace `## Anti-AI Report — Scene xx-yy` with `## Anti-AI Report — Scene <scene-id>`.
-  - Replace `### Summary — Scene xx-yy` with `### Summary — Scene <scene-id>`.
-  - Anywhere else in the body that uses `Scene xx-yy` as a label, update to `Scene <scene-id>`.
-  - Do not change behavior, scope, or what the report flags. This is a label swap.
-- The frontmatter, inputs, outputs, and behavior sections of `anti-ai.md` should not need changes — they already use `<chapter-folder>/drafts/<latest-attempt>/...` paths. Confirm this; if anything slipped through, fix it.
+- Path: `install.sh` at the repo root. Executable (`chmod +x`).
+- POSIX-sh-compatible (`#!/bin/sh`). Avoid bashisms unless there is a clear reason. The script will be run inside consuming projects with unknown shell environments.
+- Usage:
+  - `./amanuensis/install.sh` (no argument) installs into the current working directory.
+  - `./amanuensis/install.sh <target-dir>` installs into `<target-dir>`.
+  - The script resolves its own location to find the source files; it must work whether the user runs it from inside the Amanuensis repo, from inside a consuming project that has Amanuensis as a submodule, or via an absolute path.
+- Behavior:
+  - Locate `templates/dispatcher/.claude/commands/next-step.md` and `templates/dispatcher/.opencode/agents/next-step.md` relative to the script's own location.
+  - Create `<target>/.claude/commands/` and `<target>/.opencode/agents/` if missing.
+  - Copy each dispatcher file to its mirrored destination under `<target>`. Overwrite if present (idempotent refresh).
+  - Print a short summary of what was copied where.
+  - Exit non-zero on any error (missing source files, target dir not writable, etc.).
+- Error handling:
+  - If a source file is missing, fail loudly with an explicit message naming the missing path. Do not partially install.
+  - If `<target-dir>` does not exist, fail with a message; do not create the project root.
+- No flags beyond the optional positional `<target-dir>`. No `--symlink`, no `--dry-run`, no `--uninstall` for MVP.
+- The script does **not** install Amanuensis itself, set up git submodules, or modify the consuming project's `AGENTS.md`. It only copies the two dispatcher files.
 
-**Done when.** Neither file contains `xx-yy` in any form; the knowledge-delta example shows the new fuller citation; and the anti-AI report section headers use `Scene <scene-id>`.
+**Done when.** Running `./install.sh /tmp/test-target` (with `/tmp/test-target` as an empty pre-existing directory) creates `/tmp/test-target/.claude/commands/next-step.md` and `/tmp/test-target/.opencode/agents/next-step.md` matching the source files byte-for-byte. Re-running the same command succeeds without error and leaves the destination unchanged. Running with a missing target fails with a clear message.
 
 ---
 
-### Task 5 — Sprint wrap-up: `project-layouts.md`, ROADMAP cleanup, verification [x]
+### Task 5 — Smoke fixture and end-to-end test [ ]
 
-**Goal.** After Tasks 1–4 land, do the residual cleanup, remove all `mgp-story` references from `ROADMAP.md`, run the acceptance greps, and check the relevant boxes.
+**Goal.** Create `examples/smoke/` as a minimal committed `short_story` fixture and document the smoke-test recipe in `examples/smoke/README.md`. Run the recipe and confirm the dispatcher advances the marker as specified.
 
 **Requirements.**
 
-- Update `agents/project-layouts.md` line 11. The current sentence reads: "The actual file renames happen in Milestone 4; until then existing projects retain their prefixed filenames." Drop the time-bound caveat — Milestone 4 has landed. Reword to state the rule plainly: folder paths replace filename prefixes, period. Do not mention milestones in this support doc.
-- Edit `ROADMAP.md` to remove all `mgp-story` references. Specifically:
-  - Delete Task 20 from Milestone 4. Milestone 4's task list becomes 18 and 19.
-  - Delete Milestone 7 ("Adopt in mgp-story") in its entirety, including its goal line and tasks 29–33.
-  - Verify task numbering across the roadmap stays internally consistent. If removing Task 20 leaves a numbering gap (e.g., 21 follows 19), close the gap by renumbering downstream tasks in place. If renumbering is too noisy because of cross-references, leave the gap and add a one-line note in the roadmap explaining the gap so future agents don't think a task is missing. Either choice is fine; just be consistent.
-  - Remove the non-goal line "Reorganizing canon or character files in mgp-story." The surrounding non-goals stay.
-  - In the "Proposed roadmap improvements" section, the bullet about "Explicit task dependencies" gives mgp-story as an example. Remove the mgp-story example clause; the dependency-annotation idea itself stays. Replacing with a different example task is fine; dropping the example clause entirely is also fine.
-- Check ROADMAP.md tasks 18 and 19 (Milestone 4) as complete.
-- Run the acceptance greps from the Definition of done and confirm each returns nothing in tracked text:
-  - `git grep -nE 'xx-yy-|\bzzz-'`
-  - `git grep -nE '01-beats|01-cast|01-outline|01-open-questions|01-continuity'`
-  - `git grep -n 'mgp-story\|mgp_story'`
+- Create `examples/smoke/` with the minimum content required for the dispatcher to invoke `character_extraction`:
+  - `amanuensis-project.yaml` with `project_type: short_story`. Copy from `templates/amanuensis-project.yaml` and adjust as needed.
+  - `pipeline-state.md` with the canonical step list, `[>]` on `character_extraction`, all others `[ ]`. Copy from `templates/pipeline-state.md`.
+  - `plot/summary.md` — the project's story plan. May be near-empty (a single sentence is fine; the goal is to exercise the dispatcher's plumbing, not to produce real prose).
+  - `open-questions.md` — empty (or with a single placeholder header) at the project root.
+  - Any other directories the `short_story` layout in `agents/project-layouts.md` declares as required at `character_extraction` time. If the layout doc says they are created on demand, do not create them.
+- Do **not** commit `examples/smoke/.claude/` or `examples/smoke/.opencode/`. The dispatcher copies are produced by running `install.sh` as part of the smoke-test recipe; committing them would bypass the test.
+- Do **not** commit a copy of the `amanuensis/` submodule under `examples/smoke/`. The recipe instead documents how to run the dispatcher with this repo as the Amanuensis source. The simplest workable approach is fine — for example, running `install.sh` from this repo into `examples/smoke/`, then symlinking or expecting `examples/smoke/amanuensis` to point at the repo root during the test. The developer chooses; document what they chose.
+- Author `examples/smoke/README.md` describing:
+  - What the fixture is for (smoke-testing the dispatcher; not a real story).
+  - The recipe to run the test once for Claude Code, once for OpenCode. Include the exact commands the human types.
+  - The expected observable result: first invocation either runs `character_extraction` to completion and advances the marker to `scene_generation`, or stops with a question (if the trivial story plan is too thin for the step body to make progress). Both are acceptable outcomes for a smoke test; the goal is to confirm the dispatcher itself works, not to validate the step body.
+  - How to reset the fixture between runs (`git checkout examples/smoke/`).
+- Run the recipe. Confirm the dispatcher behaves as specified for both hosts. If `character_extraction` blocks on the trivial plan, that is acceptable as long as the block is the documented stop-and-ask path (writes to `open-questions.md`, marker not advanced).
+- If the smoke run surfaces a defect in Task 1, 2, 3, or 4, fix the underlying file. The smoke test is the integration check.
+
+**Done when.** `examples/smoke/` is committed with the minimum fixture; `examples/smoke/README.md` documents the recipe; running the recipe end-to-end on both hosts produces the observable result the README predicts; and the smoke run does not require ad-hoc edits to the dispatcher source files or the install script.
+
+---
+
+### Task 6 — Sprint wrap-up: `AGENTS.md`, ROADMAP, verification [ ]
+
+**Goal.** After Tasks 1–5 land, do residual cleanup and check the relevant boxes.
+
+**Requirements.**
+
+- Update `AGENTS.md`:
+  - Add the dispatcher source files (`templates/dispatcher/.claude/commands/next-step.md`, `templates/dispatcher/.opencode/agents/next-step.md`) and `install.sh` to the Core documents section, with a one-line description each.
+  - Add a one-paragraph "Setup" or "Installation" section pointing consuming-project authors at `install.sh`. State the one-line invocation and the prerequisite (Amanuensis must be present at `<project>/amanuensis/`, typically as a submodule).
+  - Confirm the rest of the file is still accurate. Do not rewrite sections that did not change.
+- Update `ROADMAP.md`:
+  - Check tasks 20, 21, 22, and 23 (Milestone 5) as complete.
+  - Verify that Milestone 4's tasks 18 and 19 are also checked. If they are not — Sprint 4's wrap-up was supposed to do this — check them now and note the fix in the commit message. Do not silently leave them unchecked.
+  - Do not edit any other roadmap content.
+- Run the acceptance checks from the Definition of done:
+  - `templates/dispatcher/.claude/commands/next-step.md` exists.
+  - `templates/dispatcher/.opencode/agents/next-step.md` exists.
+  - `install.sh` exists at the repo root, is executable, runs successfully against an empty target dir, and is idempotent on re-run.
+  - `examples/smoke/README.md` exists and the recipe in it has been executed at least once successfully against both hosts.
+  - `agents/orchestrator.md` describes the locked dispatcher behavior with no contradictions.
 - Mark each completed task in this Sprint file as `[x]`.
 
-**Done when.** `agents/project-layouts.md` no longer carries the milestone caveat; `ROADMAP.md` contains no reference to mgp-story and Milestone 7 is gone; all three acceptance greps return empty; and ROADMAP Milestone 4 is checked.
+**Done when.** `AGENTS.md` lists the new artifacts; ROADMAP.md M4 (18, 19) and M5 (20–23) boxes are checked; the smoke recipe is verified runnable; all Sprint tasks are checked.
 
 ---
 
 ## Out of scope for this Sprint
 
-- Any work inside the consuming project `mgp-story`. That project has its own migration path; this Sprint deliberately removes mgp-story references from this repo and does not coordinate with it.
-- Renaming actual files inside any consuming project. This Sprint is purely documentation cleanup within the Amanuensis tooling repo. Step bodies already use the canonical unprefixed paths; consuming projects rename their own files when they adopt.
-- Implementing the dispatcher (Milestone 5).
-- Inventing new files in the chapter folder or book folder beyond the canonical lists locked in this Sprint's Conventions section. Reconciling the support docs with what the step files already produce is the scope; expanding the schema is not.
-- Filling `templates/profile.md` with finalized content. That remains the human's responsibility from Sprint 3.
-- Resolving the deferred `agents/orchestrator.md` TODO about canon invention.
+- Multi-host portability beyond Claude Code and OpenCode. Other hosts (Gemini CLI, etc.) are deferred per ROADMAP.
+- A subagent-based dispatcher model (Option 2b from the Sprint planning discussion). MVP is same-session only.
+- A re-run convenience for the dispatcher (e.g., `--redo storyboarding`). Re-running remains the human editing `pipeline-state.md` directly.
+- Concurrency safety for simultaneous dispatcher invocations.
+- Symlink installation, uninstall, or dry-run modes for `install.sh`.
+- Resolving the `agents/orchestrator.md` TODO about agents inventing missing canon. That is a separate design question.
+- Building out `examples/smoke/` into a real short story or running any pipeline step beyond `character_extraction`. Milestone 6 is the end-to-end short-story milestone; this Sprint stops at smoke-testing the dispatcher itself.
+- Documenting the dispatcher's behavior in any consuming project's local AGENTS.md adapter. The template at `templates/project-AGENTS.md` may be lightly updated if Task 6's `AGENTS.md` edits make a parallel change obvious; otherwise leave it.
