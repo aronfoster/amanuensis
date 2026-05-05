@@ -32,6 +32,13 @@ Amanuensis is an orchestrator-driven pipeline for long-form writing. Each projec
 - `templates/pipeline-state.md` — template state file.
 - `templates/amanuensis-project.yaml` — project-level config template.
 - `templates/project-AGENTS.md` — adapter template for consuming repositories.
+- `install.sh` — copies the dispatcher files into a consuming project's `.claude/commands/` and `.opencode/agents/` folders.
+- `templates/dispatcher/.claude/commands/next-step.md` — Claude Code slash command implementing the dispatcher.
+- `templates/dispatcher/.opencode/agents/next-step.md` — OpenCode agent implementing the dispatcher at parity with the Claude Code version.
+
+## Setup
+
+From the consuming project's root, run `./amanuensis/install.sh` to copy the dispatcher into `.claude/commands/next-step.md` and `.opencode/agents/next-step.md`. Prerequisite: Amanuensis must be present at `<project>/amanuensis/` (typically as a git submodule). See `templates/dispatcher/` and `agents/orchestrator.md` for the source-of-truth dispatcher contract.
 
 ## Step workflows
 

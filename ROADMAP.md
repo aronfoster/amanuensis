@@ -96,10 +96,10 @@ Goal: rename files across the workflow set to drop legacy book/chapter filename 
 
 Goal: a runnable dispatcher that reads state, runs the next step, advances state.
 
-20. [ ] Decide host: Claude Code or OpenCode. Start with one; commit to portability later.
-21. [ ] Implement the dispatcher as the chosen host's native primitive. For Claude Code this is likely a slash command or an agent definition that reads `pipeline-state.md`, identifies the `[>]` step, invokes the corresponding step workflow file, advances the marker, exits.
-22. [ ] Define the convention for mapping `step_id` to workflow file path (e.g., `step_id: metaphor_identify` → `amanuensis/agents/metaphor/metaphor-identify.md` or `amanuensis/agents/steps/metaphor-identify.md`, whichever organizational choice the orchestrator makes in Milestone 1).
-23. [ ] Test the dispatcher end-to-end on a trivial project: empty story plan, dispatcher runs character_extraction, exits, run again, advances. No actual prose generation needed for the first test.
+20. [x] Decide host: Claude Code or OpenCode. Start with one; commit to portability later.
+21. [x] Implement the dispatcher as the chosen host's native primitive. For Claude Code this is likely a slash command or an agent definition that reads `pipeline-state.md`, identifies the `[>]` step, invokes the corresponding step workflow file, advances the marker, exits.
+22. [x] Define the convention for mapping `step_id` to workflow file path (e.g., `step_id: metaphor_identify` → `amanuensis/agents/metaphor/metaphor-identify.md` or `amanuensis/agents/steps/metaphor-identify.md`, whichever organizational choice the orchestrator makes in Milestone 1).
+23. [x] Test the dispatcher end-to-end on a trivial project: empty story plan, dispatcher runs character_extraction, exits, run again, advances. No actual prose generation needed for the first test.
 
 ---
 
