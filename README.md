@@ -1,8 +1,18 @@
 # Amanuensis
 
-A workflow harness for long-form writing with LLMs.
+---
 
-Amanuensis keeps planning, drafting, continuity, reveal timing, and prose-quality review structured as separate passes so long-form projects remain legible across chapters and books.
+**/əˌmæn.juˈen.sɪs/**: a person employed to write or type what another dictates, or to copy what has been written, acting as a literary assistant, secretary, or scribe.
+
+---
+
+Amanuensis is a workflow harness for long-form writing with LLMs.
+
+It keeps planning, drafting, continuity, reveal timing, and prose-quality review structured as separate passes so long-form projects remain legible across chapters and books.
+
+## Status
+
+**NOT YET WORKING**
 
 ## Contents
 
