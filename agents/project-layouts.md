@@ -10,6 +10,11 @@ The three project types are `short_story`, `book`, and `series`.
 - `pipeline-state.md` and `amanuensis-project.yaml` also live at the project root.
 - **Folder paths replace filename prefixes.** Older convention used numeric prefixes like `01-01-summary.md` to encode book and chapter. The new convention uses folder structure: `<book-folder>/<chapter-folder>/summary.md`. This document declares the rule. The actual file renames happen in Milestone 4; until then existing projects retain their prefixed filenames.
 - `<latest-attempt>` resolves to the highest-numbered `attemptNN` directory under the chapter's `drafts/`. If none exists and the step expects one, the step creates `attempt01`.
+- `<story-plan>` resolves to the project's top-level planning file for the work in flight. Defaults by `project_type`:
+  - `short_story`: `plot/summary.md`
+  - `book`: `plot/<book-folder>/overview.md`
+  - `series`: `plot/<book-folder>/overview.md` (per book in flight)
+  Consuming projects may override this resolution in their local `AGENTS.md` if the project keeps its planning file elsewhere.
 
 ## short_story
 

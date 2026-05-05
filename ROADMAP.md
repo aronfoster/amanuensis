@@ -77,9 +77,9 @@ Goal: every workflow that already exists becomes a conforming step. No new step 
 
 Goal: write the step workflows that don't yet exist.
 
-15. [ ] Write `agents/character-extraction.md`. Input: project's story plan (a project-specific input file referenced by the project's local `AGENTS.md`). Output: character files in `characters/<id>/` plus appended entries to `open-questions.md` for unresolved character details. `review_required: true`. Follow the existing character-folder conventions in `agents/characters.md`.
-16. [ ] Write `agents/scene-generation.md`. Input: story plan plus character files. Output: `scene-list.md` for the chapter (or for the short story, depending on project_type). Plus appended `open-questions.md` entries. `review_required: true`.
-17. [ ] Both new step workflows must conform to the step contract from Milestone 1.
+15. [x] Write `agents/character-extraction.md`. Input: project's story plan (a project-specific input file referenced by the project's local `AGENTS.md`). Output: character files in `characters/<id>/` plus appended entries to `open-questions.md` for unresolved character details. `review_required: true`. Follow the existing character-folder conventions in `agents/characters.md`.
+16. [x] Write `agents/scene-generation.md`. Input: story plan plus character files. Output: `scene-list.md` for the chapter (or for the short story, depending on project_type). Plus appended `open-questions.md` entries. `review_required: true`.
+17. [x] Both new step workflows must conform to the step contract from Milestone 1.
 
 ---
 

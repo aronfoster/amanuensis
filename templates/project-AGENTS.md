@@ -20,6 +20,8 @@ Use the reusable guidance in `amanuensis/agents/` for planning, drafting, and re
 - `amanuensis/agents/books.md` — use when creating or revising book-level files.
 - `amanuensis/agents/chapters.md` — use when creating or editing chapter files.
 - `amanuensis/agents/characters.md` — use when updating character state.
+- `amanuensis/agents/steps/character-extraction.md` — use when bootstrapping character folders from the story plan and canon.
+- `amanuensis/agents/steps/scene-generation.md` — use when producing a chapter's `scene-list.md` from the plan, characters, and canon.
 - `amanuensis/agents/steps/storyboarding.md` — use when creating storyboard blocks.
 - `amanuensis/agents/steps/drafting.md` — use when drafting prose from storyboards (chapter coordinator that dispatches per-scene subagents).
 

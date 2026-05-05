@@ -1,5 +1,25 @@
 # Amanuensis Agent Guide
 
+## What this repository is
+
+This repository **is** the Amanuensis tooling. It is consumed as a git submodule by story-writing projects. The actual prose, character files, scene lists, drafts, and canon all live in those *consuming* projects — never here.
+
+An agent invoked inside this repository is doing one of:
+
+- editing a step workflow file under `agents/steps/`
+- editing a support document under `agents/`
+- editing a template under `templates/`
+- editing the orchestrator contract (`agents/orchestrator.md`)
+- otherwise maintaining the framework (sprint/roadmap/process docs)
+
+It is **not** writing a story. Story-author-facing instructions — how to draft a chapter, how to fill out a character profile, project-local naming and reveal-timing rules — do not live in this file. They live in each consuming project's local `AGENTS.md`, which the project maintains as an adapter built from [`templates/project-AGENTS.md`](templates/project-AGENTS.md). If you find yourself wanting to add prose-writing guidance here, you are in the wrong repo: that guidance belongs in the consuming project's adapter.
+
+## Repository Boundary
+
+Amanuensis is tooling, not story canon. Do not add project-specific canon, character state, plot files, or prose drafts to this repository except as clearly marked examples. This is the most important rule in this guide; every other section assumes it.
+
+Consuming story repositories keep a small local `AGENTS.md` adapter that points back to these reusable workflows and defines project-local paths. The canonical starting point for that adapter is [`templates/project-AGENTS.md`](templates/project-AGENTS.md).
+
 ## How Amanuensis works
 
 Amanuensis is an orchestrator-driven pipeline for long-form writing. Each project advances one step at a time: a host-specific dispatcher reads `pipeline-state.md` at the project root, locates the next step, runs that step's workflow file as a fresh agent invocation, advances the marker, and exits. State lives entirely in files — there is no in-memory context carried between steps. Humans review artifacts between steps; the dispatcher does not enforce review. Step workflow files declare their inputs, outputs, and review expectations in frontmatter and describe their behavior in the body. Folder layout, including how path placeholders resolve, depends on the project's declared `project_type`.
@@ -15,8 +35,10 @@ Amanuensis is an orchestrator-driven pipeline for long-form writing. Each projec
 
 ## Step workflows
 
-The pipeline's step bodies live in `agents/steps/`. Each file declares its `step_id`, `review_required`, `inputs`, and `outputs` in frontmatter and is dispatched by the orchestrator (see `agents/orchestrator.md`).
+This is the catalog of step files this repo *provides to* consuming projects, not a how-to for writing prose. The pipeline's step bodies live in `agents/steps/`. Each file declares its `step_id`, `review_required`, `inputs`, and `outputs` in frontmatter and is dispatched by the orchestrator (see `agents/orchestrator.md`).
 
+- `agents/steps/character-extraction.md` — reads the project's story plan and canon, then bootstraps the minimum `characters/<id>/` folders (profile + baseline knowledge) for every character the plan references.
+- `agents/steps/scene-generation.md` — reads the story plan, character profiles and baseline knowledge, and canon, then writes the chapter's `scene-list.md` (or `plot/scene-list.md` for short stories).
 - `agents/steps/storyboarding.md` — produces per-beat storyboard blocks from the chapter's scene list, summary, character knowledge, and canon.
 - `agents/steps/drafting.md` — chapter coordinator that dispatches per-scene subagents and assembles their output into a single draft.
 - `agents/steps/compliance-report.md` — checks the draft against storyboard Must-Contain / Must-Not-Contain requirements and canon, producing an annotated `reviewer-actions.md` report.
@@ -28,11 +50,9 @@ The pipeline's step bodies live in `agents/steps/`. Each file declares its `step
 - `agents/steps/line-pass.md` — chunked line-level voice and rhythm pass, producing `draft-line.md`.
 - `agents/steps/anti-ai.md` — final pass that scans `draft-line.md` for AI-flavored patterns and writes a per-scene report.
 
-`character-extraction.md` and `scene-generation.md` are pending in Milestone 3.
-
 ## Support documents
 
-These docs are referenced *by* step workflows; the dispatcher does not invoke them directly.
+This is the catalog of support files this repo *provides to* consuming projects; they are referenced *by* step workflows, and the dispatcher does not invoke them directly.
 
 - `agents/update-rules.md` — safety rules around canon integrity, reveal timing, and downstream updates.
 - `agents/workflows.md` — workflow order for book setup, chapter planning, drafting, continuity review, and post-chapter updates.
@@ -45,15 +65,9 @@ These docs are referenced *by* step workflows; the dispatcher does not invoke th
 - `agents/meta.md` — meta notes about the agent guide.
 - `agents/metaphor/` — subagent prompt contracts (`metaphor-flatten.md`, `metaphor-replace.md`, `metaphor-workshop.md`) and `README.md` describing the consolidated pipeline. These are dispatched by `agents/steps/metaphor-fix.md`, not by the orchestrator.
 
-## Repository Boundary
-
-Amanuensis is tooling, not story canon. Do not add project-specific canon, character state, plot files, or prose drafts here except as clearly marked examples.
-
-Consuming story repositories should keep a small local `AGENTS.md` adapter that points back to these reusable workflows and defines project-local paths.
-
 ## Next Task Queueing
 
-After completing a task, provide the next step text to the user so he can copy-paste it. When starting a new Sprint, use **PM New Sprint**. When uncompleted tasks remain in SPRINT.md, use **Developer Step for Sprint Task**. When all tasks are complete in SPRINT.md, use **PM Sprint Closeout**. After the closeout, provide **PM New Sprint**.
+The prompts below are for maintaining *this* tooling repository — sprint planning, sprint execution, and milestone closeout. They are not invoked inside consuming story projects. After completing a task in this repo, provide the next step text to the user so he can copy-paste it. When starting a new Sprint, use **PM New Sprint**. When uncompleted tasks remain in SPRINT.md, use **Developer Step for Sprint Task**. When all tasks are complete in SPRINT.md, use **PM Sprint Closeout**. After the closeout, provide **PM New Sprint**.
 
 ### PM New Sprint
 You are an expert PM. See AGENTS.md and ROADMAP.md. We're going to work together to turn [next milestone number and title from ROADMAP.md] into a series of Tasks within SPRINT.md. We will focus on requirements, not implementation. However, we will provide specifics if it will answer necessary design decisions for the developer. The goal is that our developers can grab a task and complete it in the way they want, with minimal intervention, and they'll produce a result that meets the project's needs. This is the stage to ask questions.
