@@ -67,7 +67,7 @@ This is the catalog of support files this repo *provides to* consuming projects;
 
 ## Next Task Queueing
 
-The prompts below are for maintaining *this* tooling repository — sprint planning, sprint execution, and milestone closeout. They are not invoked inside consuming story projects. After completing a task in this repo, provide the next step text to the user so he can copy-paste it. When starting a new Sprint, use **PM New Sprint**. When uncompleted tasks remain in SPRINT.md, use **Developer Step for Sprint Task**. When all tasks are complete in SPRINT.md, use **PM Sprint Closeout**. After the closeout, provide **PM New Sprint**.
+The prompts below are for maintaining *this* tooling repository — sprint planning, sprint execution, and milestone closeout. They are not invoked inside consuming story projects. After completing a task in this repo, provide the next step text to the user so he can copy-paste it. When starting a new Sprint, use **PM New Sprint**. When uncompleted tasks remain in SPRINT.md, use **Sprint Orchestrator**. After all tasks are complete in SPRINT.md, provide **PM New Sprint**.
 
 ### PM New Sprint
 You are an expert PM. See AGENTS.md and ROADMAP.md. We're going to work together to turn [next milestone number and title from ROADMAP.md] into a series of Tasks within SPRINT.md. We will focus on requirements, not implementation. However, we will provide specifics if it will answer necessary design decisions for the developer. The goal is that our developers can grab a task and complete it in the way they want, with minimal intervention, and they'll produce a result that meets the project's needs. This is the stage to ask questions.
