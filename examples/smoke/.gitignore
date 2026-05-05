@@ -1,0 +1,12 @@
+# Dispatcher copies are produced by running install.sh as part of the smoke
+# recipe. Committing them would bypass the test.
+.claude/
+.opencode/
+
+# The recipe instructs the human to symlink `amanuensis` to the repo root
+# before running the dispatcher. Do not commit the symlink.
+/amanuensis
+
+# Step bodies write outputs under these paths during a real run; reset them
+# with `git checkout examples/smoke/ && git clean -fd examples/smoke/`.
+/characters/
