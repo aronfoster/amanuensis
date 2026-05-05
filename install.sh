@@ -1,15 +1,22 @@
 #!/bin/sh
-# install.sh — copy Amanuensis dispatcher files into a consuming project.
+# install.sh — install Amanuensis into a consuming project.
 #
 # Usage:
 #   ./install.sh                 # install into current working directory
 #   ./install.sh <target-dir>    # install into <target-dir>
 #
-# Copies:
+# Always overwrites (framework dispatcher files):
 #   templates/dispatcher/.claude/commands/next-step.md
 #       -> <target>/.claude/commands/next-step.md
 #   templates/dispatcher/.opencode/agents/next-step.md
 #       -> <target>/.opencode/agents/next-step.md
+#
+# Created only if missing (project scaffold; preserves user edits and
+# pipeline state on re-run):
+#   templates/amanuensis-project.yaml -> <target>/amanuensis-project.yaml
+#   templates/pipeline-state.md       -> <target>/pipeline-state.md
+#   templates/project-AGENTS.md       -> <target>/AGENTS.md
+#   (empty file)                      -> <target>/open-questions.md
 
 set -eu
 
@@ -51,18 +58,19 @@ fi
 # Source files.
 src_claude=$script_dir/templates/dispatcher/.claude/commands/next-step.md
 src_opencode=$script_dir/templates/dispatcher/.opencode/agents/next-step.md
+src_project_yaml=$script_dir/templates/amanuensis-project.yaml
+src_pipeline_state=$script_dir/templates/pipeline-state.md
+src_agents=$script_dir/templates/project-AGENTS.md
 
-if [ ! -f "$src_claude" ]; then
-    err "missing source file: $src_claude"
-    exit 1
-fi
+for src in "$src_claude" "$src_opencode" "$src_project_yaml" \
+           "$src_pipeline_state" "$src_agents"; do
+    if [ ! -f "$src" ]; then
+        err "missing source file: $src"
+        exit 1
+    fi
+done
 
-if [ ! -f "$src_opencode" ]; then
-    err "missing source file: $src_opencode"
-    exit 1
-fi
-
-# Destinations.
+# Dispatcher destinations (always overwrite).
 dst_claude_dir=$target/.claude/commands
 dst_opencode_dir=$target/.opencode/agents
 dst_claude=$dst_claude_dir/next-step.md
@@ -76,4 +84,33 @@ cp "$src_opencode" "$dst_opencode"
 
 printf '  %s -> %s\n' "$src_claude" "$dst_claude"
 printf '  %s -> %s\n' "$src_opencode" "$dst_opencode"
-printf 'Installed Amanuensis dispatcher into %s.\n' "$target"
+
+# Scaffold destinations (create only if missing).
+dst_project_yaml=$target/amanuensis-project.yaml
+dst_pipeline_state=$target/pipeline-state.md
+dst_agents=$target/AGENTS.md
+dst_open_questions=$target/open-questions.md
+
+install_if_missing() {
+    _src=$1
+    _dst=$2
+    if [ -e "$_dst" ]; then
+        printf '  skipped (exists): %s\n' "$_dst"
+    else
+        cp "$_src" "$_dst"
+        printf '  %s -> %s\n' "$_src" "$_dst"
+    fi
+}
+
+install_if_missing "$src_project_yaml" "$dst_project_yaml"
+install_if_missing "$src_pipeline_state" "$dst_pipeline_state"
+install_if_missing "$src_agents" "$dst_agents"
+
+if [ -e "$dst_open_questions" ]; then
+    printf '  skipped (exists): %s\n' "$dst_open_questions"
+else
+    : > "$dst_open_questions"
+    printf '  created empty: %s\n' "$dst_open_questions"
+fi
+
+printf 'Installed Amanuensis into %s.\n' "$target"
