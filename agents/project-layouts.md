@@ -8,7 +8,7 @@ The three project types are `short_story`, `book`, and `series`.
 
 - `open-questions.md` always lives at the project root, regardless of `project_type`. Steps that block write to this file.
 - `pipeline-state.md` and `amanuensis-project.yaml` also live at the project root.
-- **Folder paths replace filename prefixes.** Older convention used numeric prefixes like `01-01-summary.md` to encode book and chapter. The new convention uses folder structure: `<book-folder>/<chapter-folder>/summary.md`. This document declares the rule. The actual file renames happen in Milestone 4; until then existing projects retain their prefixed filenames.
+- **Folder paths replace filename prefixes.** Older convention used numeric prefixes like `01-01-summary.md` to encode book and chapter. The new convention uses folder structure: `<book-folder>/<chapter-folder>/summary.md`. Files inside a chapter folder use unprefixed canonical names; book and chapter identity come from the folder path, not the filename.
 - `<latest-attempt>` resolves to the highest-numbered `attemptNN` directory under the chapter's `drafts/`. If none exists and the step expects one, the step creates `attempt01`.
 - `<story-plan>` resolves to the project's top-level planning file for the work in flight. Defaults by `project_type`:
   - `short_story`: `plot/summary.md`

@@ -8,9 +8,9 @@ Generates replacement candidates for a single WORKSHOP-marked entry where the hu
 
 ## Inputs
 
-- `xx-yy-metaphors.md` — the human-reviewed working file
-- `xx-yy-draft.md` — the current prose
-- `xx-yy-zzz-storyboard.md` — for scene register, emotional tone, and POV
+- The entry block from the working metaphors file — the human-reviewed WORKSHOP entry assigned to this subagent
+- The surrounding paragraph from the latest prose, supplied by the coordinator — the flagged sentence in its paragraph context
+- The storyboard block for the entry's beat, supplied by the coordinator — for scene register, emotional tone, and POV
 - The selected voice file or profile — for sentence rhythm and diction constraints
 
 Workshop goes back to primary sources because candidate generation depends on constraints that cannot be inherited from a potentially flawed identify entry.
@@ -19,7 +19,7 @@ Workshop goes back to primary sources because candidate generation depends on co
 
 ## Output
 
-All output is appended directly below the WORKSHOP entry in `xx-yy-metaphors.md`. Nothing is written to the draft at any stage. Candidates are bare sentences, not paragraph-integrated rewrites; integration of the selected candidate is `metaphor_apply`'s job.
+All output is appended directly below the WORKSHOP entry in the working metaphors file. Nothing is written to the draft at any stage. Candidates are bare sentences, not paragraph-integrated rewrites; integration of the selected candidate is `metaphor_apply`'s job.
 
 ---
 
@@ -27,7 +27,7 @@ All output is appended directly below the WORKSHOP entry in `xx-yy-metaphors.md`
 
 ### Before generating candidates
 
-Read the entry's full identify record. Then read the flagged sentence in its paragraph in the draft, and the storyboard block for its beat.
+Read the entry's full identify record. Then read the surrounding paragraph supplied by the coordinator, locating the flagged sentence within it, and the storyboard block for the entry's beat.
 
 If the human has added corrections or notes below the action word, those take precedence over the original identify fields. Apply them before doing any other analysis.
 

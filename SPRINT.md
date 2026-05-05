@@ -63,7 +63,7 @@ This Sprint does not invent new files; it only reconciles the support-doc names 
 
 ## Tasks
 
-### Task 1 — Update `agents/chapters.md`
+### Task 1 — Update `agents/chapters.md` [x]
 
 **Goal.** Rewrite `agents/chapters.md` so it documents chapter-folder files under their canonical unprefixed names and describes storyboarding as per-beat files inside `storyboards/`, matching what the step bodies in `agents/steps/` already produce.
 
@@ -82,7 +82,7 @@ This Sprint does not invent new files; it only reconciles the support-doc names 
 
 ---
 
-### Task 2 — Update `agents/books.md`
+### Task 2 — Update `agents/books.md` [x]
 
 **Goal.** Rewrite `agents/books.md` so book-level planning artifacts are documented with unprefixed names, and remove the paragraph prescribing `xx-yy-` chapter-file naming.
 
@@ -102,7 +102,7 @@ This Sprint does not invent new files; it only reconciles the support-doc names 
 
 ---
 
-### Task 3 — Update metaphor subagent contracts
+### Task 3 — Update metaphor subagent contracts [x]
 
 **Goal.** Rewrite the `Inputs` sections of `agents/metaphor/metaphor-flatten.md`, `metaphor-replace.md`, and `metaphor-workshop.md` to describe inputs conceptually rather than as legacy `xx-yy-...md` paths. Body references to the working file are reworded the same way.
 
@@ -122,7 +122,7 @@ This Sprint does not invent new files; it only reconciles the support-doc names 
 
 ---
 
-### Task 4 — Update `agents/workflows.md` and `agents/steps/anti-ai.md`
+### Task 4 — Update `agents/workflows.md` and `agents/steps/anti-ai.md` [x]
 
 **Goal.** Clean up the last two files that still mix legacy prefix conventions into otherwise current text: `agents/workflows.md` (one filename mention, one knowledge-delta citation example) and `agents/steps/anti-ai.md` (output report headers).
 
@@ -142,7 +142,7 @@ This Sprint does not invent new files; it only reconciles the support-doc names 
 
 ---
 
-### Task 5 — Sprint wrap-up: `project-layouts.md`, ROADMAP cleanup, verification
+### Task 5 — Sprint wrap-up: `project-layouts.md`, ROADMAP cleanup, verification [x]
 
 **Goal.** After Tasks 1–4 land, do the residual cleanup, remove all `mgp-story` references from `ROADMAP.md`, run the acceptance greps, and check the relevant boxes.
 

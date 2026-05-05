@@ -85,11 +85,10 @@ Goal: write the step workflows that don't yet exist.
 
 ### Milestone 4 — Drop filename prefixes
 
-Goal: rename files across the workflow set to remove `xx-yy-` prefixes; folder paths and frontmatter carry the metadata instead.
+Goal: rename files across the workflow set to drop legacy book/chapter filename prefixes; folder paths and frontmatter carry the metadata instead.
 
-18. [ ] Update all step workflow files to reference path conventions without `xx-yy-` prefixes. Output paths become `<chapter-folder>/summary.md`, `<chapter-folder>/storyboards/scene01-beat003.md`, etc.
-19. [ ] Update templates and examples accordingly.
-20. [ ] Update mgp-story when adopting the new amanuensis version. This is a project-level rename, mechanical but project-wide. Document the migration as a one-time task in mgp-story's local notes.
+18. [x] Update all step workflow files to reference path conventions without legacy filename prefixes. Output paths become `<chapter-folder>/summary.md`, `<chapter-folder>/storyboards/scene01-beat003.md`, etc.
+19. [x] Update templates and examples accordingly.
 
 ---
 
@@ -97,10 +96,10 @@ Goal: rename files across the workflow set to remove `xx-yy-` prefixes; folder p
 
 Goal: a runnable dispatcher that reads state, runs the next step, advances state.
 
-21. [ ] Decide host: Claude Code or OpenCode. Start with one; commit to portability later.
-22. [ ] Implement the dispatcher as the chosen host's native primitive. For Claude Code this is likely a slash command or an agent definition that reads `pipeline-state.md`, identifies the `[>]` step, invokes the corresponding step workflow file, advances the marker, exits.
-23. [ ] Define the convention for mapping `step_id` to workflow file path (e.g., `step_id: metaphor_identify` → `amanuensis/agents/metaphor/metaphor-identify.md` or `amanuensis/agents/steps/metaphor-identify.md`, whichever organizational choice the orchestrator makes in Milestone 1).
-24. [ ] Test the dispatcher end-to-end on a trivial project: empty story plan, dispatcher runs character_extraction, exits, run again, advances. No actual prose generation needed for the first test.
+20. [ ] Decide host: Claude Code or OpenCode. Start with one; commit to portability later.
+21. [ ] Implement the dispatcher as the chosen host's native primitive. For Claude Code this is likely a slash command or an agent definition that reads `pipeline-state.md`, identifies the `[>]` step, invokes the corresponding step workflow file, advances the marker, exits.
+22. [ ] Define the convention for mapping `step_id` to workflow file path (e.g., `step_id: metaphor_identify` → `amanuensis/agents/metaphor/metaphor-identify.md` or `amanuensis/agents/steps/metaphor-identify.md`, whichever organizational choice the orchestrator makes in Milestone 1).
+23. [ ] Test the dispatcher end-to-end on a trivial project: empty story plan, dispatcher runs character_extraction, exits, run again, advances. No actual prose generation needed for the first test.
 
 ---
 
@@ -108,22 +107,10 @@ Goal: a runnable dispatcher that reads state, runs the next step, advances state
 
 Goal: prove the pipeline by running it on a real short story from plan to refined prose.
 
-25. [ ] Pick or write a short story plan. Set up the project with `project_type: short_story`.
-26. [ ] Run the orchestrator step-by-step. Capture frictions: missing inputs, unclear outputs, step bodies that produce the wrong shape of artifact, places where the human review gate is awkward.
-27. [ ] Fix issues found in the run. Iterate.
-28. [ ] Document the short_story end-to-end flow as an example in `examples/short-story-walkthrough.md`.
-
----
-
-### Milestone 7 — Adopt in mgp-story
-
-Goal: replace mgp-story's current ad-hoc workflow with the orchestrator-driven pipeline.
-
-29. [ ] Add updated amanuensis as a submodule in mgp-story (deferred from earlier migration plan).
-30. [ ] Rewrite `mgp-story/AGENTS.md` as the project adapter, declaring project_type: series and pointing at amanuensis workflows.
-31. [ ] Set up `pipeline-state.md` for the chapter currently in flight.
-32. [ ] Run a chapter through the orchestrator. Capture frictions specific to the series project type.
-33. [ ] Fix issues. Iterate.
+24. [ ] Pick or write a short story plan. Set up the project with `project_type: short_story`.
+25. [ ] Run the orchestrator step-by-step. Capture frictions: missing inputs, unclear outputs, step bodies that produce the wrong shape of artifact, places where the human review gate is awkward.
+26. [ ] Fix issues found in the run. Iterate.
+27. [ ] Document the short_story end-to-end flow as an example in `examples/short-story-walkthrough.md`.
 
 ---
 
@@ -145,7 +132,6 @@ These are tracked but explicitly out of scope for the current roadmap:
 
 ## Non-goals
 
-- Reorganizing canon or character files in mgp-story.
 - Designing new prose-quality passes beyond what already exists.
 - Building the dispatcher as a standalone tool independent of an LLM agent host.
 - Solving the "what is good prose" problem. The pipeline is structural; quality judgments stay with the human and the existing review passes.
@@ -155,7 +141,7 @@ These are tracked but explicitly out of scope for the current roadmap:
 Larger structural changes to consider for the roadmap document itself. Each is independent; the human should approve before any are applied.
 
 - **Definition of done per milestone.** Each milestone currently has a one-line goal but no explicit acceptance criteria. An agent finishing the last numbered task can't confirm the milestone is actually complete. Adding a short "done when…" block under each milestone goal would let agents self-verify before moving on.
-- **Explicit task dependencies.** Numbering implies sequence, but real dependencies are mixed. Task 17 depends on Milestone 1 being complete; tasks 18–19 depend on contract conformance from Milestone 2; task 20 is gated on the consumer (mgp-story) being ready. Calling these out as `Depends on:` annotations would let an agent pick up work without re-deriving the graph each time.
+- **Explicit task dependencies.** Numbering implies sequence, but real dependencies are mixed. Task 17 depends on Milestone 1 being complete; tasks 18–19 depend on contract conformance from Milestone 2. Calling these out as `Depends on:` annotations would let an agent pick up work without re-deriving the graph each time.
 - **Roadmap maintenance protocol.** Define who checks boxes when, and under what evidence. E.g., "an agent checks a box only after the artifact named in the task exists and conforms to the relevant contract; a milestone is marked done only when all tasks under it are checked and the human has reviewed." Without this, two agents working in parallel could each mark the same task done with different interpretations of "done."
 - **Per-milestone notes/log.** A scratch area attached to each milestone for in-progress observations, blockers, and decisions made during execution. Currently this kind of finding has nowhere to live except the deferred-work section, which is for explicit out-of-scope items, not in-progress notes.
 - **Status snapshot at the top.** A small "current milestone: N" / "next task: M" pointer at the top of the file so an agent can orient in one read instead of scanning the whole document for unchecked boxes.
