@@ -37,6 +37,8 @@ Amanuensis is an orchestrator-driven pipeline for long-form writing. Each projec
 
 This is the catalog of step files this repo *provides to* consuming projects, not a how-to for writing prose. The pipeline's step bodies live in `agents/steps/`. Each file declares its `step_id`, `review_required`, `inputs`, and `outputs` in frontmatter and is dispatched by the orchestrator (see `agents/orchestrator.md`).
 
+- `agents/steps/character-extraction.md` — reads the project's story plan and canon, then bootstraps the minimum `characters/<id>/` folders (profile + baseline knowledge) for every character the plan references.
+- `agents/steps/scene-generation.md` — reads the story plan, character profiles and baseline knowledge, and canon, then writes the chapter's `scene-list.md` (or `plot/scene-list.md` for short stories).
 - `agents/steps/storyboarding.md` — produces per-beat storyboard blocks from the chapter's scene list, summary, character knowledge, and canon.
 - `agents/steps/drafting.md` — chapter coordinator that dispatches per-scene subagents and assembles their output into a single draft.
 - `agents/steps/compliance-report.md` — checks the draft against storyboard Must-Contain / Must-Not-Contain requirements and canon, producing an annotated `reviewer-actions.md` report.

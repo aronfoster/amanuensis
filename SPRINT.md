@@ -51,7 +51,7 @@ Importance values are fixed at three levels: `critical` (pipeline cannot proceed
 
 ## Tasks
 
-### Task 1 — `character_extraction` step
+### ~~Task 1 — `character_extraction` step~~ Done
 
 **Goal.** Write `agents/steps/character-extraction.md` as a contract-conforming step that reads the project's story plan plus canon and bootstraps the minimum character folders described in `agents/characters.md`.
 
@@ -77,7 +77,7 @@ Importance values are fixed at three levels: `critical` (pipeline cannot proceed
 
 ---
 
-### Task 2 — `scene_generation` step
+### ~~Task 2 — `scene_generation` step~~ Done
 
 **Goal.** Write `agents/steps/scene-generation.md` as a contract-conforming step that reads the story plan, character files, and canon, and produces the chapter's `scene-list.md`.
 
@@ -119,7 +119,7 @@ Importance values are fixed at three levels: `critical` (pipeline cannot proceed
 
 ---
 
-### Task 4 — Reposition `AGENTS.md` for the tooling-repo audience
+### ~~Task 4 — Reposition `AGENTS.md` for the tooling-repo audience~~ Done
 
 **Goal.** Rewrite `AGENTS.md` so its audience is unambiguous: agents working in *this* repository are maintaining the Amanuensis tooling, not writing fiction. The current document mixes "what Amanuensis is" with "how to use Amanuensis to write" — that ambiguity is what this task removes.
 
@@ -140,7 +140,7 @@ Importance values are fixed at three levels: `critical` (pipeline cannot proceed
 
 ---
 
-### Task 5 — Sprint wrap-up: cross-references, indexing, verification
+### ~~Task 5 — Sprint wrap-up: cross-references, indexing, verification~~ Done
 
 **Goal.** After Tasks 1–4 land, update the support documents that index or cross-reference step files, verify the Definition of done, and check the relevant ROADMAP boxes.
 

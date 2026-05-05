@@ -18,6 +18,8 @@ This file defines when and why each workflow runs, and what order to follow. For
 5. Write or revise chapter `scene-list.md`
 6. Record unresolved questions in chapter `open-questions.md`
 
+For projects on the orchestrator, scene-list creation is automated by [`steps/scene-generation.md`](steps/scene-generation.md).
+
 ## Workflow: character folder creation
 
 Run this during chapter planning if a character expected in the chapter does not yet have a folder.
@@ -25,6 +27,8 @@ Run this during chapter planning if a character expected in the chapter does not
 1. Check `characters/` for an existing folder
 2. If absent, create the folder and minimum required files per `characters.md`
 3. Fill in what is known; leave unknown fields blank and mark `status: stub` if role is unsettled
+
+For projects on the orchestrator, initial character folder bootstrapping is automated by [`steps/character-extraction.md`](steps/character-extraction.md).
 
 ## Workflow: storyboarding
 
