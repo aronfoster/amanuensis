@@ -1,0 +1,79 @@
+#!/bin/sh
+# install.sh — copy Amanuensis dispatcher files into a consuming project.
+#
+# Usage:
+#   ./install.sh                 # install into current working directory
+#   ./install.sh <target-dir>    # install into <target-dir>
+#
+# Copies:
+#   templates/dispatcher/.claude/commands/next-step.md
+#       -> <target>/.claude/commands/next-step.md
+#   templates/dispatcher/.opencode/agents/next-step.md
+#       -> <target>/.opencode/agents/next-step.md
+
+set -eu
+
+err() {
+    printf 'install.sh: error: %s\n' "$1" >&2
+}
+
+# Resolve the script's own directory in a POSIX-portable way.
+script_path=$0
+case $script_path in
+    /*) ;;
+    *) script_path=$PWD/$script_path ;;
+esac
+script_dir=$(dirname "$script_path")
+script_dir=$(cd "$script_dir" && pwd)
+
+# Determine target directory.
+if [ $# -gt 1 ]; then
+    err "too many arguments; usage: $0 [<target-dir>]"
+    exit 2
+fi
+
+if [ $# -eq 1 ]; then
+    target=$1
+else
+    target=$PWD
+fi
+
+if [ ! -d "$target" ]; then
+    err "target directory does not exist: $target"
+    exit 1
+fi
+
+if [ ! -w "$target" ]; then
+    err "target directory is not writable: $target"
+    exit 1
+fi
+
+# Source files.
+src_claude=$script_dir/templates/dispatcher/.claude/commands/next-step.md
+src_opencode=$script_dir/templates/dispatcher/.opencode/agents/next-step.md
+
+if [ ! -f "$src_claude" ]; then
+    err "missing source file: $src_claude"
+    exit 1
+fi
+
+if [ ! -f "$src_opencode" ]; then
+    err "missing source file: $src_opencode"
+    exit 1
+fi
+
+# Destinations.
+dst_claude_dir=$target/.claude/commands
+dst_opencode_dir=$target/.opencode/agents
+dst_claude=$dst_claude_dir/next-step.md
+dst_opencode=$dst_opencode_dir/next-step.md
+
+mkdir -p "$dst_claude_dir"
+mkdir -p "$dst_opencode_dir"
+
+cp "$src_claude" "$dst_claude"
+cp "$src_opencode" "$dst_opencode"
+
+printf '  %s -> %s\n' "$src_claude" "$dst_claude"
+printf '  %s -> %s\n' "$src_opencode" "$dst_opencode"
+printf 'Installed Amanuensis dispatcher into %s.\n' "$target"

@@ -1,0 +1,8 @@
+# Amanuensis smoke fixture — project configuration.
+# This is the minimal short_story project committed under examples/smoke/
+# to exercise the dispatcher end-to-end. See ./README.md for the recipe.
+
+# project_type: one of `short_story`, `book`, `series`.
+# See `amanuensis/agents/project-layouts.md` for the folder layout and
+# path-resolution implications of each choice.
+project_type: short_story

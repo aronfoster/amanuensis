@@ -55,7 +55,7 @@ The install script copies these verbatim into the target project at the same rel
 
 ## Tasks
 
-### Task 1 — Lock dispatcher behavior in `agents/orchestrator.md` [ ]
+### Task 1 — Lock dispatcher behavior in `agents/orchestrator.md` [x]
 
 **Goal.** Bring `agents/orchestrator.md` into alignment with the locked Conventions above so that the implementation tasks have a single authoritative spec to point at.
 
@@ -77,7 +77,7 @@ The install script copies these verbatim into the target project at the same rel
 
 ---
 
-### Task 2 — Claude Code dispatcher [ ]
+### Task 2 — Claude Code dispatcher [x]
 
 **Goal.** Author `templates/dispatcher/.claude/commands/next-step.md` as a working Claude Code slash command that implements the dispatcher behavior locked in Task 1.
 
@@ -100,7 +100,7 @@ The install script copies these verbatim into the target project at the same rel
 
 ---
 
-### Task 3 — OpenCode dispatcher [ ]
+### Task 3 — OpenCode dispatcher [x]
 
 **Goal.** Author `templates/dispatcher/.opencode/agents/next-step.md` as a working OpenCode agent that implements the same dispatcher behavior at parity with Task 2.
 
@@ -117,7 +117,7 @@ The install script copies these verbatim into the target project at the same rel
 
 ---
 
-### Task 4 — `install.sh` [ ]
+### Task 4 — `install.sh` [x]
 
 **Goal.** Write `install.sh` at the repo root that copies both dispatcher files into a consuming project's host folders, creating parent directories as needed, idempotent on re-run.
 
@@ -145,7 +145,7 @@ The install script copies these verbatim into the target project at the same rel
 
 ---
 
-### Task 5 — Smoke fixture and end-to-end test [ ]
+### Task 5 — Smoke fixture and end-to-end test [x]
 
 **Goal.** Create `examples/smoke/` as a minimal committed `short_story` fixture and document the smoke-test recipe in `examples/smoke/README.md`. Run the recipe and confirm the dispatcher advances the marker as specified.
 
@@ -171,7 +171,7 @@ The install script copies these verbatim into the target project at the same rel
 
 ---
 
-### Task 6 — Sprint wrap-up: `AGENTS.md`, ROADMAP, verification [ ]
+### Task 6 — Sprint wrap-up: `AGENTS.md`, ROADMAP, verification [x]
 
 **Goal.** After Tasks 1–5 land, do residual cleanup and check the relevant boxes.
 
