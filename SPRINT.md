@@ -1,271 +1,173 @@
-# Sprint 2 — Milestone 2: Refactor existing workflows to the step contract
+# Sprint 3 — Milestone 3: Build the missing step bodies
 
-This Sprint converts every existing workflow into a contract-conforming step file under `agents/steps/`. After this Sprint the orchestrator's step list resolves to real files on disk, every step declares its inputs, outputs, and review expectation in frontmatter, and the legacy per-document index in `AGENTS.md` gives way to an index of step files. No new step bodies are introduced; this Sprint is contract conformance plus the body cleanup the move forces.
+This Sprint writes the two step bodies missing from the pipeline (`character_extraction` and `scene_generation`), introduces the supporting profile template they reference, and repositions `AGENTS.md` so its audience — agents maintaining the Amanuensis tooling repo — is unambiguous. After this Sprint, every entry in `templates/pipeline-state.md` resolves to a real file in `agents/steps/`, and a fresh consuming project can run the pipeline from the very first step.
 
 ## Definition of done
 
 The Sprint is complete when:
 
-1. Every Milestone 2 task in `ROADMAP.md` is checked.
-2. Every step in `templates/pipeline-state.md` whose body already exists has a corresponding file at `agents/steps/<step-id-with-dashes>.md`. (Steps `character_extraction` and `scene_generation` remain unfilled — they belong to Milestone 3.)
-3. Every step file has valid YAML frontmatter with `step_id`, `review_required`, `inputs`, and `outputs`. Each path placeholder used resolves under the rules in `agents/project-layouts.md`.
-4. Every step file has an "Open questions handling" section describing what to do when the step is blocked.
-5. The pre-step legacy locations (`agents/storyboarding.md`, `agents/drafting.md`, `agents/agentic-drafting.md`, `agents/compliance.md`, `agents/prose-pass.md`, `agents/line-pass.md`, `agents/anti-ai.md`, `agents/metaphor/metaphor-identify.md`, `agents/metaphor/metaphor-apply.md`) no longer exist as workflow files. Cross-references to them in tracked text have been updated.
-6. `AGENTS.md` "Legacy workflow documents" section is replaced by an index of the new step files; non-step support docs (`update-rules.md`, `canon.md`, `chapters.md`, etc.) stay listed under a clearly labeled support-documents section.
-7. `git grep "agents/storyboarding\|agents/agentic-drafting\|agents/compliance.md\|agents/prose-pass\|agents/line-pass\|agents/anti-ai\|agents/metaphor/metaphor-identify\|agents/metaphor/metaphor-apply"` returns nothing in tracked text outside of historical commit messages.
+1. Every Milestone 3 task in `ROADMAP.md` (15, 16, 17) is checked.
+2. `agents/steps/character-extraction.md` and `agents/steps/scene-generation.md` exist with valid YAML frontmatter (`step_id`, `review_required`, `inputs`, `outputs`) and a body conforming to the step contract in `agents/orchestrator.md`.
+3. `templates/profile.md` exists as a stub file ready for the human to paste finalized contents into via the GitHub web UI.
+4. `AGENTS.md` clearly frames this repository as Amanuensis tooling consumed as a submodule by story projects. Agents reading it understand they are maintaining tooling, not writing fiction. Story-author-facing instructions are explicitly delegated to each consuming project's local `AGENTS.md` (built from `templates/project-AGENTS.md`).
+5. Cross-references in `agents/workflows.md` and any other support doc that mentions these two new steps point at the new `agents/steps/` paths.
+6. `git grep "agents/character-extraction\|agents/scene-generation"` returns nothing in tracked text outside of historical commit messages — i.e., nobody references the legacy roadmap path.
 
 ## Conventions adopted by this Sprint
 
 These choices are locked at the start of the Sprint so individual tasks don't rediscover them.
 
-**Step file location.** Step bodies live at `agents/steps/<step-id-with-dashes>.md`. Example: `metaphor_identify` → `agents/steps/metaphor-identify.md`. Non-step support docs (`update-rules.md`, `canon.md`, `chapters.md`, `characters.md`, `workflows.md`, `voice.md`, `storyboard-schema.md`, `meta.md`, `books.md`) stay in `agents/`.
+**Step file location.** `agents/steps/<step-id-with-dashes>.md`, per the convention locked in Sprint 2. ROADMAP.md tasks 15–16 use the older path (`agents/character-extraction.md`); ignore that wording — the new locations are `agents/steps/character-extraction.md` and `agents/steps/scene-generation.md`.
 
-**Per-attempt artifacts.** All per-attempt step outputs live at `<chapter-folder>/drafts/<latest-attempt>/`:
+**Project-type scope for MVP.** Both step bodies must be written so they work for `short_story` projects end-to-end. For `book` and `series`, write the body so the structure is compatible (path placeholders, frontmatter, behavior shape) but treat "which chapter is current?" as the deferred open question already noted in `agents/orchestrator.md`. A book/series project should be able to invoke these steps once the dispatcher solves chapter selection in a later milestone — but no Sprint 3 task needs to *prove* that path.
 
-- `draft.md` — drafting output
-- `reviewer-actions.md` — compliance_report output, compliance_fix appendix
-- `draft-compliance.md` — compliance_fix output
-- `prose-pass.md` — prose_pass report
-- `metaphors.md` — metaphor_identify output, metaphor_fix appendix
-- `draft-metaphor.md` — metaphor_apply output
-- `draft-line.md` — line_pass output
-- `anti-ai.md` — anti_ai report
+**Story plan placeholder.** Both step bodies read a project-specific planning file. Use a new placeholder `<story-plan>` resolved per project_type with sensible defaults, overridable in the consuming project's local `AGENTS.md`:
 
-**Prose-revision chain.** Suffix chain. Each prose-revising step reads the most recent prose file in the attempt folder and writes a new suffixed file. Order: `draft.md` → `draft-compliance.md` → (prose_pass report; no prose change) → `draft-metaphor.md` → `draft-line.md`. `anti_ai` reads `draft-line.md` (the latest prose).
+- `short_story` default: `plot/summary.md`
+- `book` default: `plot/<book-folder>/overview.md`
+- `series` default: `plot/<book-folder>/overview.md` (per book in flight)
 
-**Body editing scope.** Path-and-cleanup. Update path references to the new placeholder conventions (`<chapter-folder>`, `<latest-attempt>`); update cross-file references that break due to the moves; delete or fix internal sections that are now wrong (e.g., the bash setup snippet in `drafting.md`'s "Experimental Mode," any lingering `xx-yy-` prose in the body). Do not introduce new behaviors, new checks, new severity levels, or new output shapes beyond what the step contract requires.
+Document the placeholder and its resolution rules in `agents/project-layouts.md` as part of the step body that introduces it (or in a dedicated short edit if the developer prefers — see Task 1).
 
-**Drafting step.** `agents/agentic-drafting.md` becomes the `drafting` step at `agents/steps/drafting.md`. The legacy `agents/drafting.md` is deleted; relevant per-scene constraints from it are folded into the new step body or its subagent prompt contract.
+**Open-questions entry format.** Steps that block or surface unresolved details append entries to project-root `open-questions.md` using a light, consistent shape. Each entry carries an importance marker — not a date. Suggested shape:
 
-**Metaphor fix subagent pattern.** `metaphor_fix` is a coordinator step. It reads `metaphors.md`, identifies every entry annotated FLATTEN / REPLACE / WORKSHOP, dispatches one subagent per entry in parallel, and reassembles their appended variants. The three files `agents/metaphor/metaphor-flatten.md`, `agents/metaphor/metaphor-replace.md`, `agents/metaphor/metaphor-workshop.md` remain at their current location as subagent prompt contracts (not steps); the coordinator picks the right one based on the entry's annotation. Workshop's Phase 2 (Integration) is removed entirely — integration work belongs to `metaphor_apply`. The "one entry per session" workshop constraint is removed; parallel subagents make the constraint unnecessary.
+```markdown
+## <step_id>: <one-line subject>
 
-**Deferred TODOs in `agents/orchestrator.md`** (canon invention, centralized human questions) remain deferred. No task in this Sprint touches them.
+- importance: critical | important | minor
+- blocker: <what is unresolved, in one or two sentences>
+- needed: <what input or decision would unblock this>
+```
+
+Importance values are fixed at three levels: `critical` (pipeline cannot proceed safely without an answer), `important` (proceed-but-flag — the step did its best with assumptions), `minor` (cosmetic or low-risk gap). Both new steps use this format. Earlier steps in the pipeline are *not* retrofitted in this Sprint.
+
+**Idempotency.** Following the convention used by every other step: a step overwrites whatever sits at its declared output paths when re-run. Humans who want to preserve prior output rename or move it before re-running the step. This applies equally to character folders (character_extraction) and scene-list files (scene_generation).
+
+**Stub characters.** When the story plan names a character role without a settled name (e.g., "the protagonist's mother"), the step creates a stub folder using a generated snake_case `character_id`, populates `profile.md` with `status: stub`, leaves unknown fields explicitly blank, and appends an `important`-level open question requesting a canonical name and missing details.
+
+**Canon as auxiliary input.** Both step bodies read `canon/**/*.md` in addition to the story plan, so extracted characters and generated scenes are grounded in world rules and don't silently invent canon. This is consistent with the priority order in `agents/canon.md`.
 
 ---
 
 ## Tasks
 
-### Task 1 — `storyboarding` step [x]
+### Task 1 — `character_extraction` step
 
-**Goal.** Move `agents/storyboarding.md` to `agents/steps/storyboarding.md` as a contract-conforming step.
-
-**Requirements.**
-- Add the frontmatter block from `templates/step-workflow.md`:
-  - `step_id: storyboarding`
-  - `review_required: true`
-  - `inputs:` — the files the body actually reads. At minimum: `<chapter-folder>/scene-list.md`, `<chapter-folder>/summary.md`, `<chapter-folder>/storyboards-planning.md` (if used), the relevant character knowledge files under `characters/<id>/knowledge/`, and any canon files referenced by the scene list.
-  - `outputs:` — `<chapter-folder>/storyboards/<scene-id>-<beat-id>-storyboard.md` (one file per storyboard block; document the file naming convention used today, dropping the `xx-yy-` prefix per the path conventions in `agents/project-layouts.md`).
-- Add an "Open questions handling" section that follows the template default: append to project-root `open-questions.md`, exit without advancing.
-- Update cross-references: any link inside the body to `agents/storyboard-schema.md` keeps pointing at `agents/storyboard-schema.md` (it remains a support doc).
-- Body cleanup: replace `xx-yy-` filename references with the new path conventions. Do not change any storyboarding behavior, anti-pattern guidance, or the storyboard-block schema.
-
-**Done when.** `agents/steps/storyboarding.md` exists with valid frontmatter, the body uses the new path conventions, and `agents/storyboarding.md` no longer exists. A grep for `agents/storyboarding.md` in tracked text returns no live references.
-
----
-
-### Task 2 — `drafting` step (replaces both legacy drafting files) [x]
-
-**Goal.** Collapse `agents/agentic-drafting.md` and `agents/drafting.md` into a single contract-conforming step at `agents/steps/drafting.md`. The chapter coordinator that dispatches per-scene subagents *is* the drafting step.
+**Goal.** Write `agents/steps/character-extraction.md` as a contract-conforming step that reads the project's story plan plus canon and bootstraps the minimum character folders described in `agents/characters.md`.
 
 **Requirements.**
-- The new file's frontmatter:
-  - `step_id: drafting`
-  - `review_required: true`
-  - `inputs:` — the chapter's storyboard files (`<chapter-folder>/storyboards/*-storyboard.md`) and the project's voice file (default `agents/voice.md`, overridable by the consuming project's local AGENTS.md).
-  - `outputs:` — `<chapter-folder>/drafts/<latest-attempt>/draft.md` plus the run's per-scene working files (`scene01.md`, `scene01-notes.md`, …) and `notes.md`. Declare the per-scene files as outputs; they are real artifacts the step produces, not internal state.
-- Body content comes from `agents/agentic-drafting.md` as the spine (coordinator behavior, subagent dispatch, scene grouping, assembly rules, notes assembly, failure handling). Fold in the per-scene constraints from `agents/drafting.md` that the subagents must follow — voice in system message, storyboard blocks in user message, no canon-file dumps, no extra-file reads — either inline or as the subagent prompt contract.
-- Delete `agents/drafting.md` and `agents/agentic-drafting.md` after the new file is in place.
-- Body cleanup: drop the "Experimental Mode" bash snippet from `agents/drafting.md`. Replace `xx-yy-draft.md` references with `<chapter-folder>/drafts/<latest-attempt>/draft.md`. Drop `plot/bookN/chapterYY/...` literals in favor of the path placeholders.
-- Update cross-references in support docs. `agents/workflows.md` and `agents/update-rules.md` likely reference `drafting.md` and `agentic-drafting.md` directly — repoint at `agents/steps/drafting.md`.
-- Add "Open questions handling" per the template default.
 
-**Done when.** `agents/steps/drafting.md` exists with valid frontmatter and a body that fully covers what both legacy files covered (chapter coordinator + per-scene contract). Both legacy files are deleted. No live cross-references to either legacy path remain.
-
----
-
-### Task 3 — `compliance_report` step [x]
-
-**Goal.** Split `agents/compliance.md` Phase 1 into its own step at `agents/steps/compliance-report.md`.
-
-**Requirements.**
 - Frontmatter:
-  - `step_id: compliance_report`
+  - `step_id: character_extraction`
   - `review_required: true`
-  - `inputs:` — `<chapter-folder>/storyboards/*-storyboard.md`, `<chapter-folder>/drafts/<latest-attempt>/draft.md`.
-  - `outputs:` — `<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md`.
-- Body content is `compliance.md` Phase 1 verbatim (with path-and-cleanup edits). Includes the three checks (Must-Contain, Must-Not-Contain, Canon), the per-block entry format, the summary block, and the relevant Anti-Patterns ("Fixing during reporting," "Recording passing items," "Collapsing blocks," "Consulting files not listed as inputs").
-- Drop Phase 2 from this file entirely. Phase 2 lives in Task 4.
-- Add "Open questions handling" per the template default.
+  - `inputs:` — `<story-plan>`, `canon/**/*.md`
+  - `outputs:` — `characters/<character-id>/profile.md`, `characters/<character-id>/knowledge/baseline.md`, `characters/<character-id>/knowledge/book-N.md` (one per book the character appears in, for `book`/`series` projects), and appended entries in project-root `open-questions.md`.
+- Body responsibilities:
+  1. Read the story plan and all canon files.
+  2. Identify every character the plan references — named characters and stub roles alike.
+  3. For each character, create the folder at `characters/<character-id>/` and write the **minimum** required files per `agents/characters.md`: `profile.md` plus `knowledge/baseline.md`. For `book` and `series` projects, also create `knowledge/book-N.md` scaffolds for each book the character appears in. Do **not** create `timeline.md` or `relationships.md` in this step.
+  4. Populate `profile.md` from `templates/profile.md` (created in Task 3). Fill fields the story plan or canon support; leave unknown fields explicitly blank rather than invented. For unnamed roles, set `status: stub` and use a descriptive snake_case `character_id` (e.g., `protagonist_mother`).
+  5. Populate `knowledge/baseline.md` with what the character plausibly knows before the story begins, drawn from canon and plan context. Leave `book-N.md` files as empty scaffolds — they fill during the scene knowledge update workflow, not here.
+  6. Append open-questions entries (using the format under "Conventions") for: missing canonical names of stub characters (`important`), unresolvable contradictions between plan and canon (`critical`), and notable blank profile fields the plan implies but does not specify (`minor`).
+- Overwrite behavior: the step overwrites any existing files at the output paths. Humans preserve prior work by renaming folders before re-running.
+- Add the standard "Open questions handling" section from `templates/step-workflow.md`. Note that for this step, *unanswered* details are normal — they are appended via the format above and the step still completes. Open-questions-handling-with-exit applies only when the *story plan itself* is missing or unreadable.
+- If the developer is introducing the `<story-plan>` placeholder for the first time, also extend `agents/project-layouts.md` with the resolution rules listed in this Sprint's Conventions section. (Task 2 also uses the placeholder; whichever task lands first does the project-layouts edit.)
 
-**Done when.** `agents/steps/compliance-report.md` exists, declares only Phase 1 inputs and the report output, and contains no fixing/applying behavior.
-
----
-
-### Task 4 — `compliance_fix` step [x]
-
-**Goal.** Split `agents/compliance.md` Phase 2 into its own step at `agents/steps/compliance-fix.md`.
-
-**Requirements.**
-- Frontmatter:
-  - `step_id: compliance_fix`
-  - `review_required: false`
-  - `inputs:` — `<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md` (annotated by the human), `<chapter-folder>/drafts/<latest-attempt>/draft.md`, the storyboard files for any FIX items (`<chapter-folder>/storyboards/*-storyboard.md`).
-  - `outputs:` — `<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md` plus appended `Applied:` / `Escalated:` blocks in `reviewer-actions.md`.
-- Body content is `compliance.md` Phase 2 with one path change: the revised prose is written to `draft-compliance.md`, **not** back into `draft.md`. Update the "Output" section accordingly. The "do not improve beyond the violation," "preserve block comment markers," and "stop and append a note" constraints remain.
-- The "Fixing unannotated violations" and "Rewriting beyond the violation" Anti-Patterns belong here.
-- After Tasks 3 and 4 land, `agents/compliance.md` is deleted.
-- Add "Open questions handling" per the template default. Note specifically that `ESCALATE`-annotated items are not blockers — the step appends an Escalated block and continues. Open-questions-handling is for when the input itself is unusable (e.g., reviewer-actions has no annotations at all).
-
-**Done when.** `agents/steps/compliance-fix.md` exists, writes only `draft-compliance.md` and the appendix, and `agents/compliance.md` is deleted.
+**Done when.** `agents/steps/character-extraction.md` exists with valid frontmatter, the body covers identification → folder creation → file population → open-questions, and a fresh `short_story` project with a populated `plot/summary.md` and `canon/` would produce a usable `characters/` tree on first run.
 
 ---
 
-### Task 5 — `prose_pass` step [x]
+### Task 2 — `scene_generation` step
 
-**Goal.** Move `agents/prose-pass.md` to `agents/steps/prose-pass.md` as a contract-conforming step. This step produces a report only — it does not modify prose.
+**Goal.** Write `agents/steps/scene-generation.md` as a contract-conforming step that reads the story plan, character files, and canon, and produces the chapter's `scene-list.md`.
 
 **Requirements.**
+
 - Frontmatter:
-  - `step_id: prose_pass`
+  - `step_id: scene_generation`
   - `review_required: true`
-  - `inputs:` — the latest prose (`<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md`), the chapter's storyboards (`<chapter-folder>/storyboards/*-storyboard.md`), the voice file (`agents/voice.md` or project-local override).
-  - `outputs:` — `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md`.
-- Body cleanup: the current "Inputs" list says "chapter draft, storyboards, voice.md, optional outputs from other passes." Tighten to the declared inputs. The "optional outputs from other passes" line is removed — the step contract requires explicit inputs. Note in the body that the `KEEP / TIGHTEN / FLATTEN / REWRITE` recommendations are advisory; the step does not write to the prose. The human applies fixes manually before `metaphor_identify` runs.
-- The body's existing structure (Top priorities, Findings template, Chapter-level diagnosis, Lines worth preserving) stays.
-- Add "Open questions handling" per the template default.
+  - `inputs:` — `<story-plan>`, `characters/<character-id>/profile.md`, `characters/<character-id>/knowledge/baseline.md`, `canon/**/*.md`
+  - `outputs:` — `<chapter-folder>/scene-list.md`, plus appended entries in project-root `open-questions.md`.
+- Body responsibilities:
+  1. Read the story plan, all character profiles and baseline knowledge, and canon.
+  2. Produce a scene-by-scene plan covering the chapter (or, for `short_story`, the entire story).
+  3. Write the result to `<chapter-folder>/scene-list.md`. For `short_story` this resolves to `plot/scene-list.md`.
+  4. Append open-questions entries for any plan ambiguity that forced a guess (per the importance-tagged format in Conventions).
+- Output shape: `scene-list.md` is YAML frontmatter followed by one section per scene. The schema is informal but the body must specify it:
+  - **Frontmatter fields** (required): `chapter_id` (e.g., `chapter01`, or `story` for short_story), `book_id` if applicable, `pov_default` (the chapter's primary POV character if there is one), and `scene_count`.
+  - **Per-scene section** (one per scene): a heading like `## scene01`, followed by short fields covering POV, location, conflict, emotional turn, what is revealed or concealed, consequences for downstream scenes, and links to any character knowledge files or canon files the scene depends on. Match the field set described informally in `agents/chapters.md`. Keep entries terse — this is scene-level planning, not storyboarding.
+- MVP scope: the step body is written assuming `short_story` is the project_type the developer can fully verify. The body must still reference `<chapter-folder>` correctly so it composes with `book` and `series` once chapter selection is solved; the developer does not need to test those paths.
+- Overwrite behavior: the step overwrites `<chapter-folder>/scene-list.md` if it already exists.
+- Add the standard "Open questions handling" section. As with character_extraction, normal ambiguities are logged in `open-questions.md` and the step completes; exit-without-advancing is reserved for an unreadable story plan or character set.
+- Cross-reference: link to `agents/chapters.md` for the field intent of a scene-list entry and to `agents/steps/storyboarding.md` as the downstream consumer that reads the produced `scene-list.md`.
 
-**Done when.** `agents/steps/prose-pass.md` exists, declares the report file as its sole output, and `agents/prose-pass.md` no longer exists.
-
----
-
-### Task 6 — `metaphor_identify` step [x]
-
-**Goal.** Move `agents/metaphor/metaphor-identify.md` to `agents/steps/metaphor-identify.md` as a contract-conforming step.
-
-**Requirements.**
-- Frontmatter:
-  - `step_id: metaphor_identify`
-  - `review_required: true`
-  - `inputs:` — the latest prose (`<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md`), the chapter's storyboards (`<chapter-folder>/storyboards/*-storyboard.md`).
-  - `outputs:` — `<chapter-folder>/drafts/<latest-attempt>/metaphors.md`.
-- Body cleanup: replace `xx-yy-draft.md` and `xx-yy-metaphors.md` with the new paths. Behavior, format, flag definitions (CLEAN / REVIEW / BROKEN), and Anti-Patterns are unchanged.
-- Add "Open questions handling" per the template default.
-
-**Done when.** `agents/steps/metaphor-identify.md` exists with valid frontmatter and `agents/metaphor/metaphor-identify.md` no longer exists.
+**Done when.** `agents/steps/scene-generation.md` exists with valid frontmatter, the body specifies the frontmatter and per-scene section format, and a `short_story` project that has just completed `character_extraction` would produce a valid `plot/scene-list.md` on first run.
 
 ---
 
-### Task 7 — `metaphor_fix` step (subagent coordinator) [x]
+### Task 3 — `templates/profile.md` stub
 
-**Goal.** Create a single new step at `agents/steps/metaphor-fix.md` that consolidates flatten / replace / workshop logic. The step body is a coordinator that dispatches one subagent per annotated entry in parallel, then assembles the appended variants back into `metaphors.md`.
+**Goal.** Create the file `templates/profile.md` as an empty placeholder. The human will paste contents from a separate project via the GitHub web UI; this Sprint just makes the file exist so Task 1 can reference it.
 
 **Requirements.**
-- Frontmatter:
-  - `step_id: metaphor_fix`
-  - `review_required: true`
-  - `inputs:` — `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` (human-reviewed working file), `<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md` (for paragraph context), `<chapter-folder>/storyboards/*-storyboard.md` (for WORKSHOP entries only), `agents/voice.md` or project-local override (for WORKSHOP entries only).
-  - `outputs:` — `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` (appended variants).
-- Body responsibilities for the coordinator:
-  1. Read `metaphors.md`. Identify every entry annotated `FLATTEN`, `REPLACE: [target image]`, or `WORKSHOP`. Skip entries with no action word (the human has accepted them as-is) and any entry the human deleted entirely.
-  2. For each annotated entry, dispatch one subagent in parallel. Pick the subagent prompt contract by annotation type:
-     - `FLATTEN` → `agents/metaphor/metaphor-flatten.md`
-     - `REPLACE` → `agents/metaphor/metaphor-replace.md`
-     - `WORKSHOP` → `agents/metaphor/metaphor-workshop.md`
-  3. Each subagent receives only what its prompt contract requires: the entry block, the surrounding paragraph extracted from `draft-compliance.md`, and (for workshop) the storyboard block for that beat plus the voice file. Subagents do not read the rest of the draft, the working file, or other entries.
-  4. Each subagent writes its variants directly below its assigned entry in `metaphors.md`, in the format declared by its prompt contract.
-  5. The coordinator does not select among variants. Human selection happens after the step exits.
-- Update the three subagent prompt files in `agents/metaphor/`:
-  - `metaphor-flatten.md` — keep behavior; add a brief header noting the file is a subagent prompt contract used by the `metaphor_fix` step, not a top-level workflow.
-  - `metaphor-replace.md` — same.
-  - `metaphor-workshop.md` — **delete Phase 2 (Integration) entirely**; integration is `metaphor_apply`'s job. **Remove the "one entry per session" rule**; subagent parallelization removes the constraint. Add the same subagent-prompt-contract header.
-- Update `agents/metaphor/README.md` to describe the consolidated pipeline: identify → human review → metaphor_fix coordinator → human selection → metaphor_apply. Clearly state the new file roles.
-- Add "Open questions handling" to the coordinator: if `metaphors.md` is missing or has no annotated entries, append to project-root `open-questions.md` and exit without advancing.
 
-**Done when.** `agents/steps/metaphor-fix.md` exists as a coordinator step with subagent dispatch, the three subagent prompt files reflect their new role and have Phase 2/per-session constraints stripped from `metaphor-workshop.md`, and `agents/metaphor/README.md` describes the consolidated pipeline.
+- Create `templates/profile.md` containing only a single placeholder comment line (e.g., `<!-- profile template contents pending; see PR comment -->`) so the file is non-empty and tracked.
+- Do not invent template contents. The human is supplying them.
+- Task 1's body references this file as the template `profile.md` is populated from. Make sure that reference resolves to the file this task creates.
+
+**Done when.** `templates/profile.md` exists, is tracked by git, and contains only a placeholder marker the human can replace.
 
 ---
 
-### Task 8 — `metaphor_apply` step [x]
+### Task 4 — Reposition `AGENTS.md` for the tooling-repo audience
 
-**Goal.** Move `agents/metaphor/metaphor-apply.md` to `agents/steps/metaphor-apply.md` as a contract-conforming step.
+**Goal.** Rewrite `AGENTS.md` so its audience is unambiguous: agents working in *this* repository are maintaining the Amanuensis tooling, not writing fiction. The current document mixes "what Amanuensis is" with "how to use Amanuensis to write" — that ambiguity is what this task removes.
 
 **Requirements.**
-- Frontmatter:
-  - `step_id: metaphor_apply`
-  - `review_required: false`
-  - `inputs:` — `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` (post-human-selection), `<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md`.
-  - `outputs:` — `<chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md`.
-- Body cleanup: replace `xx-yy-draft.md` / `xx-yy-metaphors.md` / `xx-yy-draft-metaphor.md` with the new paths. The variant-handling logic, locate-the-change rules, and apply-log block are unchanged.
-- Note in the body that surviving WORKSHOP variants are now individual sentences (since workshop's integration phase was removed). The "sentence variant" branch of Step 3 covers this case; no behavior change required, but the body should mention it explicitly so an agent isn't surprised that workshop entries arrive as bare sentences instead of integration-version paragraphs.
-- Add "Open questions handling" per the template default.
 
-**Done when.** `agents/steps/metaphor-apply.md` exists with valid frontmatter and `agents/metaphor/metaphor-apply.md` no longer exists.
+- Open the document with a clear framing block. State explicitly:
+  - This repository is the Amanuensis tooling. It is consumed as a git submodule by story-writing projects.
+  - The actual prose, character files, scene lists, drafts, and canon live in *those* consuming projects, not here.
+  - An agent invoked inside this repository is doing one of: editing step workflow files, editing support documents, editing templates, editing the orchestrator contract, or otherwise maintaining the framework. It is not writing a story.
+  - Story-writing projects each have their own local `AGENTS.md` (the adapter), built from `templates/project-AGENTS.md`. That file is where story-author-facing instructions live. This `AGENTS.md` deliberately does not host them.
+- Keep the existing index of step workflows and support documents, but reframe its purpose: it is the catalog of files this repo *provides to* consuming projects, not a how-to for writing prose. One sentence at the top of each section is enough to make this clear.
+- Keep the "Next Task Queueing" prompts (PM New Sprint, Developer Step for Sprint Task, PM Sprint Closeout). Those prompts are about maintaining this repo and belong here. If any of them currently read as if they could be invoked in a story project, tighten the wording.
+- Move or expand the "Repository Boundary" section so its rule ("Amanuensis is tooling, not story canon") sits near the top of the document, not at the end. It is the most important rule for an agent reading this file.
+- The existing `templates/project-AGENTS.md` is the canonical adapter starting point for consuming projects. Mention it explicitly and link to it from this file's framing block.
+- Do not introduce new sections beyond what the framing requires. Keep the file scannable.
+
+**Done when.** A reader who has never seen this repo before, opening `AGENTS.md` cold, can answer in their first read: (a) what this repo is, (b) what it is *not*, (c) where prose-writing instructions live (in consuming projects), (d) what kind of work an agent is expected to do here.
 
 ---
 
-### Task 9 — `line_pass` step [x]
+### Task 5 — Sprint wrap-up: cross-references, indexing, verification
 
-**Goal.** Move `agents/line-pass.md` to `agents/steps/line-pass.md` as a contract-conforming step.
-
-**Requirements.**
-- Frontmatter:
-  - `step_id: line_pass`
-  - `review_required: true`
-  - `inputs:` — `<chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md`, `<chapter-folder>/drafts/<latest-attempt>/draft-line.md` (read for already-finalized chunks once the step is partway through), `agents/voice.md` or project-local override.
-  - `outputs:` — `<chapter-folder>/drafts/<latest-attempt>/draft-line.md`.
-- Body cleanup: replace `xx-yy-draft-metaphor.md` and `xx-yy-draft-line.md` with the new paths. Chunking, context-window rules, seam policy, apply-log format, and Anti-Patterns are unchanged.
-- Note that `draft-line.md` appears in both inputs and outputs because the step writes chunk-by-chunk and reads previously-finalized chunks as preceding-context. This is the same behavior the legacy doc describes; the frontmatter just makes it explicit.
-- Add "Open questions handling" per the template default.
-
-**Done when.** `agents/steps/line-pass.md` exists with valid frontmatter and `agents/line-pass.md` no longer exists.
-
----
-
-### Task 10 — `anti_ai` step [x]
-
-**Goal.** Move `agents/anti-ai.md` to `agents/steps/anti-ai.md` as a contract-conforming step.
+**Goal.** After Tasks 1–4 land, update the support documents that index or cross-reference step files, verify the Definition of done, and check the relevant ROADMAP boxes.
 
 **Requirements.**
-- Frontmatter:
-  - `step_id: anti_ai`
-  - `review_required: true`
-  - `inputs:` — `<chapter-folder>/drafts/<latest-attempt>/draft-line.md` (the latest prose).
-  - `outputs:` — `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md`.
-- Body cleanup: replace `xx-yy-draft.md` and `xx-yy-anti-ai.md` with the new paths. The eight pattern categories, the flagged-words list, the per-scene summary, and Anti-Patterns are unchanged.
-- The current body says "This pass runs after compliance and metaphor check." Update to match the locked pipeline order: anti_ai is the last step; it reads the line-pass output.
-- Add "Open questions handling" per the template default. (Anti-AI is unusual in that it is a context-free pass against a single file; blockers are rare.)
 
-**Done when.** `agents/steps/anti-ai.md` exists with valid frontmatter and `agents/anti-ai.md` no longer exists.
-
----
-
-### Task 11 — Sprint wrap-up: AGENTS.md, cleanup, verification [x]
-
-**Goal.** After Tasks 1–10 land, update `AGENTS.md` to reflect the new layout, remove now-empty directories and stale cross-references, and verify the Sprint's Definition of done holds.
-
-**Requirements.**
-- Replace the "Legacy workflow documents" section in `AGENTS.md` with two sections:
-  - **"Step workflows"** — index of files in `agents/steps/` with one-line descriptions: `storyboarding.md`, `drafting.md`, `compliance-report.md`, `compliance-fix.md`, `prose-pass.md`, `metaphor-identify.md`, `metaphor-fix.md`, `metaphor-apply.md`, `line-pass.md`, `anti-ai.md`. Note that `character-extraction.md` and `scene-generation.md` are pending in Milestone 3.
-  - **"Support documents"** — the docs that remain in `agents/`: `update-rules.md`, `workflows.md`, `canon.md`, `books.md`, `chapters.md`, `characters.md`, `storyboard-schema.md`, `voice.md`, `meta.md`, plus `agents/metaphor/` (the subagent prompt contracts and README). Make clear these are referenced *by* step workflows; they are not invoked by the dispatcher.
-- Update `agents/workflows.md` if it references any of the moved files. Repoint at the new `agents/steps/` paths or call out the legacy reference if rewriting is out of scope. (`agents/workflows.md` is itself a candidate for retirement, but that is a Milestone 4-or-later decision; for this Sprint just keep its references current.)
-- Update `agents/update-rules.md` cross-references the same way.
-- If `agents/metaphor/` ends up containing only the three subagent prompt files plus `README.md`, leave it. If the README is no longer accurate after Task 7's edits, fix it. Do not delete the directory.
+- Update `AGENTS.md`'s step-workflow index (already touched in Task 4) so `character-extraction.md` and `scene-generation.md` appear with one-line descriptions and the "pending in Milestone 3" note is removed.
+- Update `agents/workflows.md`. The current "Workflow: chapter planning" section describes scene-list creation as a manual workflow; add a one-line pointer to `agents/steps/scene-generation.md` as the step that automates this for projects on the orchestrator. Likewise, if any support doc references character extraction informally, point at `agents/steps/character-extraction.md`.
+- Update `templates/project-AGENTS.md` if useful to reference the two new step files in its "Where To Look" section, so consuming projects bootstrapped from the template see them.
+- Confirm `templates/pipeline-state.md` already lists `character_extraction` and `scene_generation` as the first two steps; if so, no edit needed. (Per Sprint 2's leftovers, it should already be correct.)
 - Run the verification commands from the Definition of done:
-  - `git grep "agents/storyboarding\|agents/agentic-drafting\|agents/compliance.md\|agents/prose-pass\|agents/line-pass\|agents/anti-ai\|agents/metaphor/metaphor-identify\|agents/metaphor/metaphor-apply"` should return nothing in tracked text.
-  - `ls agents/steps/` should list the ten step files Task 1–10 produced.
-  - Each step file should have a frontmatter block with the four required fields.
-- Check the boxes for Milestone 2 tasks 7–14 in `ROADMAP.md`. Mark each completed task in this Sprint file as `[x]`.
+  - `ls agents/steps/` should now list twelve step files (the ten from Sprint 2 plus the two from this Sprint).
+  - Each new step file should have a frontmatter block with the four required fields.
+  - `git grep "agents/character-extraction\|agents/scene-generation"` should return nothing in tracked text. (References should use `agents/steps/character-extraction.md` / `agents/steps/scene-generation.md`.)
+- Check ROADMAP.md tasks 15, 16, and 17 as complete.
+- Mark each completed task in this Sprint file as `[x]`.
 
-**Done when.** `AGENTS.md` reflects the new layout, no live cross-references to legacy step paths remain, all ten step files are present and frontmatter-valid, and `ROADMAP.md` Milestone 2 tasks are checked.
+**Done when.** All cross-references point at the new step paths, `AGENTS.md` and `templates/project-AGENTS.md` index the new steps, ROADMAP.md Milestone 3 tasks are checked, and the verification commands all pass.
 
 ---
 
 ## Out of scope for this Sprint
 
-- Writing the bodies of `character_extraction` and `scene_generation` (Milestone 3).
-- Renaming files to drop `xx-yy-` prefixes inside consuming projects (Milestone 4). This Sprint adopts the new path placeholder conventions for step files; the file-rename pass against real project repos is not in scope.
+- Solving "which chapter is the current chapter" for `book` and `series` projects. Both new step bodies are written so they will compose correctly once that question is solved, but the dispatcher mechanism for chapter selection is deferred.
 - Implementing the dispatcher (Milestone 5).
-- Resolving the `agents/orchestrator.md` TODOs about canon invention and centralized human questions (deferred).
-- Introducing new behaviors, checks, severity levels, or output formats in any step body. Body edits are limited to path conventions, dead cross-references, and internal consistency fixes the move forces.
-- Retiring or rewriting `agents/workflows.md`, `agents/update-rules.md`, or other support docs beyond updating their cross-references.
-- Deleting `agents/metaphor/` or relocating the three subagent prompt contracts. They stay where they are.
+- Renaming files to drop `xx-yy-` prefixes inside consuming projects (Milestone 4).
+- Retrofitting earlier step bodies to the new open-questions importance format. Earlier steps continue to use whatever convention they already had; the new format applies only to the two steps written in this Sprint.
+- Filling `templates/profile.md` with finalized content. The Sprint creates the file; the human supplies contents via GitHub web after Task 3 lands.
+- Creating `timeline.md` or `relationships.md` skeletons during character_extraction. Those are optional-at-creation per `agents/characters.md` and remain so.
+- Writing a formal `agents/scene-list-schema.md`. Sprint 3 keeps the scene-list schema informal, embedded in the step body.
+- Resolving the deferred `agents/orchestrator.md` TODOs about canon invention and centralized human questions.
