@@ -58,8 +58,30 @@ After completing a task, provide the next step text to the user so he can copy-p
 ### PM New Sprint
 You are an expert PM. See AGENTS.md and ROADMAP.md. We're going to work together to turn [next milestone number and title from ROADMAP.md] into a series of Tasks within SPRINT.md. We will focus on requirements, not implementation. However, we will provide specifics if it will answer necessary design decisions for the developer. The goal is that our developers can grab a task and complete it in the way they want, with minimal intervention, and they'll produce a result that meets the project's needs. This is the stage to ask questions.
 
-### Developer Step for Sprint Task
-See AGENTS.md and SPRINT.md. Complete Sprint [Sprint number from SPRINT.md header] Task [First incomplete task in SPRINT.md].
+### Sprint Orchestrator
+You are managing an entire Sprint by spawning subagents per task and merging their work. Follow this protocol exactly.
 
-### PM Sprint Closeout
-Complete Sprint [Sprint number from SPRINT.md header] from SPRINT.md. See AGENTS.md for additional guidance. Close out the Sprint, ensuring that all files referencing updated files have been updated, and all objectives have been met. Do not erase or overwrite SPRINT.md, just mark items completed.
+**Orientation (read first, in order):**
+1. `AGENTS.md` — repo conventions and the "Next Task Queueing" workflow.
+2. `ROADMAP.md` — milestone context for the Sprint.
+3. `SPRINT.md` — the authoritative task list. Note which tasks are already checked.
+4. Any task-specific source docs the Sprint references (e.g. `agents/orchestrator.md`).
+
+**Plan before acting.** Produce a short dependency analysis covering, for each unchecked task: which files it creates, which files it modifies, and which other tasks it reads from or conflicts with. Group tasks into **waves**:
+- Tasks that touch the same file run sequentially (one agent, or back-to-back).
+- Tasks that touch disjoint files run in parallel within a wave.
+- A task that consumes another task's output runs in a later wave.
+
+Present the plan and wait for human approval before spawning anything.
+
+**Per wave:**
+1. Spawn one subagent per task (or one agent for a sequential bundle). Brief each agent self-containedly: cite the SPRINT.md task block as authoritative, point at the specific source files to read, list verification commands, and instruct the agent to **edit files but not commit** — you commit between waves.
+2. After agents return, run verification yourself: `git status`, `git diff` on shared files, spot-read new files, run any acceptance grep the Sprint defines (e.g. `git grep "TBD"` returns nothing).
+3. Commit the wave with a descriptive message. One commit per wave is fine; per-task commits are also fine.
+4. Update a TodoWrite list as waves complete.
+
+**Branch and push.** Confirm the development branch from the task instructions or create it if missing. Push only after all waves are complete and verified, using `git push -u origin <branch>`. Never force-push.
+
+**Closeout.** Personally verify that all sprint objectives have been completed. Check Sprint boxes and mark milestones complete. Do not erase or overwrite SPRINT.md, just mark items completed.
+
+**Output discipline.** Brief status updates between waves: what shipped, what's next. Don't narrate subagent internals — summarize their results in one or two sentences each.
