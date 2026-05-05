@@ -1,3 +1,16 @@
+---
+step_id: prose_pass
+review_required: true
+inputs:
+  - <chapter-folder>/drafts/<latest-attempt>/draft-compliance.md
+  - <chapter-folder>/storyboards/*-storyboard.md
+  - agents/voice.md
+outputs:
+  - <chapter-folder>/drafts/<latest-attempt>/prose-pass.md
+---
+
+See `agents/orchestrator.md` for the step workflow contract.
+
 # Prose Pass
 
 ## Purpose
@@ -16,20 +29,21 @@ It does three things:
 
 This pass should be **selective**. It does not try to perfect every line. It identifies the places where prose is actively costing the chapter clarity, force, or pleasure.
 
+This step produces a report only. The `KEEP / TIGHTEN / FLATTEN / REWRITE` recommendations it emits are advisory — the step does **not** write to the prose. The human applies fixes manually to the chapter draft before `metaphor_identify` runs.
+
 ---
 
 ## Inputs
 
-- chapter draft
-- storyboards
-- voice.md
-- optional outputs from other passes
+- `<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md` — the latest prose, post-compliance fixes. This is the text the pass reviews.
+- `<chapter-folder>/storyboards/*-storyboard.md` — the chapter's storyboard blocks, used to judge whether the prose is serving the scene as designed.
+- `agents/voice.md` — the project's voice file (overridable by the consuming project's local AGENTS.md). Used to judge POV and voice consistency.
 
 ---
 
 ## Output
 
-Write a report in markdown.
+Write a report in markdown to `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md`.
 
 For each issue:
 - quote the line or short passage
@@ -45,6 +59,7 @@ Do **not** rewrite the whole chapter.
 Do **not** produce line edits for every issue.
 Do **not** praise at length.
 Do **not** fix spelling, punctuation, or grammar unless they materially affect rhythm or clarity.
+Do **not** modify the prose file. The recommendations are advisory; the human applies fixes manually before `metaphor_identify` runs.
 
 End with:
 - `Top priorities`
@@ -53,7 +68,9 @@ End with:
 
 ---
 
-## Review stance
+## Behavior
+
+### Review stance
 
 You are not here to reward sentences for sounding literary.
 You are here to judge whether the prose is helping the scene.
@@ -70,9 +87,9 @@ Be skeptical of prose that sounds impressive on first read but becomes fuzzy, in
 
 ---
 
-## What to look for
+### What to look for
 
-### 1. Concrete detail
+#### 1. Concrete detail
 
 Flag passages where the prose becomes abstract when the scene needs something visible, audible, tactile, spatial, or bodily specific.
 
@@ -94,7 +111,7 @@ Use `FLATTEN` when the prose is trying to sound meaningful without showing anyth
 
 ---
 
-### 2. Figurative language
+#### 2. Figurative language
 
 Flag figurative language only when it is causing real trouble.
 
@@ -126,7 +143,7 @@ Use `REWRITE` for imagery that is broken, misleading, or tonally damaging.
 
 ---
 
-### 3. Rhythm and sentence movement
+#### 3. Rhythm and sentence movement
 
 Flag local prose that is monotonous, clogged, shapeless, or mismatched to scene energy.
 
@@ -151,7 +168,7 @@ Use `FLATTEN` when flourish is obscuring motion.
 
 ---
 
-### 4. POV and voice consistency
+#### 4. POV and voice consistency
 
 Flag prose that does not feel like this character, this narrator, or this book.
 
@@ -173,7 +190,7 @@ Use `KEEP` when the prose feels inseparable from the POV.
 
 ---
 
-### 5. Density and clustering
+#### 5. Density and clustering
 
 Do not judge lines only in isolation.
 Sometimes a fine sentence becomes a problem because of its neighbors.
@@ -195,7 +212,7 @@ A chapter does not need every paragraph to shimmer.
 
 ---
 
-## What not to do
+### What not to do
 
 - Do not nitpick every sentence.
 - Do not require all prose to be plain.
@@ -208,32 +225,32 @@ A chapter does not need every paragraph to shimmer.
 
 ---
 
-## Severity guide
+### Severity guide
 
-### KEEP
+#### KEEP
 The line is doing its job well. It may be vivid, restrained, lyrical, or plain. Leave it alone.
 
-### TIGHTEN
+#### TIGHTEN
 The line is basically sound but needs more precision, cleaner rhythm, or less drag.
 
-### FLATTEN
+#### FLATTEN
 The prose is trying too hard, drawing attention away from the scene, or adding decorative language without enough payoff. A simpler line would likely work better.
 
-### REWRITE
+#### REWRITE
 The line is actively failing: broken image, wrong tone, generic abstraction, voice break, or rhythm that damages readability.
 
 ---
 
-## Output format
+### Output format
 
-### Top priorities
+#### Top priorities
 List the 5 to 10 highest-value prose problems in the chapter.
 
-### Findings
+#### Findings
 
 For each finding, use this template:
 
-#### [short label]
+##### [short label]
 - Quote: "..."
 - Problem: ...
 - Why it matters: ...
@@ -243,17 +260,17 @@ Keep explanations brief and concrete.
 
 ---
 
-## Chapter-level diagnosis
+### Chapter-level diagnosis
 
 Conclude with short sections:
 
-### What the prose is already doing well
+#### What the prose is already doing well
 Name genuine strengths.
 
-### Repeated failure modes
+#### Repeated failure modes
 List patterns, not isolated lines.
 
-### Best revision strategy
+#### Best revision strategy
 Choose one or two:
 - sharpen concrete detail
 - reduce abstraction
@@ -262,12 +279,12 @@ Choose one or two:
 - improve sentence variation
 - restore POV-specific diction
 
-### Lines worth preserving
+#### Lines worth preserving
 Quote a few lines or moments that feel alive and should guide revision.
 
 ---
 
-## Prioritization rules
+### Prioritization rules
 
 When in doubt, prioritize:
 1. broken imagery
@@ -280,7 +297,7 @@ Ignore minor imperfections unless they are part of a pattern.
 
 ---
 
-## Decision rule
+### Decision rule
 
 The goal is not "beautiful prose everywhere."
 The goal is prose that makes the chapter vivid, coherent, and pleasurable to read.
@@ -288,3 +305,13 @@ The goal is prose that makes the chapter vivid, coherent, and pleasurable to rea
 A plain sentence that lands is better than a fancy sentence that wobbles.
 A strong lyrical sentence is worth keeping when it truly belongs.
 Be selective, concrete, and unsentimental.
+
+---
+
+## Outputs
+
+- `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md` — the advisory report described above. Contains `Top priorities`, per-finding entries using the Findings template, a `Chapter-level diagnosis` section (with `What the prose is already doing well`, `Repeated failure modes`, `Best revision strategy`), and `Lines worth preserving`. The step does not modify the prose file; the human applies fixes manually before `metaphor_identify` runs.
+
+## Open questions handling
+
+If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.

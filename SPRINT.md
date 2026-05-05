@@ -45,7 +45,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ## Tasks
 
-### Task 1 — `storyboarding` step [ ]
+### Task 1 — `storyboarding` step [x]
 
 **Goal.** Move `agents/storyboarding.md` to `agents/steps/storyboarding.md` as a contract-conforming step.
 
@@ -63,7 +63,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ---
 
-### Task 2 — `drafting` step (replaces both legacy drafting files) [ ]
+### Task 2 — `drafting` step (replaces both legacy drafting files) [x]
 
 **Goal.** Collapse `agents/agentic-drafting.md` and `agents/drafting.md` into a single contract-conforming step at `agents/steps/drafting.md`. The chapter coordinator that dispatches per-scene subagents *is* the drafting step.
 
@@ -83,7 +83,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ---
 
-### Task 3 — `compliance_report` step [ ]
+### Task 3 — `compliance_report` step [x]
 
 **Goal.** Split `agents/compliance.md` Phase 1 into its own step at `agents/steps/compliance-report.md`.
 
@@ -101,7 +101,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ---
 
-### Task 4 — `compliance_fix` step [ ]
+### Task 4 — `compliance_fix` step [x]
 
 **Goal.** Split `agents/compliance.md` Phase 2 into its own step at `agents/steps/compliance-fix.md`.
 
@@ -120,7 +120,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ---
 
-### Task 5 — `prose_pass` step [ ]
+### Task 5 — `prose_pass` step [x]
 
 **Goal.** Move `agents/prose-pass.md` to `agents/steps/prose-pass.md` as a contract-conforming step. This step produces a report only — it does not modify prose.
 
@@ -138,7 +138,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ---
 
-### Task 6 — `metaphor_identify` step [ ]
+### Task 6 — `metaphor_identify` step [x]
 
 **Goal.** Move `agents/metaphor/metaphor-identify.md` to `agents/steps/metaphor-identify.md` as a contract-conforming step.
 
@@ -155,7 +155,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ---
 
-### Task 7 — `metaphor_fix` step (subagent coordinator) [ ]
+### Task 7 — `metaphor_fix` step (subagent coordinator) [x]
 
 **Goal.** Create a single new step at `agents/steps/metaphor-fix.md` that consolidates flatten / replace / workshop logic. The step body is a coordinator that dispatches one subagent per annotated entry in parallel, then assembles the appended variants back into `metaphors.md`.
 
@@ -185,7 +185,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ---
 
-### Task 8 — `metaphor_apply` step [ ]
+### Task 8 — `metaphor_apply` step [x]
 
 **Goal.** Move `agents/metaphor/metaphor-apply.md` to `agents/steps/metaphor-apply.md` as a contract-conforming step.
 
@@ -203,7 +203,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ---
 
-### Task 9 — `line_pass` step [ ]
+### Task 9 — `line_pass` step [x]
 
 **Goal.** Move `agents/line-pass.md` to `agents/steps/line-pass.md` as a contract-conforming step.
 
@@ -221,7 +221,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ---
 
-### Task 10 — `anti_ai` step [ ]
+### Task 10 — `anti_ai` step [x]
 
 **Goal.** Move `agents/anti-ai.md` to `agents/steps/anti-ai.md` as a contract-conforming step.
 
@@ -239,7 +239,7 @@ These choices are locked at the start of the Sprint so individual tasks don't re
 
 ---
 
-### Task 11 — Sprint wrap-up: AGENTS.md, cleanup, verification [ ]
+### Task 11 — Sprint wrap-up: AGENTS.md, cleanup, verification [x]
 
 **Goal.** After Tasks 1–10 land, update `AGENTS.md` to reflect the new layout, remove now-empty directories and stale cross-references, and verify the Sprint's Definition of done holds.
 

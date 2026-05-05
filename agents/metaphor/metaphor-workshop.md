@@ -1,6 +1,8 @@
 # Metaphor Workshop
 
-Generates replacement candidates for WORKSHOP-marked entries where the human has not supplied a target image. Works one entry per session. Appends candidates to the working file and stops for human selection. Does not write to the draft.
+> This file is a subagent prompt contract used by the `metaphor_fix` step (`agents/steps/metaphor-fix.md`). It is not a top-level workflow. The `metaphor_fix` coordinator dispatches one subagent against this contract for each `WORKSHOP`-annotated entry in the working metaphors file.
+
+Generates replacement candidates for a single WORKSHOP-marked entry where the human has not supplied a target image. Appends candidates to the working file and stops for human selection. Does not write to the draft. Integration of the selected candidate happens later, in `metaphor_apply`.
 
 ---
 
@@ -17,11 +19,11 @@ Workshop goes back to primary sources because candidate generation depends on co
 
 ## Output
 
-All output is appended directly below the WORKSHOP entry in `xx-yy-metaphors.md`. Nothing is written to the draft at any stage.
+All output is appended directly below the WORKSHOP entry in `xx-yy-metaphors.md`. Nothing is written to the draft at any stage. Candidates are bare sentences, not paragraph-integrated rewrites; integration of the selected candidate is `metaphor_apply`'s job.
 
 ---
 
-## Phase 1: Candidate Generation
+## Candidate Generation
 
 ### Before generating candidates
 
@@ -103,35 +105,7 @@ Do not recommend a candidate. Do not signal preference.
 
 ### Stop.
 
-After candidates are appended, stop. Do not proceed to Phase 2 without human selection.
-
----
-
-## Phase 2: Integration
-
-The human will respond with one of:
-
-- A letter (selecting a candidate)
-- A modified version of a candidate
-- A rejection with feedback
-
-**If a candidate is selected or a modified version supplied:**
-
-Treat the selected or modified sentence as the target image and proceed as `metaphor-replace.md`. Produce three integration versions (minimal, balanced, fuller) embedded in the paragraph. Append them below the candidates:
-
-```markdown
-### Integration Options
-- **Selected:** "[chosen candidate]"
-- **Version A (minimal):** "[paragraph with rewritten sentence]"
-- **Version B (balanced):** "[paragraph with rewritten sentence]"
-- **Version C (fuller):** "[paragraph with rewritten sentence]"
-```
-
-Stop. Do not select a version. The human deletes the versions not wanted and leaves one.
-
-**If all candidates are rejected:**
-
-Ask what the candidates got wrong — uninvited properties that appeared, borrowed property that was missing, or direction to move in. Generate a second round of 8 candidates adjusted for that feedback, appended below the first round. Stop again.
+After candidates are appended, stop. Do not write integration versions, do not select among candidates, and do not write to the draft. Human selection happens after `metaphor_fix` exits; integration of the selected candidate happens in `metaphor_apply`.
 
 ---
 
@@ -151,10 +125,8 @@ Ask what the candidates got wrong — uninvited properties that appeared, borrow
 
 **Signaling a preferred candidate.** Present all candidates neutrally.
 
-**Proceeding to integration before selection.** Phase 1 ends when candidates are appended. Do not write integration versions until the human has chosen.
+**Producing integration versions.** This subagent generates candidates only. Integration of the selected candidate into its paragraph is `metaphor_apply`'s job. Stop after candidates are appended.
 
 **Generating candidates that all use the same vehicle class.** Force variety across groups and within them.
 
 **Ignoring the chapter's image vocabulary.** Anchor Group 2 candidates to families already present in the chapter.
-
-**Treating rejection as failure.** A second round is normal. Use the feedback to narrow, not to restate.

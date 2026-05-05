@@ -38,7 +38,7 @@ scene lists will also include links to every reference file that should be consi
 ### `xx-yy-zzz-storyboard.md`
 A sequence of independently draftable blocks.
 
-Each block follows the schema defined in `storyboard-schema.md`. The prose generation workflow — how blocks are produced from the scene list and how prose is generated from a single block — is defined in `drafting.md`.
+Each block follows the schema defined in `storyboard-schema.md`. The prose generation workflow — how blocks are produced from the scene list and how prose is generated from a single block — is defined in `steps/drafting.md`.
 
 ### `draft.md`
 Actual prose.

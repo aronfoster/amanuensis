@@ -1,31 +1,31 @@
-# Metaphor Check
-
-Reviews drafted prose for figurative comparisons. Reports findings for human evaluation. Does not fix.
-
 ---
+step_id: metaphor_identify
+review_required: true
+inputs:
+  - <chapter-folder>/drafts/<latest-attempt>/draft-compliance.md
+  - <chapter-folder>/storyboards/*-storyboard.md
+outputs:
+  - <chapter-folder>/drafts/<latest-attempt>/metaphors.md
+---
+
+See `agents/orchestrator.md` for the step workflow contract.
+
+# Metaphor Identify
+
+## Purpose
+
+Reviews drafted prose for figurative comparisons. Reports findings for human evaluation. Does not fix. The step produces a working file the human annotates before `metaphor_fix` dispatches subagents to generate variants.
 
 ## Inputs
 
-- The drafted prose (`xx-yy-draft.md`)
-- The storyboard blocks for the chapter (`xx-yy-zzz-storyboard.md`) — for emotional register and scene intent only; do not treat storyboard fields as specifications to diff against
+- `<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md` — the latest prose, post-compliance fix.
+- `<chapter-folder>/storyboards/*-storyboard.md` — the storyboard blocks for the chapter, used for emotional register and scene intent only; do not treat storyboard fields as specifications to diff against.
 
 Do not read canon files, the scene list, or any other file.
 
----
+## Behavior
 
-## Output
-
-`xx-yy-metaphors.md` in the chapter folder. One file per chapter; append across scenes with a scene header.
-
-Begin each scene's section with:
-
-```markdown
-## Metaphor Report — Scene xx-yy
-```
-
----
-
-## What to collect
+### What to collect
 
 Collect every simile and live metaphor in the prose. A **live metaphor** is a comparison the prose is actively deploying — one where the vehicle is doing work on the tenor in this sentence, in this scene.
 
@@ -33,9 +33,13 @@ Collect every simile and live metaphor in the prose. A **live metaphor** is a co
 
 **If unsure whether a metaphor is dead or live, report it.** The cost of a false positive is low. The cost of missing a broken live metaphor is not.
 
----
+### Format
 
-## Format
+Begin each scene's section with:
+
+```markdown
+## Metaphor Report — Scene xx-yy
+```
 
 For each figure collected, produce one entry:
 
@@ -63,9 +67,7 @@ Do not editorialize in `Register fit` or `Implication`. State what the metaphor 
 
 Leave the `Human Assessment` line empty. It will be completed by the human reviewer.
 
----
-
-## At the end of each scene
+### At the end of each scene
 
 Append a summary:
 
@@ -80,9 +82,7 @@ Append a summary:
 
 No pattern-level commentary. The summary is a count.
 
----
-
-## Anti-Patterns
+### Anti-Patterns
 
 **Reporting dead metaphors.** Conventional idioms are not figures. Skip them unless genuinely unsure.
 
@@ -93,3 +93,11 @@ No pattern-level commentary. The summary is a count.
 **Consulting the storyboard as a spec.** The storyboard tells you what the scene was supposed to feel like. Use it to calibrate register fit. Do not treat it as a checklist to diff against — that is compliance's job.
 
 **Skipping a figure because it seems intentional.** Intentionality is not the test. A broken metaphor the author chose deliberately is still broken. Report it; the human decides.
+
+## Outputs
+
+- `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — one file per chapter; append across scenes with a scene header. Each scene section contains one entry per figure (in the format above) and a per-scene summary count. The file is a working artifact the human will annotate before `metaphor_fix` runs.
+
+## Open questions handling
+
+If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
