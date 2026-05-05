@@ -8,7 +8,7 @@ The Sprint is complete when:
 
 1. Every Milestone 3 task in `ROADMAP.md` (15, 16, 17) is checked.
 2. `agents/steps/character-extraction.md` and `agents/steps/scene-generation.md` exist with valid YAML frontmatter (`step_id`, `review_required`, `inputs`, `outputs`) and a body conforming to the step contract in `agents/orchestrator.md`.
-3. `templates/profile.md` exists as a stub file ready for the human to paste finalized contents into via the GitHub web UI.
+3. ~~`templates/profile.md` exists.~~
 4. `AGENTS.md` clearly frames this repository as Amanuensis tooling consumed as a submodule by story projects. Agents reading it understand they are maintaining tooling, not writing fiction. Story-author-facing instructions are explicitly delegated to each consuming project's local `AGENTS.md` (built from `templates/project-AGENTS.md`).
 5. Cross-references in `agents/workflows.md` and any other support doc that mentions these two new steps point at the new `agents/steps/` paths.
 6. `git grep "agents/character-extraction\|agents/scene-generation"` returns nothing in tracked text outside of historical commit messages — i.e., nobody references the legacy roadmap path.
@@ -105,7 +105,7 @@ Importance values are fixed at three levels: `critical` (pipeline cannot proceed
 
 ---
 
-### Task 3 — `templates/profile.md` stub
+### ~~Task 3 — `templates/profile.md` stub~~ Done
 
 **Goal.** Create the file `templates/profile.md` as an empty placeholder. The human will paste contents from a separate project via the GitHub web UI; this Sprint just makes the file exist so Task 1 can reference it.
 
