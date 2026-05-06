@@ -67,6 +67,9 @@ Add Amanuensis as a submodule from the consuming project root:
 
 ```sh
 git submodule add git@github.com:aronfoster/amanuensis.git amanuensis
+git add .gitmodules amanuensis
+git commit -m "Add Amanuensis as submodule"
+git push
 ```
 
 The local `AGENTS.md` should tell agents where the story files live and point them to `amanuensis/agents/` for reusable workflows. See `templates/project-AGENTS.md`.
