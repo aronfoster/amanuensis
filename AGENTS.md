@@ -55,7 +55,8 @@ This is the catalog of step files this repo *provides to* consuming projects, no
 - `agents/steps/metaphor-fix.md` — coordinator step that dispatches one subagent per annotated entry in parallel (FLATTEN / REPLACE / WORKSHOP) and reassembles their variants into `metaphors.md`.
 - `agents/steps/metaphor-apply.md` — applies the human-selected variant to the prose, producing `draft-metaphor.md`.
 - `agents/steps/line-pass.md` — chunked line-level voice and rhythm pass, producing `draft-line.md`.
-- `agents/steps/anti-ai.md` — final pass that scans `draft-line.md` for AI-flavored patterns and writes a per-scene report.
+- `agents/steps/anti-ai-report.md` — scans the line-pass output for AI-pattern flags across nine categories plus a flagged-words list, producing the annotated `anti-ai.md` report.
+- `agents/steps/anti-ai-fix.md` — applies the human-annotated fixes from `anti-ai.md` to the line-pass draft, producing `draft-anti-ai.md` (the final manuscript output).
 
 ## Support documents
 
