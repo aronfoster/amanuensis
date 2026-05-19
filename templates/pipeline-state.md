@@ -1,6 +1,6 @@
 ---
 project_type: short_story
-last_updated: 2026-05-04T14:32:18-06:00
+last_updated: 2026-05-18T14:16:18-06:00
 ---
 
 # Pipeline State
@@ -22,4 +22,5 @@ To redo a step, move the `[>]` marker up to that step and change downstream `[x]
 - [ ] metaphor_fix
 - [ ] metaphor_apply
 - [ ] line_pass
-- [ ] anti_ai
+- [ ] anti_ai_report
+- [ ] anti_ai_fix
