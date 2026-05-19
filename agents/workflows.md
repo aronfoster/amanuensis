@@ -72,9 +72,9 @@ Review the drafted prose and fix any deviations from storyboard requirements (es
 
 For projects on the orchestrator, this file is produced by [`steps/metaphor-identify.md`](steps/metaphor-identify.md).
 
-## Workflow: Anti-AI update
+## Workflow: Anti-AI pass
 
-* Remove em-dashes and famously AI words, figures of speech, turns of phrase.
+Scan the line-pass output for AI-pattern flags and apply the human-annotated fixes. See [`steps/anti-ai-report.md`](steps/anti-ai-report.md) for the report phase (categories include em dashes, negative parallelism, significance inflation, copula avoidance, superficial -ing analysis, transition openers, synonym cycling, cadence tics, animacy projection, plus a flagged-words list) and [`steps/anti-ai-fix.md`](steps/anti-ai-fix.md) for the apply phase. The report supports both per-entry annotations (`FIX`/`SKIP`/`ESCALATE`) and per-category bulk headers; em dashes are typically handled in bulk.
 
 ## Workflow: post-chapter update
 
