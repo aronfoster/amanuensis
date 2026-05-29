@@ -1,6 +1,6 @@
 # Initial Voice Profile
 
-This is a reusable seed profile copied from an existing project. Treat project-specific names as placeholders until Amanuensis has a proper selectable voice library.
+This is a starter voice profile. Copy it to your consuming project's root as `voice.md` and rewrite it for your project — the pipeline's voice-consuming steps (drafting, prose pass, line pass, metaphor workshop) read the project-root `voice.md`, not this template. `install.sh` copies this file to the project root on first install. Treat the project-specific names below as placeholders.
 
 ## The job of the prose
 

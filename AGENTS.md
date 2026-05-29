@@ -32,6 +32,7 @@ Amanuensis is an orchestrator-driven pipeline for long-form writing. Each projec
 - `templates/pipeline-state.md` — template state file.
 - `templates/amanuensis-project.yaml` — project-level config template.
 - `templates/project-AGENTS.md` — adapter template for consuming repositories.
+- `templates/voice.md` — starter voice profile that a consuming project copies to its project-root `voice.md`. The voice-consuming steps read the project-root `voice.md`, not this template; this repo holds only the starter.
 - `install.sh` — copies the dispatcher files into a consuming project's `.claude/commands/` and `.opencode/agents/` folders.
 - `templates/dispatcher/.claude/commands/next-step.md` — Claude Code slash command implementing the dispatcher.
 - `templates/dispatcher/.opencode/agents/next-step.md` — OpenCode agent implementing the dispatcher at parity with the Claude Code version.
@@ -69,7 +70,7 @@ This is the catalog of support files this repo *provides to* consuming projects;
 - `agents/chapters.md` — rules for chapter workflow files.
 - `agents/characters.md` — rules for character profiles, knowledge state, timelines, and relationships.
 - `agents/storyboard-schema.md` — schema for storyboard blocks.
-- `agents/voice.md` — voice file consumed by drafting, prose pass, line pass, and metaphor workshop.
+- The voice file consumed by drafting, prose pass, line pass, and metaphor workshop is **not** kept here. It lives at the consuming project's root as `voice.md` (overridable by a path named in the project's top-level `AGENTS.md`). This repo ships only the starter at `templates/voice.md`.
 - `agents/meta.md` — meta notes about the agent guide.
 - `agents/metaphor/` — subagent prompt contracts (`metaphor-flatten.md`, `metaphor-replace.md`, `metaphor-workshop.md`) and `README.md` describing the consolidated pipeline. These are dispatched by `agents/steps/metaphor-fix.md`, not by the orchestrator.
 

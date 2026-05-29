@@ -5,7 +5,7 @@ inputs:
   - <chapter-folder>/drafts/<latest-attempt>/metaphors.md
   - <chapter-folder>/drafts/<latest-attempt>/draft-compliance.md
   - <chapter-folder>/storyboards/*-storyboard.md
-  - agents/voice.md
+  - voice.md
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/metaphors.md
 ---
@@ -23,7 +23,7 @@ Coordinator step that turns the human-annotated `metaphors.md` working file into
 - **`<chapter-folder>/drafts/<latest-attempt>/metaphors.md`** — the human-reviewed working file produced by `metaphor_identify` and annotated by the human. Each entry the human wants acted on carries an action word (`FLATTEN`, `REPLACE: [target image]`, or `WORKSHOP`) below the flag line and may carry inline corrections to identify fields. Entries the human accepted as-is have no action word; entries the human rejected have been deleted from the file.
 - **`<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md`** — the latest prose. The coordinator extracts the surrounding paragraph for each annotated entry's flagged sentence and passes only that paragraph to the subagent. Subagents do not receive the full draft.
 - **`<chapter-folder>/storyboards/*-storyboard.md`** — passed to `WORKSHOP` subagents only. The coordinator selects the storyboard block for the entry's beat and passes that single block to the workshop subagent. Not passed to flatten or replace subagents.
-- **`agents/voice.md`** — the voice file. The consuming project may override this by pointing at a project-local voice file in its top-level `AGENTS.md`; the coordinator passes whichever path is in effect. Passed to `WORKSHOP` subagents only. Not passed to flatten or replace subagents.
+- **`voice.md`** — the project-root voice file (a sibling of `pipeline-state.md`, not the copy inside the `amanuensis/` submodule). A project may override the location by pointing at a different voice file in its top-level `AGENTS.md`; the coordinator passes whichever path is in effect. Passed to `WORKSHOP` subagents only. Not passed to flatten or replace subagents. If a `WORKSHOP` entry needs the voice file and none can be found, see Open questions handling.
 
 ## Behavior
 
@@ -65,4 +65,4 @@ The coordinator waits for all subagents to finish appending their variants and t
 
 If `metaphors.md` is missing, append a blocker to the project-root `open-questions.md` and exit without advancing the pipeline marker. If `metaphors.md` exists but contains no annotated entries (every entry was either accepted as-is or deleted), append a blocker to `open-questions.md` noting that `metaphor_fix` was invoked with nothing to do — either the human intended to advance directly to `metaphor_apply` (move the marker) or annotation is incomplete — and exit without advancing.
 
-For other ambiguous or missing inputs (the draft is missing, a workshop entry's storyboard cannot be located, etc.), append the blocker to `open-questions.md` and exit without advancing. Do not fabricate inputs and do not write partial variants. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+For other ambiguous or missing inputs (the draft is missing, a workshop entry's storyboard cannot be located, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) is needed by a `WORKSHOP` entry but does not exist, etc.), append the blocker to `open-questions.md` and exit without advancing. Do not fabricate inputs and do not write partial variants. The next dispatcher invocation will re-run this step after the human resolves the blocker.

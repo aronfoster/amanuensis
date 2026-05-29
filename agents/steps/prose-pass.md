@@ -4,7 +4,7 @@ review_required: true
 inputs:
   - <chapter-folder>/drafts/<latest-attempt>/draft-compliance.md
   - <chapter-folder>/storyboards/*-storyboard.md
-  - agents/voice.md
+  - voice.md
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/prose-pass.md
 ---
@@ -37,7 +37,7 @@ This step produces a report only. The `KEEP / TIGHTEN / FLATTEN / REWRITE` recom
 
 - `<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md` — the latest prose, post-compliance fixes. This is the text the pass reviews.
 - `<chapter-folder>/storyboards/*-storyboard.md` — the chapter's storyboard blocks, used to judge whether the prose is serving the scene as designed.
-- `agents/voice.md` — the project's voice file (overridable by the consuming project's local AGENTS.md). Used to judge POV and voice consistency.
+- `voice.md` — the project-root voice file (a sibling of `pipeline-state.md`, not the copy inside the `amanuensis/` submodule; overridable by the path named in the consuming project's local AGENTS.md). Used to judge POV and voice consistency. If no voice file can be found, see Open questions handling.
 
 ---
 
@@ -314,4 +314,4 @@ Be selective, concrete, and unsentimental.
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+If the step cannot complete because of missing or ambiguous inputs — including a missing project-root `voice.md` (or the override named in the project's `AGENTS.md`) — append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.

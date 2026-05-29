@@ -13,6 +13,7 @@ Committed in this directory:
 - `amanuensis-project.yaml` — `project_type: short_story`.
 - `pipeline-state.md` — canonical step list with `[>]` on `character_extraction`, all others `[ ]`.
 - `plot/summary.md` — one-sentence story plan.
+- `voice.md` — project-root voice file (started from `templates/voice.md`); the voice-consuming steps read it here. Committed so `install.sh` skips it and the fixture stays a valid consuming project, even though the `character_extraction` smoke step does not read it.
 - `open-questions.md` — empty placeholder; step bodies append here when they block.
 - `README.md` — this file.
 - `.gitignore` — blocks accidental commits of the install artifacts and symlink listed below.
@@ -46,6 +47,7 @@ amanuensis-project.yaml
 open-questions.md
 pipeline-state.md
 plot/summary.md
+voice.md
 README.md
 .gitignore
 ```

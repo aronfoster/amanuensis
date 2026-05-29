@@ -3,7 +3,7 @@ step_id: drafting
 review_required: true
 inputs:
   - <chapter-folder>/storyboards/*-storyboard.md
-  - agents/voice.md
+  - voice.md
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/draft.md
   - <chapter-folder>/drafts/<latest-attempt>/scene01.md
@@ -24,7 +24,7 @@ Use this step only after the chapter's storyboard files are complete. This step 
 ## Inputs
 
 - **`<chapter-folder>/storyboards/*-storyboard.md`** — every storyboard file for the chapter being drafted. Each file represents one beat. Multiple beat files share a `scene_ref` value when they belong to the same scene; the coordinator groups by that value. Each file's frontmatter also carries `beat_index`, used to order beats within a scene.
-- **`agents/voice.md`** — the voice file. The consuming project may override this by pointing at a project-local voice file in its top-level `AGENTS.md`; the coordinator passes whichever path is in effect to every subagent. Subagents place the full contents of the voice file in their LLM system message so it can be cached.
+- **`voice.md`** — the project-root voice file. The coordinator reads `voice.md` from the consuming project's root (a sibling of `pipeline-state.md`), not from inside the `amanuensis/` submodule. A project may override the location by pointing at a different voice file in its top-level `AGENTS.md`; the coordinator passes whichever path is in effect to every subagent. Subagents place the full contents of the voice file in their LLM system message so it can be cached. If no voice file can be found, see Open questions handling.
 
 ## Behavior
 
@@ -164,4 +164,4 @@ This step does not include storyboarding, compliance review, continuity review, 
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs — for example, the chapter has no storyboard files, storyboards are missing `scene_ref` or `beat_index` frontmatter required to group and order them, or a subagent reports that its storyboard files do not contain enough to draft from — append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write a partial `draft.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker (typically by editing storyboards).
+If the step cannot complete because of missing or ambiguous inputs — for example, the chapter has no storyboard files, storyboards are missing `scene_ref` or `beat_index` frontmatter required to group and order them, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) does not exist, or a subagent reports that its storyboard files do not contain enough to draft from — append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write a partial `draft.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker (typically by editing storyboards).
