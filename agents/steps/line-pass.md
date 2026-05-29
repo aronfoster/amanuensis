@@ -4,7 +4,7 @@ review_required: true
 inputs:
   - <chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md
   - <chapter-folder>/drafts/<latest-attempt>/draft-line.md
-  - agents/voice.md
+  - voice.md
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/draft-line.md
 ---
@@ -23,7 +23,7 @@ This pass runs after the metaphor pipeline and before any final proofread. It do
 
 - `<chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md` — the prose after metaphor-apply has run; the source for unedited chunks and following-context windows.
 - `<chapter-folder>/drafts/<latest-attempt>/draft-line.md` — the in-progress output; the source for preceding-context windows once any chunk has been written. This file appears in both `inputs` and `outputs` because the step writes chunk-by-chunk and reads previously-finalized chunks back as preceding-context. The frontmatter records both roles explicitly; behavior is unchanged from the legacy doc.
-- `agents/voice.md` (or project-local override) — the selected voice file or profile, passed in full as the system message; calibration anchor for the whole pass.
+- `voice.md` — the project-root voice file (a sibling of `pipeline-state.md`, not the copy inside the `amanuensis/` submodule; overridable by the path named in the consuming project's top-level `AGENTS.md`), passed in full as the system message; calibration anchor for the whole pass. If no voice file can be found, see Open questions handling.
 
 Do not read the storyboard, canon files, character files, or the apply log from the metaphor step. Voice spec, the chunk, and the surrounding context windows are the entire input. If something needs more than that to fix, it is not a line-level problem.
 
@@ -179,4 +179,4 @@ The log records every chunk and every judgment call. Volume of edits is too high
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+If the step cannot complete because of missing or ambiguous inputs — including a missing project-root `voice.md` (or the override named in the project's `AGENTS.md`) — append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.

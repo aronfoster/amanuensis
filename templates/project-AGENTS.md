@@ -10,6 +10,7 @@ Use the reusable guidance in `amanuensis/agents/` for planning, drafting, and re
 - `characters/` — character profiles, timelines, relationships, and knowledge state
 - `locations/` — location references
 - `plot/` — book, chapter, storyboard, draft, and aftermath files
+- `voice.md` — project-root voice file read by drafting, prose pass, line pass, and metaphor workshop (start from `amanuensis/templates/voice.md`)
 - `amanuensis/` — reusable workflow tooling
 
 ## Where To Look
@@ -28,3 +29,5 @@ Use the reusable guidance in `amanuensis/agents/` for planning, drafting, and re
 ## Project Rules
 
 Add project-specific canon, voice, naming, or reveal-timing rules here. Keep story facts in the story repository, not in Amanuensis.
+
+The voice-consuming steps (drafting, prose pass, line pass, metaphor workshop) read `voice.md` at this project's root by default. To keep the voice file somewhere else, name its path here and the steps will use that path instead.

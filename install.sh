@@ -18,6 +18,7 @@
 #   templates/amanuensis-project.yaml -> <target>/amanuensis-project.yaml
 #   templates/pipeline-state.md       -> <target>/pipeline-state.md
 #   templates/project-AGENTS.md       -> <target>/AGENTS.md
+#   templates/voice.md                -> <target>/voice.md
 #   templates/dispatcher/.claude/settings.json
 #       -> <target>/.claude/settings.json
 #   (empty file)                      -> <target>/open-questions.md
@@ -67,10 +68,11 @@ src_settings=$script_dir/templates/dispatcher/.claude/settings.json
 src_project_yaml=$script_dir/templates/amanuensis-project.yaml
 src_pipeline_state=$script_dir/templates/pipeline-state.md
 src_agents=$script_dir/templates/project-AGENTS.md
+src_voice=$script_dir/templates/voice.md
 
 for src in "$src_claude" "$src_opencode" "$src_session_hook" \
            "$src_settings" "$src_project_yaml" \
-           "$src_pipeline_state" "$src_agents"; do
+           "$src_pipeline_state" "$src_agents" "$src_voice"; do
     if [ ! -f "$src" ]; then
         err "missing source file: $src"
         exit 1
@@ -103,6 +105,7 @@ dst_project_yaml=$target/amanuensis-project.yaml
 dst_pipeline_state=$target/pipeline-state.md
 dst_agents=$target/AGENTS.md
 dst_settings=$target/.claude/settings.json
+dst_voice=$target/voice.md
 dst_open_questions=$target/open-questions.md
 
 install_if_missing() {
@@ -120,6 +123,7 @@ install_if_missing "$src_project_yaml" "$dst_project_yaml"
 install_if_missing "$src_pipeline_state" "$dst_pipeline_state"
 install_if_missing "$src_agents" "$dst_agents"
 install_if_missing "$src_settings" "$dst_settings"
+install_if_missing "$src_voice" "$dst_voice"
 
 if [ -e "$dst_open_questions" ]; then
     printf '  skipped (exists): %s\n' "$dst_open_questions"

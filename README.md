@@ -57,6 +57,7 @@ story-project/
   amanuensis/      # git submodule
   .opencode/      # OpenCode runtime files synced from amanuensis/opencode/
   AGENTS.md       # project-local adapter
+  voice.md        # project voice file (started from amanuensis/templates/voice.md)
   canon/
   characters/
   locations/
