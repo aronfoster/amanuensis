@@ -1,209 +1,357 @@
-# Sprint 5 — Milestone 5: Dispatcher implementation
+# Sprint 6 — Milestone 1: Pipeline step-list consistency
 
-This Sprint delivers a runnable dispatcher for both Claude Code and OpenCode, an `install.sh` that places the dispatcher into a consuming project's host folders, and an end-to-end smoke test on a trivial `short_story` fixture committed to this repo. After this Sprint, a human can clone a consuming project, run `./amanuensis/install.sh`, type `/next-step` (or its OpenCode equivalent), and watch the pipeline state advance one step per invocation.
+This Sprint makes every step list in the repository agree with the actual step
+workflow files in `agents/steps/`, designates `templates/pipeline-state.md` as the
+single canonical source of the default step sequence, removes the duplicated
+enumeration from `agents/orchestrator.md`, and adds an executable consistency check
+guarded by CI in this repo. It also ships a portable version of that check to
+consuming projects: `install.sh` installs a CI workflow that validates the
+consuming project's own `pipeline-state.md` against the step files installed via the
+Amanuensis submodule.
+
+After this Sprint, a maintainer cannot merge a change that adds, removes, or
+renames a step workflow file without either updating the canonical list to match or
+failing CI; and a consuming project gets the same protection against a
+`pipeline-state.md` that references a step the installed Amanuensis version does not
+provide.
+
+## Background — what is and isn't wrong today
+
+Established by inspection during planning; tasks should not re-derive this:
+
+- `templates/pipeline-state.md` is **already correct**: its 13 steps
+  (`character_extraction` … `anti_ai_report`, `anti_ai_fix`) match the 13 files in
+  `agents/steps/` exactly. This file becomes the canonical source; it is not being
+  rewritten, only annotated and pointed-to.
+- `examples/smoke/pipeline-state.md:25` is **stale**: it ends with the monolithic
+  `anti_ai` instead of the `anti_ai_report` / `anti_ai_fix` split. This is the only
+  fixture edit M1.1 requires.
+- `agents/orchestrator.md:60-74` embeds the full step list as part of its "State
+  file format" example, ending with the same stale monolithic `anti_ai`. Removing
+  this enumeration (M1.2) eliminates that stale reference as a side effect, so it is
+  not separately patched.
+- No **other** file embeds an ordered or monolithic step list. `README.md` has only
+  prose; `agents/workflows.md` uses prose plus file links and already references
+  `anti-ai-report.md` / `anti-ai-fix.md` correctly; `templates/project-AGENTS.md`
+  carries an unordered partial catalog of step files with no `anti_ai` entry;
+  `examples/smoke/README.md` says "canonical step list" as a reference, not an
+  enumeration. M1.3 is therefore a **verification sweep**, not a set of edits —
+  fix anything a fresh grep turns up, but expect to find nothing.
 
 ## Definition of done
 
 The Sprint is complete when:
 
-1. ROADMAP.md tasks 20–23 (Milestone 5) are checked.
-2. `agents/orchestrator.md` documents the locked dispatcher behavior: same-session model, stop-and-ask on malformed state, marker advancement as the step body's final action, blocked-step path writes to `open-questions.md` and exits without advancing.
-3. `templates/dispatcher/.claude/commands/next-step.md` exists and is a working Claude Code slash command that implements the orchestrator's dispatcher behavior end-to-end.
-4. `templates/dispatcher/.opencode/agents/next-step.md` exists and is a working OpenCode agent definition that implements the same behavior at parity with the Claude Code version.
-5. `install.sh` exists at the repo root, is idempotent, copies both dispatcher files into a target project's `.claude/commands/` and `.opencode/agents/` folders, creates missing parents, and is invocable as `./amanuensis/install.sh` from a consuming project root.
-6. `examples/smoke/` contains a minimal `short_story` fixture (project config, pipeline state, empty story plan, `open-questions.md`) sufficient to exercise the dispatcher running `character_extraction`.
-7. The smoke-test recipe documented in `examples/smoke/README.md` runs cleanly: install dispatcher into the smoke project; first invocation runs `character_extraction` (or stops with a question if blocked); a second invocation advances the marker accordingly. The recipe describes both Claude Code and OpenCode invocations.
-8. `AGENTS.md` references the dispatcher source files and `install.sh` in its Core documents / setup section so a future agent can locate them without searching.
+1. ROADMAP.md tasks M1.1, M1.2, and M1.3 are checked.
+2. `examples/smoke/pipeline-state.md` lists `anti_ai_report` and `anti_ai_fix`
+   instead of `anti_ai`, and its step list matches `templates/pipeline-state.md`
+   exactly (same steps, same order).
+3. `agents/orchestrator.md` contains **no** enumerated step list. Its "State file
+   format" section points to `templates/pipeline-state.md` as the canonical example
+   of both the file format and the default step sequence, retaining only prose that
+   describes the frontmatter fields and the `[>]` / `[x]` / `[ ]` marker semantics.
+4. `templates/pipeline-state.md` carries a short note declaring it the canonical
+   default sequence and stating that its step set must match `agents/steps/`.
+5. `scripts/check-pipeline-state.sh` exists, is executable, is POSIX-sh-compatible,
+   and implements the two modes specified in Task 3. It exits non-zero with a clear,
+   path-naming message on any mismatch and zero on success.
+6. A CI workflow in this repo (`.github/workflows/`) runs the check on push and pull
+   request and would fail if the template, the smoke fixture, or the `agents/steps/`
+   set drifted out of agreement.
+7. `install.sh` installs a consumer-side CI workflow
+   (`templates/dispatcher/.github/workflows/pipeline-state-check.yml` →
+   `<project>/.github/workflows/pipeline-state-check.yml`) in addition to the two
+   dispatcher files, idempotently, creating `.github/workflows/` if missing. The
+   installed workflow invokes `amanuensis/scripts/check-pipeline-state.sh` in
+   resolvable mode against the consuming project's `pipeline-state.md`.
+8. A fresh grep confirms no other hard-coded step list remains
+   (`git grep -n "anti_ai\b" -- '*.md' '*.yaml' '*.sh'` returns nothing outside
+   ROADMAP/SPRINT planning prose).
+9. `AGENTS.md` lists the new script and the consumer workflow template in its Core
+   documents, and its Setup section notes that `install.sh` now also installs the
+   check workflow.
 
 ## Conventions adopted by this Sprint
 
-These choices are locked at the start of the Sprint so individual tasks don't rediscover them.
+Locked at the start so individual tasks don't rediscover them.
 
-**Hosts at parity.** Both Claude Code and OpenCode are first-class for MVP. The two dispatcher files have equivalent behavior; only host-specific frontmatter and invocation details differ. Neither host is a stub.
+**Canonical source.** `templates/pipeline-state.md` is the single source of the
+**default** step sequence. "Canonical list" everywhere in this Sprint means the
+ordered step list in that file. The ground truth for *which steps exist* is the set
+of files in `agents/steps/`; the canonical list must equal that set.
 
-**Dispatcher model: same-session.** The dispatcher *is* the step body. When the human invokes `/next-step` in a fresh host session, the dispatcher prompt reads `pipeline-state.md`, loads the resolved step workflow file, follows that file's body in the same session, then advances the marker before exiting. The dispatcher does not spawn a subagent for the step body. The "fresh agent invocation" guarantee is honored because the human invokes the dispatcher fresh, not by host-side context isolation.
+**Consuming projects may legitimately differ.** Per `agents/orchestrator.md`, a
+consuming project customizes its own `pipeline-state.md` (steps may be omitted or
+reordered per project or project type). Therefore the consumer-facing check is
+**resolvable-only** — every listed step must resolve to an installed step file — and
+is **never** exhaustive. Only this repo's own template and fixture are held to
+exhaustive, ordered agreement.
 
-**Marker advancement is the step body's final action.** The step body, on successful completion, edits `pipeline-state.md` itself: flips the current `[>]` to `[x]`, flips the next `[ ]` to `[>]`, updates `last_updated`. If the step exits early (blocked, error), the marker is not advanced and the next dispatcher invocation re-runs the same step. The dispatcher does not advance the marker on the step body's behalf; nor does the step body advance it speculatively before the work is done.
+**Two check modes.** The script supports:
+- *resolvable* (default): every `step_id` in a given `pipeline-state.md` resolves to
+  `<steps-dir>/<step-id-with-dashes>.md`. Used for consuming projects and for the
+  smoke fixture.
+- *exhaustive*: resolvable, **plus** every `<steps-dir>/*.md` basename appears in the
+  list (no step file omitted). Used for `templates/pipeline-state.md`.
 
-**Blocked-step path.** A step that cannot complete writes a question to the project-root `open-questions.md` and exits without advancing the marker. The human resolves the blocker by editing files; the next dispatcher invocation re-runs the same step.
+**Order vs set.** Membership is the rule against the step-files directory (the
+filesystem has no inherent order). Ordered equality is enforced only between the
+smoke fixture and the template (both are ordered lists in this repo).
 
-**Stop and ask on confusion.** If `pipeline-state.md` is missing, malformed, has no `[>]` marker, or the resolved step file does not exist on disk, the dispatcher stops and asks the human. It does not guess, does not invent state, does not advance anything. No automatic recovery.
+**step_id → file path.** `step_id` snake_case → dashes → `<steps-dir>/<…>.md`, the
+existing convention documented in `agents/orchestrator.md`. The script reuses it; it
+does not invent a new mapping.
 
-**Step-id → file path.** `step_id` snake_case is converted to dashes and resolves to `amanuensis/agents/steps/<step-id-with-dashes>.md`. This is already documented in `agents/orchestrator.md`; this Sprint treats it as an existing convention to be referenced consistently, not a new design decision.
+**Script style.** `scripts/check-pipeline-state.sh`, `#!/bin/sh`, no bashisms,
+executable, clear error messages that name the offending path, non-zero exit on
+failure — consistent with the existing `install.sh`.
 
-**Slash-command / agent name.** `next-step`. The Claude Code human types `/next-step`. The OpenCode equivalent is invoked under the same name.
+**Mirror destination paths for installable files.** The consumer CI workflow source
+lives at `templates/dispatcher/.github/workflows/pipeline-state-check.yml` and is
+copied verbatim to the same relative path under the consuming project root. This
+extends the Sprint-5 dispatcher convention (mirror source path == destination path)
+to a third installed file.
 
-**Source of truth: mirror destination paths.** Dispatcher source files live at:
-- `templates/dispatcher/.claude/commands/next-step.md`
-- `templates/dispatcher/.opencode/agents/next-step.md`
+**Revisiting the Sprint-5 minimal-install decision.** Sprint 5 locked "`install.sh`
+copies only the two dispatcher files" and "does not modify the consuming project's
+`.github`." This Sprint deliberately revises that: `install.sh` now also installs the
+namespaced check workflow into the consumer's `.github/workflows/`. The file name is
+Amanuensis-specific so it cannot clobber a consumer's unrelated workflows. No other
+Sprint-5 install behavior changes.
 
-The install script copies these verbatim into the target project at the same relative paths under the project root. Mirroring keeps the install step a near-trivial copy and makes the destination obvious from the source location.
+**Submodule checkout in the consumer workflow.** The shipped workflow checks out
+submodules (`actions/checkout` with `submodules: recursive`) so that
+`amanuensis/scripts/check-pipeline-state.sh` and `amanuensis/agents/steps/` are
+present when it runs. This is a hard requirement of the workflow, not optional.
 
-**Install script.** `install.sh` at the repo root, POSIX-sh-compatible, idempotent. Default target is the current working directory; the consuming-project flow is `cd <project-root> && ./amanuensis/install.sh`. Re-running refreshes the copies (overwrite). No symlink mode in MVP. No uninstall.
-
-**Smoke fixture lives in this repo.** `examples/smoke/` is a committed `short_story` project with the bare minimum to invoke `character_extraction`. The dispatcher files copied in by `install.sh` are *not* committed inside `examples/smoke/.claude/` or `examples/smoke/.opencode/` — running the install script is part of the smoke-test recipe and proves the script works.
-
-**Timezone.** `last_updated` uses whatever local timezone the host produces, with offset, in ISO 8601. Not normalized to UTC.
-
-**No re-run convenience.** Re-running a step is the human editing `pipeline-state.md` by hand, as already documented in `agents/orchestrator.md`. No `--redo` flag, no extra slash command.
-
-**No concurrency safety.** MVP does not address concurrent dispatcher invocations. Out of scope.
-
-**Idempotency, scope.** This Sprint adds files (dispatcher sources, install script, smoke fixture, README) and edits a small number of docs (`agents/orchestrator.md`, `AGENTS.md`, `ROADMAP.md`). No renames, no migrations, no changes to existing step workflow bodies.
+**Scope.** This Sprint adds files (the script, the internal CI workflow, the consumer
+workflow template) and edits a small number of existing files (`orchestrator.md`,
+`templates/pipeline-state.md`, `examples/smoke/pipeline-state.md`, `install.sh`,
+`AGENTS.md`, `ROADMAP.md`, and the smoke README). No step workflow bodies change. No
+renames of existing step files.
 
 ---
 
 ## Tasks
 
-### Task 1 — Lock dispatcher behavior in `agents/orchestrator.md` [x]
+### Task 1 — Fix the stale step in the smoke fixture [ ]
 
-**Goal.** Bring `agents/orchestrator.md` into alignment with the locked Conventions above so that the implementation tasks have a single authoritative spec to point at.
+**Goal.** Bring `examples/smoke/pipeline-state.md` into agreement with the canonical
+list (M1.1).
 
 **Requirements.**
 
-- The "Dispatcher behavior" section currently describes the dispatcher as if it advances the marker after the step body completes. Rewrite it to match the same-session, step-body-owns-the-advance model:
-  - Dispatcher reads `pipeline-state.md`, locates `[>]`.
-  - Resolves step file path via the existing `step_id` → dashes convention.
-  - Loads the step file and follows its body in the same session.
-  - The step body's last successful action is to edit `pipeline-state.md` (flip `[>]` to `[x]`, flip next `[ ]` to `[>]`, update `last_updated`).
-  - On block, the step writes to `open-questions.md` and exits without touching the marker.
-- Add an explicit "Failure modes" subsection listing the stop-and-ask conditions: missing or malformed `pipeline-state.md`, no `[>]` marker, resolved step file does not exist. The dispatcher surfaces the problem to the human and exits; it does not attempt recovery.
-- Resolve the existing `TODO: create centralized and organized location for questions to the human` by either (a) confirming `open-questions.md` at the project root is that location and removing the TODO, or (b) leaving the TODO with a note that this Sprint did not address it. Pick (a) unless there is a reason to defer.
-- The `TODO` about agents inventing missing canon (in the step workflow contract section) is **not** in scope for this Sprint. Leave it as-is.
-- The step_id → path mapping paragraph is already correct. Confirm it reads cleanly after the edits and that the dispatcher source files (Tasks 2 and 3) will be able to cite it verbatim.
-- Do not introduce a host-specific section. The orchestrator doc stays host-agnostic; host wiring lives in the dispatcher source files.
+- In `examples/smoke/pipeline-state.md`, replace the single `- [ ] anti_ai` line with
+  the two lines `- [ ] anti_ai_report` and `- [ ] anti_ai_fix`, in that order, so the
+  fixture's full step list matches `templates/pipeline-state.md` step-for-step and
+  order-for-order.
+- Do not change the marker position (`[>]` stays on `character_extraction`) or the
+  frontmatter beyond what an honest edit requires. Leave `last_updated` as-is unless
+  the developer chooses to refresh it; it is not load-bearing for this milestone.
+- Confirm `examples/smoke/README.md` still reads correctly afterward. Its line about a
+  "canonical step list with `[>]` on `character_extraction`" is a reference, not an
+  enumeration, and should need no change — verify, don't rewrite.
 
-**Done when.** `agents/orchestrator.md` reflects the locked Conventions with no contradictions, the failure-modes subsection exists, and the open-questions TODO is either resolved or explicitly deferred.
+**Done when.** `examples/smoke/pipeline-state.md` ends with `anti_ai_report` then
+`anti_ai_fix`, and a diff of its step list against `templates/pipeline-state.md`'s
+step list is empty.
 
 ---
 
-### Task 2 — Claude Code dispatcher [x]
+### Task 2 — Make `templates/pipeline-state.md` canonical; strip the orchestrator's list [ ]
 
-**Goal.** Author `templates/dispatcher/.claude/commands/next-step.md` as a working Claude Code slash command that implements the dispatcher behavior locked in Task 1.
+**Goal.** Single-source the default sequence (M1.2, documentation half): the template
+is canonical, and `agents/orchestrator.md` stops duplicating it.
 
 **Requirements.**
 
-- File path is exactly `templates/dispatcher/.claude/commands/next-step.md` so the install script's copy operation is structurally trivial.
-- File uses Claude Code's slash-command format (markdown, optional frontmatter as the host expects). The developer chooses the exact frontmatter; what matters is that typing `/next-step` in Claude Code from a project where this file has been installed at `.claude/commands/next-step.md` runs the dispatcher.
-- The body of the file must, at a minimum:
-  - Read `pipeline-state.md` from the project root, parse its frontmatter and the step list, locate the `[>]` line.
-  - Stop and ask the human on any of the failure-mode conditions from Task 1.
-  - Read `amanuensis-project.yaml` for `project_type` if path resolution requires it.
-  - Resolve the step workflow file at `amanuensis/agents/steps/<step-id-with-dashes>.md`. Stop and ask if missing.
-  - Load and follow that step file's body in the same session.
-  - Specify that the step body's final action is to edit `pipeline-state.md` (flip `[>]` to `[x]`, flip next `[ ]` to `[>]`, update `last_updated`) before exiting.
-  - On a blocked step, append to project-root `open-questions.md` and exit without touching the marker.
-- The file must point readers at `agents/orchestrator.md` for the canonical contract; it does not redefine the contract. Treat the dispatcher source as a thin host adapter over the orchestrator spec.
-- Keep the file short. The goal is a clear procedure the host can follow, not a re-derivation of orchestrator.md.
+- In `agents/orchestrator.md`, remove the enumerated step list from the "State file
+  format" section (currently the fenced example containing `- [>] character_extraction`
+  … `- [ ] anti_ai`). Per the locked decision, **remove the list entirely** — do not
+  leave an elided skeleton of real step_ids.
+  - Replace it with a pointer: `templates/pipeline-state.md` is the canonical example
+    of both the file format and the default step sequence.
+  - Retain (as prose, not as an enumeration) the description of the frontmatter fields
+    (`project_type`, `last_updated`) and the `[>]` / `[x]` / `[ ]` marker semantics,
+    plus the existing note that a project's list may be customized and the dispatcher
+    reads whatever list is present. None of that surrounding prose names specific
+    steps, so it stays.
+  - After the edit, `agents/orchestrator.md` must contain zero step_id enumerations.
+    The `step_id → path` mapping paragraph stays; it references the convention, not a
+    list.
+- In `templates/pipeline-state.md`, add a short note (a sentence or two, e.g. under
+  the `## Steps` heading or in a comment) stating that this file is the canonical
+  default step sequence and that its step set must match the files in
+  `amanuensis/agents/steps/`. Keep it brief; this is a signpost, not a spec.
+- Do not change the actual step lines in the template — they are already correct.
 
-**Done when.** The file exists at the specified path; invoking `/next-step` in a Claude Code session inside a project that has installed it advances the pipeline by one step (or stops cleanly per the failure modes). Verified during Task 5's smoke test, not during this task.
+**Done when.** `agents/orchestrator.md` enumerates no steps and points to the
+template as canonical; `templates/pipeline-state.md` declares itself canonical; the
+two files do not contradict each other.
 
 ---
 
-### Task 3 — OpenCode dispatcher [x]
+### Task 3 — Consistency-check script [ ]
 
-**Goal.** Author `templates/dispatcher/.opencode/agents/next-step.md` as a working OpenCode agent that implements the same dispatcher behavior at parity with Task 2.
+**Goal.** Provide the executable check that backs both the internal CI (Task 4) and
+the consumer workflow (Task 5). This is the M1.2 "add a check" deliverable.
 
 **Requirements.**
 
-- File path is exactly `templates/dispatcher/.opencode/agents/next-step.md`.
-- File uses OpenCode's agent definition format. Existing prior art under `opencode/agents/` (chapter-coordinator, scene-drafter) is the reference for frontmatter shape; match its style.
-- Behavior is identical to Task 2's Claude Code dispatcher. Same procedure, same stop-and-ask conditions, same hand-off to the resolved step file's body in the same session, same final-action contract for marker advancement.
-- Any host-specific differences (model selection, mode, tool grants) are the developer's call. They must not change the dispatcher's observable behavior.
-- The file must point readers at `agents/orchestrator.md` for the canonical contract; it does not redefine the contract.
-- Where the Claude Code and OpenCode dispatcher bodies overlap (the procedural steps), the wording should be substantially the same so a future maintainer reading both files sees them as parallel implementations of one spec.
+- Path: `scripts/check-pipeline-state.sh`, `#!/bin/sh`, executable, no bashisms,
+  error-loud and non-zero on failure — matching `install.sh`'s style.
+- Invocation (the developer chooses exact flag spelling; this is the required
+  behavior):
+  - `check-pipeline-state.sh <pipeline-state-file> <steps-dir>` — **resolvable** mode:
+    parse the `## Steps` list from `<pipeline-state-file>`, extract each `step_id`
+    (the snake_case token after the `- [ ]` / `- [>]` / `- [x]` marker), convert
+    snake → dashes, and assert `<steps-dir>/<step-id-with-dashes>.md` exists. Fail,
+    naming the offending `step_id` and the path it expected, if any does not.
+  - `check-pipeline-state.sh --exhaustive <pipeline-state-file> <steps-dir>` —
+    **exhaustive** mode: everything resolvable mode does, **plus** assert that every
+    `<steps-dir>/*.md` basename (dashes → snake) appears in the list. Fail, naming any
+    step file that is missing from the list.
+- Parsing contract: step lines are list items whose marker is `[ ]`, `[>]`, or `[x]`
+  followed by a single snake_case token. The `## Steps` heading delimits the block;
+  lines outside it are ignored. The developer may tighten this, but it must handle the
+  template and the smoke fixture as written.
+- On success, exit 0 and print a one-line confirmation naming the file checked and the
+  mode. On any failure, exit non-zero. Do not modify any file — this is read-only.
+- The script must be runnable both from the repo root and from a consuming project via
+  the submodule path (`amanuensis/scripts/check-pipeline-state.sh`). It must not assume
+  its own location relative to the target files — both paths are passed as arguments.
 
-**Done when.** The file exists at the specified path; invoking `next-step` in an OpenCode session inside a project that has installed it advances the pipeline by one step (or stops cleanly). Verified during Task 5's smoke test, not during this task.
+**Done when.** Running the script in exhaustive mode on `templates/pipeline-state.md`
+against `agents/steps/` exits 0; running resolvable mode on
+`examples/smoke/pipeline-state.md` against `agents/steps/` exits 0; temporarily
+introducing a bogus step line, or hiding a step file, makes the relevant mode exit
+non-zero with a message naming the discrepancy.
 
 ---
 
-### Task 4 — `install.sh` [x]
+### Task 4 — Internal CI workflow [ ]
 
-**Goal.** Write `install.sh` at the repo root that copies both dispatcher files into a consuming project's host folders, creating parent directories as needed, idempotent on re-run.
+**Goal.** Guard this repo against step-list drift on every push and pull request
+(M1.2 "add a check," CI half). Depends on Tasks 1–3.
 
 **Requirements.**
 
-- Path: `install.sh` at the repo root. Executable (`chmod +x`).
-- POSIX-sh-compatible (`#!/bin/sh`). Avoid bashisms unless there is a clear reason. The script will be run inside consuming projects with unknown shell environments.
-- Usage:
-  - `./amanuensis/install.sh` (no argument) installs into the current working directory.
-  - `./amanuensis/install.sh <target-dir>` installs into `<target-dir>`.
-  - The script resolves its own location to find the source files; it must work whether the user runs it from inside the Amanuensis repo, from inside a consuming project that has Amanuensis as a submodule, or via an absolute path.
-- Behavior:
-  - Locate `templates/dispatcher/.claude/commands/next-step.md` and `templates/dispatcher/.opencode/agents/next-step.md` relative to the script's own location.
-  - Create `<target>/.claude/commands/` and `<target>/.opencode/agents/` if missing.
-  - Copy each dispatcher file to its mirrored destination under `<target>`. Overwrite if present (idempotent refresh).
-  - Print a short summary of what was copied where.
-  - Exit non-zero on any error (missing source files, target dir not writable, etc.).
-- Error handling:
-  - If a source file is missing, fail loudly with an explicit message naming the missing path. Do not partially install.
-  - If `<target-dir>` does not exist, fail with a message; do not create the project root.
-- No flags beyond the optional positional `<target-dir>`. No `--symlink`, no `--dry-run`, no `--uninstall` for MVP.
-- The script does **not** install Amanuensis itself, set up git submodules, or modify the consuming project's `AGENTS.md`. It only copies the two dispatcher files.
+- Add a GitHub Actions workflow under `.github/workflows/` in this repo (name is the
+  developer's call, e.g. `pipeline-state-check.yml`). This repo has no existing CI;
+  this introduces it. Keep it minimal — a single job on `push` and `pull_request`.
+- The job must run, at minimum:
+  - `scripts/check-pipeline-state.sh --exhaustive templates/pipeline-state.md agents/steps`
+  - `scripts/check-pipeline-state.sh examples/smoke/pipeline-state.md agents/steps`
+    (resolvable; the fixture may in principle omit steps, though today it does not)
+  - An ordered-equality assertion between the smoke fixture's step list and the
+    template's step list (e.g. `diff` of the two extracted, ordered step-id
+    sequences). Fail if they differ. The extraction can reuse the script's parsing or
+    a small inline `grep`/`sed`; the developer decides, but the property — fixture
+    order == template order — must be enforced.
+- The workflow needs no secrets and no submodule checkout (everything it reads lives
+  in this repo). Use a stock `actions/checkout`.
+- A red run must be a real signal: verify locally that breaking any of the three
+  invariants (add/remove a step file without updating the template; desync the
+  fixture from the template; reorder the fixture) makes the job fail.
 
-**Done when.** Running `./install.sh /tmp/test-target` (with `/tmp/test-target` as an empty pre-existing directory) creates `/tmp/test-target/.claude/commands/next-step.md` and `/tmp/test-target/.opencode/agents/next-step.md` matching the source files byte-for-byte. Re-running the same command succeeds without error and leaves the destination unchanged. Running with a missing target fails with a clear message.
+**Done when.** The workflow exists, runs the three checks, and passes on the current
+(post-Task-1/2) tree; a deliberately introduced drift fails it.
 
 ---
 
-### Task 5 — Smoke fixture and end-to-end test [x]
+### Task 5 — Ship the consumer validator via `install.sh` [ ]
 
-**Goal.** Create `examples/smoke/` as a minimal committed `short_story` fixture and document the smoke-test recipe in `examples/smoke/README.md`. Run the recipe and confirm the dispatcher advances the marker as specified.
+**Goal.** Give consuming projects a rolldown path: a CI workflow, installed by
+`install.sh`, that validates their own `pipeline-state.md` against the step files in
+their installed Amanuensis submodule (M1.2 consumer-facing extension). Depends on
+Task 3.
 
 **Requirements.**
 
-- Create `examples/smoke/` with the minimum content required for the dispatcher to invoke `character_extraction`:
-  - `amanuensis-project.yaml` with `project_type: short_story`. Copy from `templates/amanuensis-project.yaml` and adjust as needed.
-  - `pipeline-state.md` with the canonical step list, `[>]` on `character_extraction`, all others `[ ]`. Copy from `templates/pipeline-state.md`.
-  - `plot/summary.md` — the project's story plan. May be near-empty (a single sentence is fine; the goal is to exercise the dispatcher's plumbing, not to produce real prose).
-  - `open-questions.md` — empty (or with a single placeholder header) at the project root.
-  - Any other directories the `short_story` layout in `agents/project-layouts.md` declares as required at `character_extraction` time. If the layout doc says they are created on demand, do not create them.
-- Do **not** commit `examples/smoke/.claude/` or `examples/smoke/.opencode/`. The dispatcher copies are produced by running `install.sh` as part of the smoke-test recipe; committing them would bypass the test.
-- Do **not** commit a copy of the `amanuensis/` submodule under `examples/smoke/`. The recipe instead documents how to run the dispatcher with this repo as the Amanuensis source. The simplest workable approach is fine — for example, running `install.sh` from this repo into `examples/smoke/`, then symlinking or expecting `examples/smoke/amanuensis` to point at the repo root during the test. The developer chooses; document what they chose.
-- Author `examples/smoke/README.md` describing:
-  - What the fixture is for (smoke-testing the dispatcher; not a real story).
-  - The recipe to run the test once for Claude Code, once for OpenCode. Include the exact commands the human types.
-  - The expected observable result: first invocation either runs `character_extraction` to completion and advances the marker to `scene_generation`, or stops with a question (if the trivial story plan is too thin for the step body to make progress). Both are acceptable outcomes for a smoke test; the goal is to confirm the dispatcher itself works, not to validate the step body.
-  - How to reset the fixture between runs (`git checkout examples/smoke/`).
-- Run the recipe. Confirm the dispatcher behaves as specified for both hosts. If `character_extraction` blocks on the trivial plan, that is acceptable as long as the block is the documented stop-and-ask path (writes to `open-questions.md`, marker not advanced).
-- If the smoke run surfaces a defect in Task 1, 2, 3, or 4, fix the underlying file. The smoke test is the integration check.
+- Author the consumer workflow source at
+  `templates/dispatcher/.github/workflows/pipeline-state-check.yml`, mirroring the
+  dispatcher source-path convention so the install copy is structurally trivial.
+  - The workflow runs on the consumer's `push` / `pull_request`.
+  - It checks out the consumer repo **with submodules** (`actions/checkout` with
+    `submodules: recursive`) so `amanuensis/` is populated.
+  - It invokes `sh amanuensis/scripts/check-pipeline-state.sh pipeline-state.md
+    amanuensis/agents/steps` (resolvable mode) against the consumer's project-root
+    `pipeline-state.md`. Resolvable, never exhaustive — the consumer's list may
+    legitimately be a subset or reordering.
+  - Keep it self-contained and host-agnostic; it is a plain GitHub Actions file the
+    consumer can edit after install.
+- Update `install.sh`:
+  - In addition to the two dispatcher files, copy
+    `templates/dispatcher/.github/workflows/pipeline-state-check.yml` to
+    `<target>/.github/workflows/pipeline-state-check.yml`, creating
+    `<target>/.github/workflows/` if missing.
+  - Keep the existing behavior intact: idempotent overwrite, fail loud and non-zero if
+    a source file is missing (now three source files, not two), do not create the
+    target project root, print a summary listing all copied files.
+  - Preserve POSIX-sh compatibility and the self-locating behavior already in the
+    script. The new copy is one more of the same operation, not a new mechanism.
+- Do not have `install.sh` run the check, modify the consumer's other workflows, or
+  touch anything beyond the three namespaced files. It installs; it does not execute.
 
-**Done when.** `examples/smoke/` is committed with the minimum fixture; `examples/smoke/README.md` documents the recipe; running the recipe end-to-end on both hosts produces the observable result the README predicts; and the smoke run does not require ad-hoc edits to the dispatcher source files or the install script.
+**Done when.** `./install.sh /tmp/test-target` (empty pre-existing dir) creates all
+three files including `/tmp/test-target/.github/workflows/pipeline-state-check.yml`
+matching the source byte-for-byte; re-running is a clean no-op-equivalent overwrite;
+a missing source file fails loudly; the installed workflow, read by eye, calls the
+submodule script in resolvable mode against the consumer's `pipeline-state.md`.
 
 ---
 
-### Task 6 — Sprint wrap-up: `AGENTS.md`, ROADMAP, verification [x]
+### Task 6 — Sweep, docs, ROADMAP, verification [ ]
 
-**Goal.** After Tasks 1–5 land, do residual cleanup and check the relevant boxes.
+**Goal.** Close M1.3, update the catalogs, and check the boxes. Depends on Tasks 1–5.
 
 **Requirements.**
 
-- Update `AGENTS.md`:
-  - Add the dispatcher source files (`templates/dispatcher/.claude/commands/next-step.md`, `templates/dispatcher/.opencode/agents/next-step.md`) and `install.sh` to the Core documents section, with a one-line description each.
-  - Add a one-paragraph "Setup" or "Installation" section pointing consuming-project authors at `install.sh`. State the one-line invocation and the prerequisite (Amanuensis must be present at `<project>/amanuensis/`, typically as a submodule).
-  - Confirm the rest of the file is still accurate. Do not rewrite sections that did not change.
-- Update `ROADMAP.md`:
-  - Check tasks 20, 21, 22, and 23 (Milestone 5) as complete.
-  - Verify that Milestone 4's tasks 18 and 19 are also checked. If they are not — Sprint 4's wrap-up was supposed to do this — check them now and note the fix in the commit message. Do not silently leave them unchecked.
-  - Do not edit any other roadmap content.
-- Run the acceptance checks from the Definition of done:
-  - `templates/dispatcher/.claude/commands/next-step.md` exists.
-  - `templates/dispatcher/.opencode/agents/next-step.md` exists.
-  - `install.sh` exists at the repo root, is executable, runs successfully against an empty target dir, and is idempotent on re-run.
-  - `examples/smoke/README.md` exists and the recipe in it has been executed at least once successfully against both hosts.
-  - `agents/orchestrator.md` describes the locked dispatcher behavior with no contradictions.
+- **M1.3 verification sweep.** Run `git grep -n "anti_ai\b"` and
+  `git grep -ln "\[>\] \|\[ \] "` across `*.md` / `*.yaml` and confirm no hard-coded
+  ordered or monolithic step list survives outside `templates/pipeline-state.md` and
+  `examples/smoke/pipeline-state.md`. Background says you should find nothing else; if
+  you do (a list in `README.md`, `agents/workflows.md`, or
+  `templates/project-AGENTS.md`), replace it with a reference to the canonical
+  template rather than re-enumerating. Record in the commit message what the sweep
+  found.
+- **`AGENTS.md`.** Add `scripts/check-pipeline-state.sh` and
+  `templates/dispatcher/.github/workflows/pipeline-state-check.yml` to the Core
+  documents section with a one-line description each. In the Setup section, note that
+  `install.sh` now also installs the pipeline-state check workflow into the consuming
+  project's `.github/workflows/`. Do not rewrite unrelated sections.
+- **`examples/smoke/README.md`.** Optionally add one line to the recipe showing the
+  maintainer how to run `scripts/check-pipeline-state.sh` against the fixture, since
+  the smoke fixture is now a checked artifact. Keep it short; this is a convenience,
+  not a required step of the smoke test.
+- **`ROADMAP.md`.** Check M1.1, M1.2, and M1.3. Update the milestone's "Done when" is
+  satisfied; if it helps a future reader, add a one-line Note that the milestone also
+  shipped a consumer-side validator (an intentional extension beyond the original
+  three bullets). Do not edit other milestones.
+- **Acceptance run.** Execute, and confirm green:
+  - `scripts/check-pipeline-state.sh --exhaustive templates/pipeline-state.md agents/steps` → exit 0.
+  - `scripts/check-pipeline-state.sh examples/smoke/pipeline-state.md agents/steps` → exit 0.
+  - Ordered equality of the smoke fixture and template step lists.
+  - `./install.sh /tmp/test-target` produces all three files; re-run clean.
+  - `git grep -n "anti_ai\b" -- '*.md' '*.yaml' '*.sh'` returns nothing outside
+    ROADMAP/SPRINT planning prose.
+  - `agents/orchestrator.md` contains no enumerated step list.
 - Mark each completed task in this Sprint file as `[x]`.
 
-**Done when.** `AGENTS.md` lists the new artifacts; ROADMAP.md M4 (18, 19) and M5 (20–23) boxes are checked; the smoke recipe is verified runnable; all Sprint tasks are checked.
+**Done when.** The sweep is clean, `AGENTS.md` lists the new artifacts, ROADMAP M1.1–
+M1.3 are checked, the acceptance commands pass, and all Sprint tasks are checked.
 
 ---
 
 ## Out of scope for this Sprint
 
-- Multi-host portability beyond Claude Code and OpenCode. Other hosts (Gemini CLI, etc.) are deferred per ROADMAP.
-- A subagent-based dispatcher model (Option 2b from the Sprint planning discussion). MVP is same-session only.
-- A re-run convenience for the dispatcher (e.g., `--redo storyboarding`). Re-running remains the human editing `pipeline-state.md` directly.
-- Concurrency safety for simultaneous dispatcher invocations.
-- Symlink installation, uninstall, or dry-run modes for `install.sh`.
-- Resolving the `agents/orchestrator.md` TODO about agents inventing missing canon. That is a separate design question.
-- Building out `examples/smoke/` into a real short story or running any pipeline step beyond `character_extraction`. Milestone 6 is the end-to-end short-story milestone; this Sprint stops at smoke-testing the dispatcher itself.
-- Documenting the dispatcher's behavior in any consuming project's local AGENTS.md adapter. The template at `templates/project-AGENTS.md` may be lightly updated if Task 6's `AGENTS.md` edits make a parallel change obvious; otherwise leave it.
+- Holding consuming projects' `pipeline-state.md` to the *exhaustive* canonical list.
+  Consumers customize their sequence; only resolvability is checked downstream.
+- Per-project-type canonical lists (separate `book` / `series` default sequences).
+  There is one template today; multiple canonical lists are a future concern.
+- Auto-running the check inside `install.sh`, or having `install.sh` modify any
+  consumer file other than the three namespaced ones.
+- Any change to step workflow bodies in `agents/steps/`, or renaming step files.
+- Reworking the smoke test itself (Milestone-5 territory) beyond the optional
+  one-line check note.
+- The `agents/orchestrator.md` TODO about agents inventing missing canon (Milestone 3).
