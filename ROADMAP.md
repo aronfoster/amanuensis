@@ -1,148 +1,198 @@
 # Amanuensis Roadmap
 
-This roadmap covers turning Amanuensis into an orchestrated drafting pipeline that runs from a story plan through refined prose. Pre-writing (turning vague story ideas into structured plans) is out of scope and lives in the deferred work section at the bottom.
+Remaining work, in rough dependency order. Tasks plus short notes on what's done.
+Project overview, architecture, and current status live elsewhere.
 
-## Goal
-
-A scheduled or human-invoked agent (Claude Code, OpenCode, etc.) advances a project one step at a time through a pipeline defined by Amanuensis. Each step is a fresh agent invocation with no carried context. State lives in the filesystem. The human reviews artifacts between steps and edits files freely.
-
-## Pipeline (MVP)
-
-The orchestrator runs these steps in order, one per invocation:
-
-1. character_extraction
-2. scene_generation
-3. storyboarding
-4. drafting
-5. compliance_report
-6. compliance_fix
-7. prose_pass
-8. metaphor_identify
-9. metaphor_fix
-10. metaphor_apply
-11. line_pass
-12. anti_ai
-
-Continuity review, scene knowledge update, and post-chapter update are deferred.
-
-## Architecture decisions (locked)
-
-- Each step is a fresh agent invocation. No context carries between steps. State lives in files.
-- Each step has a workflow file with frontmatter declaring `step_id`, `review_required`, `inputs`, `outputs`, plus a body that defines the step's behavior.
-- The orchestrator is a dispatcher plus a state file. The dispatcher reads the state file, finds the `[>]` marker, runs that step's workflow, advances the marker on completion, exits.
-- The state file is markdown with `[x]` / `[>]` / `[ ]` markers and minimal yaml frontmatter for project_type and last_updated.
-- The marker advances on step body completion regardless of `review_required`. Human review happens on the artifact between invocations.
-- Project type (`short_story` / `book` / `series`) is declared in `amanuensis-project.yaml` at project root. Folder layout adapts to project type. Filename prefixes are dropped; folder paths and frontmatter carry chapter and book identity.
-- Highest-numbered attempt folder is the current attempt. No attempt tracking in state file.
-- The metaphor pipeline collapses to three orchestrator steps: identify, fix (handles flatten/replace/workshop together based on file annotations), apply.
-
-## Milestones
-
-The roadmap is grouped by Milestone. Milestones are ordered such that finishing a Milestone leaves Amanuensis in a usable state, even if subsequent Milestones are not yet started.
+Several milestones edit the canonical step list (`templates/pipeline-state.md`); they
+are sequenced, not parallel, so it is never edited by two at once.
 
 ---
 
-### Milestone 1 — Foundations
+## M1 — Pipeline step-list consistency
 
-Goal: define the contract every step workflow must satisfy, and the project structure every consuming repository must have.
+Make every step list agree with `agents/steps/` and single-source it.
 
-1. [x] Write `agents/orchestrator.md` defining the dispatcher behavior, the state file format, the step workflow contract (frontmatter fields, input/output conventions, exit semantics), and the rules for advancing markers and handling errors.
-2. [x] Write `templates/step-workflow.md` as the template for individual step workflow files.
-3. [x] Write `templates/pipeline-state.md` as the template state file.
-4. [x] Write `templates/amanuensis-project.yaml` defining `project_type` and any other project-level configuration the dispatcher needs.
-5. [x] Document the project_type-dependent folder conventions in `agents/project-layouts.md`. Cover short_story, book, and series. Include the rule that folder paths replace filename prefixes.
-6. [x] Update `AGENTS.md` to be up to date, including the new orchestrator and project-layout documents.
+Done when: all step lists match the step files; `orchestrator.md` references the
+canonical list instead of duplicating it; the smoke fixture is checked against it.
 
----
+- [ ] M1.1 Propagate the `anti_ai_report`/`anti_ai_fix` split into
+  `examples/smoke/pipeline-state.md`, the `orchestrator.md` state example, and any
+  README references still showing monolithic `anti_ai`.
+- [ ] M1.2 Make `templates/pipeline-state.md` canonical; point `orchestrator.md` at it
+  rather than re-listing; add a check that the smoke fixture's step set matches.
+- [ ] M1.3 Replace any other hard-coded step lists (README, `workflows.md`, adapter
+  template) with references.
 
-### Milestone 2 — Refactor existing workflows to the step contract
-
-Goal: every workflow that already exists becomes a conforming step. No new step bodies yet, only contract conformance.
-
-7. [x] Refactor `agents/storyboarding.md` to the step-workflow contract. Add frontmatter, declare inputs and outputs, mark `review_required: true`.
-8. [x] Refactor `agents/drafting.md` similarly. Mark `review_required: true`.
-9. [x] Refactor `agents/agentic-drafting.md` so the chapter coordinator is invokable as a single orchestrator step that internally dispatches subagents. The orchestrator does not see the subagents; it sees one step that produces a draft.
-10. [x] Split `agents/compliance.md` into two step workflows: `compliance_report.md` (`review_required: true`) and `compliance_fix.md` (`review_required: false`, runs against the annotated report).
-11. [x] Refactor `agents/prose-pass.md` to the step contract. `review_required: true`.
-12. [x] Refactor the metaphor pipeline:
-    - [x] `agents/metaphor/metaphor-identify.md` becomes step `metaphor_identify`. `review_required: true`.
-    - [x] Create `agents/metaphor/metaphor-fix.md` as a single step that reads the working file, dispatches flatten / replace / workshop logic per entry annotation, and appends variants. `review_required: true`. Remove workshop's Milestone 2 (integration) entirely; integration is metaphor_apply's job.
-    - [x] `agents/metaphor/metaphor-apply.md` becomes step `metaphor_apply`. `review_required: false`.
-13. [x] Refactor `agents/line-pass.md` to the step contract. `review_required: true`.
-14. [x] Refactor `agents/anti-ai.md` to the step contract. `review_required: true`. Anti-AI is always last in the pipeline.
+Notes: —
 
 ---
 
-### Milestone 3 — Build the missing step bodies
+## M2 — Drafting artifact cleanup
 
-Goal: write the step workflows that don't yet exist.
+Delete per-scene fragments after assembly; align the step body with the OpenCode
+coordinator.
 
-15. [x] Write `agents/character-extraction.md`. Input: project's story plan (a project-specific input file referenced by the project's local `AGENTS.md`). Output: character files in `characters/<id>/` plus appended entries to `open-questions.md` for unresolved character details. `review_required: true`. Follow the existing character-folder conventions in `agents/characters.md`.
-16. [x] Write `agents/scene-generation.md`. Input: story plan plus character files. Output: `scene-list.md` for the chapter (or for the short story, depending on project_type). Plus appended `open-questions.md` entries. `review_required: true`.
-17. [x] Both new step workflows must conform to the step contract from Milestone 1.
+Done when: a drafting run leaves `draft.md` and `notes.md` only; `sceneNN.md` /
+`sceneNN-notes.md` removed; `drafting.md` frontmatter no longer lists them as durable
+outputs.
 
----
+- [ ] M2.1 Add post-assembly deletion of `sceneNN.md` / `sceneNN-notes.md` to
+  `drafting.md`, mirroring `opencode/agents/chapter-coordinator.md`.
+- [ ] M2.2 Reconcile `drafting.md` frontmatter: drop the per-scene fragments from
+  durable outputs or mark them transient.
+- [ ] M2.3 Document the audit-record vs transient-fragment distinction (persist
+  `reviewer-actions.md`, `metaphors.md`, `anti-ai.md`, `notes.md`; delete scene fragments).
 
-### Milestone 4 — Drop filename prefixes
-
-Goal: rename files across the workflow set to drop legacy book/chapter filename prefixes; folder paths and frontmatter carry the metadata instead.
-
-18. [x] Update all step workflow files to reference path conventions without legacy filename prefixes. Output paths become `<chapter-folder>/summary.md`, `<chapter-folder>/storyboards/scene01-beat003.md`, etc.
-19. [x] Update templates and examples accordingly.
-
----
-
-### Milestone 5 — Dispatcher implementation
-
-Goal: a runnable dispatcher that reads state, runs the next step, advances state.
-
-20. [x] Decide host: Claude Code or OpenCode. Start with one; commit to portability later.
-21. [x] Implement the dispatcher as the chosen host's native primitive. For Claude Code this is likely a slash command or an agent definition that reads `pipeline-state.md`, identifies the `[>]` step, invokes the corresponding step workflow file, advances the marker, exits.
-22. [x] Define the convention for mapping `step_id` to workflow file path (e.g., `step_id: metaphor_identify` → `amanuensis/agents/metaphor/metaphor-identify.md` or `amanuensis/agents/steps/metaphor-identify.md`, whichever organizational choice the orchestrator makes in Milestone 1).
-23. [x] Test the dispatcher end-to-end on a trivial project: empty story plan, dispatcher runs character_extraction, exits, run again, advances. No actual prose generation needed for the first test.
+Notes: —
 
 ---
 
-### Milestone 6 — End-to-end short story
+## M3 — Bounded canon invention
 
-Goal: prove the pipeline by running it on a real short story from plan to refined prose.
+Replace the blanket "do not invent canon" with one bounded rule; resolve the
+`orchestrator.md` TODO.
 
-24. [ ] Pick or write a short story plan. Set up the project with `project_type: short_story`.
-25. [ ] Run the orchestrator step-by-step. Capture frictions: missing inputs, unclear outputs, step bodies that produce the wrong shape of artifact, places where the human review gate is awkward.
-26. [ ] Fix issues found in the run. Iterate.
-27. [ ] Document the short_story end-to-end flow as an example in `examples/short-story-walkthrough.md`.
+Done when: a single statement of the rule exists and is referenced from the step
+bodies; the contradictory TODO is gone.
+
+- [ ] M3.1 Write the rule (in `canon.md` or `update-rules.md`): invent only when canon
+  and plan are silent, it cannot contradict existing canon, it fits genre/register/period,
+  and it is not load-bearing for reveal timing or character knowledge; otherwise record an
+  open question.
+- [ ] M3.2 Reference it from `drafting.md`, `scene-generation.md`,
+  `character-extraction.md`, `storyboarding.md`, `update-rules.md`; keep the hard
+  prohibition for reveal- and knowledge-load-bearing facts.
+- [ ] M3.3 Resolve the `orchestrator.md` invention TODO.
+
+Notes: —
 
 ---
 
-## Deferred work
+## M4 — Versioned draft naming
 
-These are tracked but explicitly out of scope for the current roadmap:
+Decouple prose-bearing draft filenames from the producing step so prose-chain reordering
+is a `pipeline-state.md`-only edit. Prerequisite for M5 and M7.
 
-- **Pre-writing pipeline.** Turning vague story ideas into structured plans through agentic conversation. Discussed extensively but deferred until the drafting pipeline is solid.
-- **Multi-host portability.** Make the dispatcher run identically across Claude Code, OpenCode, Gemini CLI. Will be tackled after the first host implementation surfaces concrete portability constraints.
-- **Continuity review step.** Compare reveal timing against character knowledge files; flag premature knowledge or contradictions.
-- **Scene knowledge update step.** Apply confirmed knowledge deltas to character files after drafting.
-- **Post-chapter update step.** Aftermath, relationships, timeline updates.
-- **Pass interaction rules.** Define what triggers re-running an earlier pass when a later pass changes prose. Currently: passes run once, in order.
-- **Storyboard review step.** A dedicated review pass between storyboarding and drafting. Acceptable risk for now since drafting failure surfaces storyboard problems anyway.
-- **Aftermath workflow.** Templates, schema, review pass for `aftermath.md`. Deferred until aftermath is actually used.
-- **Improved review-gate UX.** Beyond "edit files freely between invocations." Possibly diff views, structured approval, change tracking.
-- **Per-attempt state tracking.** Currently the convention is highest-numbered attempt is current. Revisit if comparing attempts becomes a frequent operation.
-- **Multi-work concurrency.** Multiple chapters in flight simultaneously across a series. Currently MVP assumes one work at a time.
+Done when: prose-advancing steps read `<latest-draft>` and write the next version; report
+steps read `<latest-draft>` and do not increment; provenance is recorded; side-artifacts
+keep their step names; the report→fix adjacency invariant is documented.
 
-## Non-goals
+- [ ] M4.1 Define `<latest-draft>` resolution (highest-numbered `draft-vNN.md` in the
+  attempt), parallel to `<latest-attempt>`. Drafting produces `draft-v01.md`.
+- [ ] M4.2 Convert prose-advancing steps (`drafting`, `compliance_fix`, `metaphor_apply`,
+  `line_pass`, `anti_ai_fix`) to write `<next-draft>`; convert prose-reading steps
+  (`compliance_report`, `prose_pass`, `metaphor_identify`, `metaphor_fix`,
+  `anti_ai_report`) to read `<latest-draft>`.
+- [ ] M4.3 Add provenance to each draft version (frontmatter stamp `produced_by` / `reads`,
+  or an attempt-level manifest).
+- [ ] M4.4 Document the report→fix adjacency invariant: no draft increment between a report
+  and its paired fix.
+- [ ] M4.5 Sweep the rename through docs that hard-code `draft.md` (`chapters.md`,
+  `project-layouts.md`, schema examples) and the canonical state list.
 
-- Designing new prose-quality passes beyond what already exists.
-- Building the dispatcher as a standalone tool independent of an LLM agent host.
-- Solving the "what is good prose" problem. The pipeline is structural; quality judgments stay with the human and the existing review passes.
+Notes: side-artifacts (`reviewer-actions.md`, `metaphors.md`, `anti-ai.md`,
+`prose-pass.md`) stay step-named; only prose-bearing files are versioned.
 
-## Proposed roadmap improvements
+---
 
-Larger structural changes to consider for the roadmap document itself. Each is independent; the human should approve before any are applied.
+## M5 — Prose fix apply step
 
-- **Definition of done per milestone.** Each milestone currently has a one-line goal but no explicit acceptance criteria. An agent finishing the last numbered task can't confirm the milestone is actually complete. Adding a short "done when…" block under each milestone goal would let agents self-verify before moving on.
-- **Explicit task dependencies.** Numbering implies sequence, but real dependencies are mixed. Task 17 depends on Milestone 1 being complete; tasks 18–19 depend on contract conformance from Milestone 2. Calling these out as `Depends on:` annotations would let an agent pick up work without re-deriving the graph each time.
-- **Roadmap maintenance protocol.** Define who checks boxes when, and under what evidence. E.g., "an agent checks a box only after the artifact named in the task exists and conforms to the relevant contract; a milestone is marked done only when all tasks under it are checked and the human has reviewed." Without this, two agents working in parallel could each mark the same task done with different interpretations of "done."
-- **Per-milestone notes/log.** A scratch area attached to each milestone for in-progress observations, blockers, and decisions made during execution. Currently this kind of finding has nowhere to live except the deferred-work section, which is for explicit out-of-scope items, not in-progress notes.
-- **Status snapshot at the top.** A small "current milestone: N" / "next task: M" pointer at the top of the file so an agent can orient in one read instead of scanning the whole document for unchecked boxes.
-- **Split the deferred section.** "Deferred work" currently mixes (a) features explicitly out of scope for this roadmap (pre-writing, multi-host) with (b) workflow steps deferred to later milestones (continuity review, scene knowledge update). These are different categories — the first is product scope, the second is sequencing. Splitting them would clarify which deferred items might re-enter the roadmap and which are parked indefinitely.
+Close the prose-apply orphan: `prose_pass` recommendations get applied into the versioned
+draft the metaphor stage reads. Depends on M4.
+
+Done when: `prose_fix` reads annotated `prose-pass.md` + `<latest-draft>` and writes the
+next draft version; `prose_pass` output carries an annotation grammar; the metaphor stage
+consumes the prose-applied draft.
+
+- [ ] M5.1 Add `FIX` / `FIX: <instruction>` / `SKIP` / `ESCALATE` annotation grammar (and
+  optional per-category bulk headers) to `prose-pass.md`, keyed off the existing
+  KEEP/TIGHTEN/FLATTEN/REWRITE labels.
+- [ ] M5.2 Decide and record the apply strategy. Default candidate: chunked, like
+  `line_pass` — REWRITE is paragraph-scale, TIGHTEN/FLATTEN local.
+- [ ] M5.3 Write `agents/steps/prose-fix.md` (inputs: annotated `prose-pass.md`,
+  `<latest-draft>`, voice; output: next draft version + apply log). `review_required: false`.
+- [ ] M5.4 Insert `prose_fix` after `prose_pass` in the canonical step list.
+
+Notes: with M4 done, the metaphor steps already read `<latest-draft>`, so no input
+rewiring is needed.
+
+---
+
+## M6 — Storyboard reader-reveal coverage
+
+Storyboards declare what the reader must understand, not only what is concealed; an
+advisory review pass flags under-communication. Order-independent of M4/M5.
+
+Done when: the schema has a reader-takeaway field; `storyboarding` populates it;
+`storyboard_review` flags beats whose takeaway is unsupported or whose reveals lack prior
+setup; it sits between storyboarding and drafting.
+
+- [ ] M6.1 Add a reader-takeaway field to `storyboard-schema.md` (distinct from
+  `concealment_from_reader` and `must_preserve`), held to the spec-not-prose discipline.
+- [ ] M6.2 Update `storyboarding.md` to populate it; make an empty field a default-to-fill
+  anti-pattern.
+- [ ] M6.3 Write `agents/steps/storyboard-review.md` (advisory, report-only): check each
+  beat's takeaway is carried and that dependent beats have prior setup.
+- [ ] M6.4 Insert `storyboard_review` between `storyboarding` and `drafting` in the
+  canonical list.
+
+Notes: a `storyboard_review_fix` apply step and the cross-chapter reveals ledger are
+deferred.
+
+---
+
+## M7 — Dispatcher rework: forward / back / redo with archiving
+
+Replace linear `next-step` with directional control; redo archives prior draft versions
+and surfaces downstream staleness. Design-gated. Builds on M4's version counter.
+
+Done when: design note approved; human can advance, step back, and redo a specific step;
+redo archives versions above the redone step and flags them stale; `orchestrator.md`
+documents the model; both hosts at parity; the smoke fixture exercises a redo.
+
+- [ ] M7.1 Design note (blocking). Resolve: skill granularity (one parameterized dispatcher
+  vs per-step skills); backward semantics (marker-only vs restore archived versions);
+  archive location vs the `attemptNN` convention (mid-pipeline redo must not re-run
+  drafting); downstream-staleness rule (everything with version > N is stale — reset
+  markers / archive / warn?); review-gate behavior under back and redo.
+- [ ] M7.2 Update `orchestrator.md` to the directional model (absorbs the deferred
+  pass-interaction question).
+- [ ] M7.3 Implement per-step invocation.
+- [ ] M7.4 Implement archive-on-redo over the version counter.
+- [ ] M7.5 Host parity (`.claude` + `.opencode`).
+- [ ] M7.6 Extend the smoke recipe: advance -> redo -> verify archive, on both hosts.
+
+Notes: —
+
+---
+
+## M8 — Reverse ingestion: existing prose into Amanuensis
+
+Ingest a finished work into Amanuensis artifacts (characters, scene-list, storyboards,
+overview), chunked to fit context. Design-gated.
+
+Done when: a single existing chapter or short story ingests into a valid project structure
+that the forward pipeline's downstream steps can consume.
+
+- [ ] M8.1 Design note (blocking): reverse pipeline steps (candidates: prose_chunking,
+  character_extraction_from_prose, scene_reconstruction, storyboard_reconstruction,
+  overview_synthesis); chunking strategy that preserves cross-chunk continuity;
+  reconciliation against existing canon.
+- [ ] M8.2+ Implementation tasks opened from the approved design note.
+
+Notes: —
+
+---
+
+## Deferred
+
+- storyboard_review_fix apply step (after M6 proves out)
+- story-level reveals ledger with buildup (couples to continuity review; matters for book/series)
+- continuity review step
+- scene knowledge update step
+- post-chapter update step
+- chapter selection for book/series ("which chapter is current?")
+- pre-writing pipeline (vague idea -> plan)
+- multi-host beyond Claude Code / OpenCode
+- per-attempt comparison tooling (revisit after M7's archive model)
+- multi-work concurrency
