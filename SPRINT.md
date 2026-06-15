@@ -1,285 +1,306 @@
-# Sprint 7 — Milestone 2: Drafting artifact cleanup
+# Sprint 8 — Milestone 3: Bounded canon invention + capture
 
-This Sprint makes a drafting run leave only durable artifacts behind. The
-Claude-side step body (`agents/steps/drafting.md`) is brought to parity with the
-OpenCode coordinator (`opencode/agents/chapter-coordinator.md`), which already
-deletes the per-scene working files after assembly. After this Sprint, a completed
-drafting attempt folder contains `draft.md` and `notes.md` only; the per-scene
-`sceneNN.md` / `sceneNN-notes.md` fragments are deleted once their content has been
-folded into those two combined files. The frontmatter and Outputs section of
-`drafting.md` stop advertising the scene fragments as durable outputs, and a single
-place in the docs (`agents/chapters.md`) records why some per-attempt files persist
-as audit records while the scene fragments are transient.
+This Sprint replaces the project's blanket "do not invent canon" stance with one
+bounded rule, resolves the contradictory `orchestrator.md` TODO, and adds a
+coordinator-managed **capture agent** that records the continuity-relevant inventions
+the rule permits into the right canonical files. After this Sprint: a single statement
+of the invention rule exists and the step bodies reference it rather than restating a
+flat prohibition; the drafting coordinator dispatches a capture agent that writes
+permitted inventions to `timeline.md` / `profile.md` / an agent-generated `canon/`
+subfolder — **never** `knowledge/` — with annotated, edit-policy-respecting,
+non-blocking writes; and both hosts (Claude step bodies and the OpenCode coordinator)
+describe the same contract.
 
-This is a documentation/prose-contract milestone: every change edits a Markdown step
-body or support doc. No code, no scripts, no schema changes. The step bodies are run
-by an LLM coordinator, so "a run leaves draft.md and notes.md only" is enforced by
-the instructions the coordinator follows, not by an executable test; acceptance is by
-inspection of those instructions plus grep invariants on the frontmatter.
+Like Sprint 7 this is a documentation/prose-contract milestone: every change edits a
+Markdown step body, support doc, or agent prompt. No code, no scripts, no schema
+changes. The behavior is enforced by the instructions the LLM coordinator and its
+subagents follow, not by an executable test; acceptance is by inspection of those
+instructions plus grep invariants.
 
 ## Background — what is and isn't wrong today
 
-Established by inspection during planning; tasks should not re-derive this:
+Established by inspection during planning; tasks should not re-derive this.
 
-- `opencode/agents/chapter-coordinator.md:35` is **already correct**: it instructs
-  the coordinator to "Delete the scene-drafter's scene and notes files once their
-  entire contents are in the chapter draft and notes files." This is the reference
-  behavior the Claude-side step is being brought up to. Its only gap is that it does
-  not point at the persist-vs-delete rationale; Task 3 adds a one-line pointer for
-  host symmetry.
-- `agents/steps/drafting.md` is the file that **lags**. Three things are wrong:
-  - Frontmatter `outputs:` (lines 7–11) lists `scene01.md` and `scene01-notes.md`
-    as durable outputs alongside `draft.md` and `notes.md`.
-  - The Behavior section assembles `draft.md` (step 7, Assembly rules) and `notes.md`
-    (step 8, Notes assembly) but **never deletes** the scene fragments afterward.
-  - The Outputs section (lines 158–163) documents `sceneNN.md` / `sceneNN-notes.md`
-    as outputs ("Working artifacts the coordinator reads during assembly").
-- **Deletion is safe by construction.** `draft.md` already absorbs all scene prose
-  (Assembly rules) and `notes.md` already absorbs every per-scene notes file, broken
-  out by scene (Notes assembly). So by the time the fragments are deleted, their
-  entire content is captured in a durable combined file. The deletion is gated on
-  that capture — it is not unconditional.
-- **Drafting is the only step that produces transient fragment files.** The other
-  coordinator step, `metaphor_fix`, has its subagents append in place into
-  `metaphors.md`; it writes no per-entry fragment files. So this milestone's cleanup
-  is scoped entirely to the drafting step; no other step body produces orphan
-  fragments to reconcile.
-- `agents/chapters.md:57` already describes the per-attempt working artifacts under
-  `drafts/attemptNN/` (reviewer reports, compliance and prose-pass outputs, metaphor
-  working files, line-pass and anti-AI outputs). This is the natural and only home
-  for the audit-record-vs-transient-fragment distinction (Task 2); no new doc is
-  created.
-- `agents/project-layouts.md` shows only `draft.md` in its folder trees, never the
-  scene fragments, so it needs **no** edit. Verify, don't rewrite.
+- **The contradiction lives at `agents/orchestrator.md:42`.** The dispatcher contract
+  says "do not invent missing canon," immediately followed by a TODO stating the
+  opposite intent: that drafters *should* be free to invent non-load-bearing detail
+  (the "what did John order at breakfast" case) so long as it makes sense and does not
+  conflict with canon. This TODO is the thing M3.3 closes; its example is the seed of
+  the rule's wording.
+- **The canonical prohibition is `agents/update-rules.md:5` — "Rule 1: do not silently
+  invent canon."** This is the single statement the rest of the repo should defer to.
+  `agents/canon.md:36` ("Do not silently invent settled world facts.") is the
+  world-truth restatement. The rule (M3.1) is best written as a qualification of Rule 1
+  — the *silently* and *settled/load-bearing* qualifiers are already doing the work;
+  the bounded rule makes the permitted case explicit and names the exceptions.
+- **The flat prohibition is scattered across these step bodies** and must be pointed at
+  the single rule rather than each carrying its own absolute (M3.2):
+  `agents/steps/drafting.md:65` and `:153`, `agents/steps/scene-generation.md:27` and
+  `:109`, `agents/steps/character-extraction.md:43`, `agents/characters.md:93`, and the
+  OpenCode `opencode/agents/chapter-coordinator.md:40`. `storyboarding.md` is named in
+  the ROADMAP task; confirm whether it carries an invention prohibition and reference
+  the rule there too if so, otherwise no edit.
+- **`knowledge/` is off-limits to capture by existing contract.**
+  `agents/characters.md:61`: "Knowledge items are only written to these files during
+  the scene knowledge update workflow, after drafting confirms what the scene
+  committed." That workflow is deferred (see ROADMAP Deferred list). `knowledge/` is
+  also the reveal-sensitive state M3's hard prohibition protects. Capture therefore
+  never writes `knowledge/`; the eggs-class fact is a `timeline.md` event, and invented
+  identity color is a `profile.md` field.
+- **Stub-folder creation already has a procedure.** `agents/characters.md:74–91`
+  defines how to create a character folder for a not-yet-present character, including
+  `status: stub` frontmatter and the minimum files. The capture agent's
+  walk-on-with-no-folder path reuses this procedure; it does not invent a new one.
+- **The drafting subagents are sandboxed and cannot be the writers.**
+  `agents/steps/drafting.md:61–69`: scene-drafters may read only the inputs handed to
+  them and write only their own `sceneNN.md` / `sceneNN-notes.md`; they are explicitly
+  barred from reading or writing canon and character files. So capture cannot be folded
+  into the scene-drafter role — it is a **new, non-sandboxed subagent role** the
+  coordinator dispatches. Precedent for a coordinator dispatching a specialized
+  subagent exists in both hosts: the metaphor subagents under `agents/metaphor/` and
+  the scene-drafters under `opencode/agents/`.
+- **Capture must run before the M2 fragment deletion.** Per Sprint 7,
+  `agents/steps/drafting.md` step 8 assembles `notes.md` and step 9 deletes each
+  `sceneNN-notes.md`. The recommendations capture consumes live in those notes files,
+  so the coordinator must collect them (during step 8) and dispatch capture before the
+  step-9 deletion. Capture is gated the same way deletion is: it runs only on a
+  completed assembly, never on a failure/abandon path.
+- **`edit_policy` already exists.** `agents/update-rules.md:41` (Rule 7) defines the
+  operational-file header field `edit_policy: locked | propose_only | careful_edit |
+  editable` (also in `templates/profile.md:5`). Capture's write discipline respects it:
+  no silent write into a `locked` or `propose_only` target.
+- **`canon/` is world-level truth.** `agents/canon.md:3` and the priority order
+  (`canon/` is rank 1). World-level inventions go into a **new agent-generated subfolder
+  under `canon/`**, kept visibly distinct from human-authored canon. The subfolder name
+  is not yet chosen (see Open decision below).
+- **`agents/project-layouts.md`** shows `canon/` in its folder trees; if a new
+  agent-generated subfolder is named, decide whether the trees need it (low priority —
+  the trees are illustrative, not exhaustive).
+
+## Open decisions (resolve at task start)
+
+1. **Name of the agent-generated `canon/` subfolder.** Candidates: `canon/generated/`,
+   `canon/invented/`, `canon/agent/`. Pick one and use it consistently across the
+   capture agent doc, `canon.md`, and any tree. Flagged to the human at planning time;
+   default to `canon/generated/` if no preference.
+2. **Draft-version provenance (M4 dependency).** M3.7's annotation wants a
+   "which draft did this come from" stamp, which is **M4.3** and M4 is not yet built.
+   Default for this Sprint: capture annotates source **scene + beat + attempt** now (all
+   available today), and the draft-version stamp is folded in when M4 lands. Do not
+   block this Sprint on M4; do leave the annotation shape extensible.
 
 ## Definition of done
 
 The Sprint is complete when:
 
-1. ROADMAP.md tasks M2.1, M2.2, and M2.3 are checked.
-2. `agents/steps/drafting.md` frontmatter `outputs:` lists **only**
-   `<chapter-folder>/drafts/<latest-attempt>/draft.md` and
-   `<chapter-folder>/drafts/<latest-attempt>/notes.md`. The `scene01.md` and
-   `scene01-notes.md` lines are gone.
-3. `agents/steps/drafting.md` Behavior section contains an explicit post-assembly
-   deletion step: after `draft.md` and `notes.md` are assembled, the coordinator
-   deletes each `sceneNN.md` and `sceneNN-notes.md`, gated on its content already
-   being captured in `draft.md` / `notes.md`. The deletion is suppressed on the
-   failure paths (blocker recorded, assembly not completed).
-4. `agents/steps/drafting.md` Outputs section no longer presents the scene fragments
-   as durable outputs; it documents `draft.md` and `notes.md` as the durable outputs
-   and describes the scene fragments (in prose, not as an outputs entry) as transient
-   working files created during the run and deleted after assembly.
-5. `agents/chapters.md` records the audit-record-vs-transient-fragment distinction:
-   `notes.md`, `reviewer-actions.md`, `metaphors.md`, and `anti-ai.md` persist as
-   per-attempt records; the per-scene `sceneNN.md` / `sceneNN-notes.md` fragments are
-   transient and deleted after assembly because their content is captured in the
-   combined files.
-6. `opencode/agents/chapter-coordinator.md` still instructs deletion and now points
-   at the same persist-vs-delete distinction, so the two hosts describe the same
-   contract. Its existing safety condition ("once their entire contents are in the
-   chapter draft and notes files") is preserved.
-7. A drafting attempt folder, after a run that follows the updated `drafting.md`,
-   would contain `draft.md` and `notes.md` only — confirmed by reading the step body,
-   since the step is LLM-run and has no executable harness.
+1. ROADMAP.md tasks M3.1–M3.8 are checked.
+2. A single bounded-invention rule exists (a revision of `update-rules.md` Rule 1,
+   cross-referenced from `canon.md`): invent only when canon and plan are silent, the
+   invention cannot contradict existing canon, it fits genre/register/period, and it is
+   **not** load-bearing for reveal timing or character knowledge; otherwise record an
+   open question.
+3. The scattered flat prohibitions in the step bodies named above reference that single
+   rule instead of each restating an absolute; the **hard** prohibition is preserved
+   verbatim for reveal- and knowledge-load-bearing facts.
+4. The `orchestrator.md:42` TODO is gone, replaced by wording consistent with the rule.
+5. `agents/steps/drafting.md` documents that scene-drafters emit invention
+   *recommendations* in `sceneNN-notes.md` under a defined schema (invented fact;
+   target `character_id`(s) or world-scope; fact-type `event` / `identity` / `world`;
+   source scene + beat), and the subagent prompt contract instructs them to do so —
+   while they still write nothing outside their notes/prose.
+6. `agents/steps/drafting.md` documents the coordinator collecting those
+   recommendations during notes assembly and dispatching the capture agent before the
+   fragment-deletion step, gated on a completed assembly.
+7. A capture agent definition exists for both hosts (a doc under `agents/` plus an
+   `opencode/agents/` counterpart) with the routing and write discipline below.
+8. Routing is specified: character `event` → `characters/<id>/timeline.md`; invented
+   stable identity color → `characters/<id>/profile.md`; **never** `knowledge/`;
+   non-character `world` facts → the chosen agent-generated `canon/` subfolder; a
+   walk-on with no folder → create a `status: stub` folder per `characters.md:74–91`,
+   then write.
+9. Write discipline is specified: each write is annotated (source scene + beat +
+   attempt, extensible to the M4 draft-version stamp, plus an `invented, unreviewed`
+   marker); respects the target file's `edit_policy` (no silent write to a `locked` /
+   `propose_only` file — record a proposal/blocker in `notes.md` instead); and is
+   non-blocking (a capture failure never blocks draft completion — it is logged in
+   `notes.md`). Captured writes ride drafting's existing `review_required: true` gate.
+10. Both hosts agree: the Claude `drafting.md` and the OpenCode `chapter-coordinator.md`
+    describe the same recommendation/collection/dispatch contract.
 
 ## Conventions adopted by this Sprint
 
 Locked at the start so individual tasks don't rediscover them.
 
-**Durable vs transient.** A per-attempt file is **durable** (an audit record) if it
-is the only place its content lives and a human or downstream step may need it later:
-`draft.md`, `notes.md`, and the later-stage records `reviewer-actions.md`,
-`metaphors.md`, `anti-ai.md`. A file is **transient** if its entire content is folded
-into a durable combined file during the same step: the per-scene `sceneNN.md` and
-`sceneNN-notes.md` fragments. Transient files are deleted after assembly; durable
-files are never deleted by the step that writes them.
-
-**Deletion is gated, not unconditional.** The coordinator deletes a scene fragment
-only after confirming its content is present in the durable combined file
-(`sceneNN.md` → `draft.md`, `sceneNN-notes.md` → `notes.md`). On any failure path —
-a subagent reports a blocker, assembly does not complete, a scene file is missing —
-the fragments are **not** deleted and the blocker is recorded in `notes.md`, matching
-the step's existing failure handling. This preserves the working files for diagnosis
-when a run cannot complete.
-
-**`outputs:` means durable outputs.** Per `agents/orchestrator.md`, frontmatter is
-descriptive, not enforced. This Sprint adopts the reading that `outputs:` lists the
-**durable** artifacts a step leaves behind. Transient working files are described in
-the body, not listed in `outputs:`. No new frontmatter field is introduced; the
-orchestrator frontmatter contract is unchanged.
-
-**Reference direction.** `opencode/agents/chapter-coordinator.md` is the behavioral
-reference (it already deletes). `agents/steps/drafting.md` is brought up to it. The
-OpenCode file changes only by gaining a pointer to the shared persist-vs-delete rule
-(Task 3); its deletion instruction and safety condition are not rewritten.
-
-**Single documentation home.** The persist-vs-delete distinction is documented once,
-in `agents/chapters.md`, next to the existing per-attempt artifacts description. Step
-bodies and the OpenCode coordinator may reference it but do not restate the full list.
-
-**Scope.** This Sprint edits `agents/steps/drafting.md`, `agents/chapters.md`,
-`opencode/agents/chapter-coordinator.md`, `ROADMAP.md`, and this Sprint file. It does
-**not** change scene-drafter prompt files, `project-layouts.md`, any other step body,
-the storyboard schema, or any script. No file is renamed.
+- **One rule, referenced not restated.** The bounded rule is stated once (Rule 1 in
+  `update-rules.md`). Every other file points at it. Only the reveal-/knowledge-
+  load-bearing hard prohibition is repeated where it must be unmissable.
+- **`knowledge/` is never written by capture.** It stays the sole province of the
+  deferred scene-knowledge-update step; this is what protects reveal timing. This is a
+  hard line, not a default.
+- **Capture is a subagent role, not a pipeline step.** It does not appear in
+  `templates/pipeline-state.md`; it is dispatched by the drafting coordinator inside the
+  existing `drafting` step, like the metaphor subagents inside `metaphor_fix`.
+- **Writes are annotated, edit-policy-respecting, and non-blocking.** Capture never
+  silently overwrites human-authored canon and never halts a draft on failure.
+- **Host parity.** The Claude step bodies and the OpenCode coordinator describe the same
+  contract; neither host gains behavior the other lacks.
 
 ---
 
 ## Tasks
 
-### Task 1 — Delete scene fragments after assembly; reconcile `drafting.md` frontmatter and Outputs [x]
+### Task 1 — Write the bounded-invention rule; resolve the orchestrator TODO [ ]
 
-**Goal.** Bring `agents/steps/drafting.md` to parity with the OpenCode coordinator:
-the run deletes the per-scene fragments after assembly, and the file stops advertising
-them as durable outputs. Closes **M2.1** and **M2.2**. All edits are within this one
-file so a single developer owns it end to end.
+**Goal.** Replace the blanket prohibition with one bounded rule and remove the
+self-contradicting TODO. Closes **M3.1** and **M3.3**.
 
 **Requirements.**
 
-- **Frontmatter (M2.2).** In the `outputs:` block, remove the
-  `<chapter-folder>/drafts/<latest-attempt>/scene01.md` and
-  `<chapter-folder>/drafts/<latest-attempt>/scene01-notes.md` lines. After the edit,
-  `outputs:` lists exactly `draft.md` and `notes.md` (with their full
-  `<chapter-folder>/drafts/<latest-attempt>/` paths). Do not add a new frontmatter
-  key for the fragments — they are described in the body, not the frontmatter.
-- **Behavior — add the deletion step (M2.1).** After the existing Notes-assembly step
-  (currently step 8 in "Coordinator responsibilities"), add a step that deletes each
-  `sceneNN.md` and `sceneNN-notes.md` from `<chapter-folder>/drafts/<latest-attempt>/`
-  once its content is captured: the scene prose is in `draft.md` and the scene notes
-  are in `notes.md`. Mirror the OpenCode wording — deletion happens "once their entire
-  contents are in the chapter draft and notes files." State the gate explicitly so a
-  reader cannot read it as an unconditional `rm`.
-- **Behavior — guard the failure paths.** Make clear (in the new deletion step and/or
-  the existing "Failure handling" / "Safety rules" subsections) that the fragments are
-  **not** deleted when the run cannot complete assembly — e.g. a subagent reports a
-  blocker, a scene file is missing, or assembly is abandoned. On those paths the
-  fragments are preserved and the blocker is recorded in `notes.md`, consistent with
-  the step's existing failure handling. The Open-questions exit path (no `draft.md`
-  written) likewise performs no deletion.
-- **Outputs section.** Rewrite the Outputs list so `draft.md` and `notes.md` are the
-  durable outputs. Remove the `sceneNN.md` and `sceneNN-notes.md` bullets as durable
-  outputs; instead add a short prose line (in the Outputs section or the deletion
-  step) noting they are transient working files written by subagents during the run
-  and deleted after assembly, so they are not part of the durable output set. Do not
-  delete the Behavior-section references to subagents *writing* `sceneNN.md` /
-  `sceneNN-notes.md` (steps 5–6 and the subagent contract) — those files are still
-  created transiently; only their status as durable outputs changes.
-- Keep all other prose intact: scene grouping, subagent contract, assembly rules,
-  notes assembly format, out-of-scope, and open-questions handling are unchanged.
+- Revise `agents/update-rules.md` Rule 1 so it states the bounded permission: an agent
+  may invent a detail only when (a) canon and the plan are silent on it, (b) it cannot
+  contradict any existing canon, (c) it fits the work's genre / register / period, and
+  (d) it is **not** load-bearing for reveal timing or character knowledge. Otherwise the
+  agent records an open question rather than inventing. Keep the "silently" framing — the
+  point is that permitted invention is captured (Tasks 3–5), not hidden.
+- Cross-reference the rule from `agents/canon.md` (near line 36) so the world-truth file
+  and the rules file agree; do not restate the full rule in both.
+- Edit `agents/orchestrator.md:42`: remove the parenthetical TODO and reword the bullet
+  so the blocked-path guidance is consistent with the new rule (invent the permitted
+  case; record an open question for the load-bearing/conflicting case).
 
-**Done when.** `drafting.md` frontmatter `outputs:` names only `draft.md` and
-`notes.md`; the Behavior section has an explicit, capture-gated deletion step for the
-scene fragments with the failure paths excluded; and the Outputs section presents
-`draft.md` / `notes.md` as durable while describing the fragments as transient.
+**Done when.** Rule 1 states the four-part bounded permission and its exceptions;
+`canon.md` references it; the `orchestrator.md` TODO is gone and its bullet matches.
 
 ---
 
-### Task 2 — Document the audit-record vs transient-fragment distinction in `chapters.md` [x]
+### Task 2 — Point the scattered prohibitions at the single rule [ ]
 
-**Goal.** Record, in one place, why some per-attempt files persist and the scene
-fragments do not. Closes **M2.3**.
+**Goal.** Make every step body defer to Rule 1 instead of carrying its own absolute,
+while preserving the hard prohibition for reveal/knowledge facts. Closes **M3.2**.
 
 **Requirements.**
 
-- Edit `agents/chapters.md`, at or near the existing per-attempt artifacts
-  description (the `draft.md` section, around line 57, which already enumerates the
-  working files under `drafts/attemptNN/`). Add a short, clearly-scoped passage that:
-  - States that some per-attempt files are **durable audit records** kept for human
-    review and downstream steps: `notes.md` (the run record), and the later-stage
-    review/report files `reviewer-actions.md`, `metaphors.md`, and `anti-ai.md`,
-    alongside the prose `draft.md`.
-  - States that the per-scene `sceneNN.md` / `sceneNN-notes.md` fragments are
-    **transient**: their entire content is folded into `draft.md` and `notes.md`
-    during the drafting step, and they are deleted after assembly. The general rule:
-    a working file is deletable once its content is captured in a durable combined
-    artifact.
-- Keep it brief and consistent with the file's existing tone — a few sentences or a
-  short list, not a new top-level section unless that reads more naturally. Do not
-  restate the drafting step's full behavior; this is the rationale, the step body is
-  the procedure.
-- Do not edit `project-layouts.md` (its trees show only `draft.md` and are correct).
+- In each of `agents/steps/drafting.md` (lines 65 and 153),
+  `agents/steps/scene-generation.md` (27 and 109),
+  `agents/steps/character-extraction.md` (43), and `agents/characters.md` (93), change
+  the flat "do not invent canon" statement to reference the bounded rule — permitted
+  invention is allowed under Rule 1; load-bearing/conflicting facts are still recorded
+  as open questions.
+- **Preserve the hard line.** Where a file protects reveal timing or character
+  knowledge (e.g. `drafting.md` Safety rules, the subagent "preserve what a character
+  knows/suspects/believes" lines), keep the absolute prohibition unmistakable. The
+  bounded permission never reaches reveal-/knowledge-load-bearing facts.
+- Check `agents/steps/storyboarding.md` for an invention prohibition; reference the rule
+  if present, no edit if absent.
 
-**Done when.** `agents/chapters.md` names the persisted set (`notes.md`,
-`reviewer-actions.md`, `metaphors.md`, `anti-ai.md`, plus `draft.md`) as durable
-records and the scene fragments as transient-deleted-after-assembly, with the
-capture-based rule stated once.
+**Done when.** The named prohibitions reference Rule 1; the reveal/knowledge hard
+prohibition is intact and clearly separated from the permitted case.
 
 ---
 
-### Task 3 — Point the OpenCode coordinator at the shared rule [x]
+### Task 3 — Recommendation hand-off schema [ ]
 
-**Goal.** Keep the two hosts describing the same contract without rewriting the
-OpenCode coordinator's already-correct deletion instruction.
+**Goal.** Let sandboxed scene-drafters surface continuity-relevant inventions without
+writing canon. Closes **M3.4**.
 
 **Requirements.**
 
-- In `opencode/agents/chapter-coordinator.md`, preserve the existing deletion bullet
-  and its safety condition ("Delete the scene-drafter's scene and notes files once
-  their entire contents are in the chapter draft and notes files").
-- Add a brief pointer making the persist-vs-delete intent explicit and consistent
-  with Task 2: the scene and notes fragments are transient and deleted after
-  assembly, while the chapter draft and run notes (and later review/report files)
-  persist. A one-line reference to the distinction documented in the Amanuensis
-  `chapters.md` (reached via the project's workflow paths, the same way this file
-  already references `update-rules.md` / `agentic-drafting.md`) is sufficient — do not
-  inline the full persist list into this host file.
-- Make no other behavioral change to the coordinator (scene grouping, attempt-folder
-  creation, dispatch, assembly, the `wc` word-count report all stay).
+- In `agents/steps/drafting.md`, define the schema a subagent records in its
+  `sceneNN-notes.md` for each invention it made under Rule 1: the invented fact; the
+  target (`character_id`(s) or world-scope); the fact-type (`event` / `identity` /
+  `world`); and the source scene + beat.
+- Add a line to the subagent prompt contract (the fenced block around lines 77–99)
+  instructing subagents to record these recommendations in their notes file — and
+  reaffirm they still write nothing outside their prose/notes files and never touch
+  canon or character files themselves.
 
-**Done when.** `chapter-coordinator.md` still instructs gated deletion and now points
-at the shared persist-vs-delete distinction, matching the Claude-side step and
-`chapters.md`.
+**Done when.** `drafting.md` specifies the recommendation schema and the subagent
+contract tells subagents to emit it, with the sandbox preserved.
 
 ---
 
-### Task 4 — Verification sweep, ROADMAP, closeout [x]
+### Task 4 — Coordinator collection + gated dispatch [ ]
 
-**Goal.** Confirm the milestone's "done when" holds, update the catalogs, and check
-the boxes. Depends on Tasks 1–3.
+**Goal.** Have the coordinator gather recommendations and dispatch capture at the right
+point in the run. Closes **M3.5**.
 
 **Requirements.**
 
-- **Frontmatter invariant.** Confirm `agents/steps/drafting.md`'s `outputs:` block
-  contains no `scene` line (e.g. `git grep -n "scene01" -- agents/steps/drafting.md`
-  returns only legitimate Behavior/contract references to subagents writing or the
-  coordinator deleting `sceneNN.md` / `sceneNN-notes.md`, and **nothing** inside the
-  frontmatter `outputs:` block). Read the frontmatter by eye to confirm only
-  `draft.md` and `notes.md` remain.
-- **Behavioral read-through.** Read the updated `drafting.md` Behavior and Outputs
-  sections and confirm a faithful run would leave `draft.md` and `notes.md` only, with
-  deletion gated on capture and suppressed on failure paths. This is the acceptance
-  for an LLM-run step — there is no executable harness.
-- **Host parity check.** Confirm `drafting.md`, `chapter-coordinator.md`, and
-  `chapters.md` agree: same deletion behavior, same safety condition, same
-  persist-vs-delete framing, no contradiction.
-- **Sweep.** `git grep -n "scene01\|scene02\|sceneNN" -- '*.md'` across the repo;
-  confirm no remaining file lists the scene fragments as durable outputs or as
-  expected persisted artifacts. Background says drafting.md is the only such file; if
-  the sweep turns up another (it shouldn't), reconcile it the same way. Record what
-  the sweep found in the commit message.
-- **ROADMAP.md.** Check M2.1, M2.2, and M2.3. Optionally add a one-line Note that the
-  OpenCode coordinator was also pointed at the shared rule for host parity. Do not
-  edit other milestones.
-- **Sprint file.** Mark each completed task in this file as `[x]`.
+- In `agents/steps/drafting.md` "Coordinator responsibilities," add a step (after notes
+  assembly, step 8; before fragment deletion, step 9) in which the coordinator collects
+  the per-scene recommendations and dispatches the capture agent with them.
+- Gate it exactly like deletion: capture runs only on a completed assembly. On any
+  failure/abandon path the coordinator does not dispatch capture and records the
+  blocker in `notes.md`.
+- State explicitly that capture is **non-blocking**: a capture failure is logged in
+  `notes.md` and does not prevent `draft.md` from being a completed output.
 
-**Done when.** The frontmatter invariant holds, the step body reads as
-draft.md-and-notes.md-only with gated deletion, the three files agree, ROADMAP
-M2.1–M2.3 are checked, and all Sprint tasks are checked.
+**Done when.** `drafting.md` collects recommendations and dispatches capture between
+notes assembly and fragment deletion, gated on completion and non-blocking on failure.
+
+---
+
+### Task 5 — Capture agent definition: routing + write discipline [ ]
+
+**Goal.** Write the agent the coordinator dispatches. Closes **M3.6** and **M3.7**.
+
+**Requirements.**
+
+- Create the capture agent doc for the Claude host (under `agents/`, e.g.
+  `agents/capture/` mirroring `agents/metaphor/`) and an `opencode/agents/` counterpart.
+- **Routing.** Character `event` → `characters/<id>/timeline.md`; invented stable
+  identity color → `characters/<id>/profile.md`; **never** `knowledge/` (cite
+  `characters.md:61`); non-character `world` facts → the chosen agent-generated `canon/`
+  subfolder (Open decision 1); a walk-on with no folder → create a `status: stub` folder
+  per `characters.md:74–91`, then write.
+- **Write discipline.** Annotate each write with source scene + beat + attempt (Open
+  decision 2 for the M4 draft-version stamp) and an `invented, unreviewed` marker;
+  respect the target's `edit_policy` (Rule 7) — no silent write to `locked` /
+  `propose_only`, record a proposal/blocker in `notes.md` instead; never write
+  `knowledge/`; only ever record inventions Rule 1 permits (reveal/knowledge facts are
+  open questions, never captured).
+
+**Done when.** Both host docs specify the routing table and the annotated,
+edit-policy-respecting, knowledge-excluded write discipline.
+
+---
+
+### Task 6 — Host parity, verification sweep, closeout [ ]
+
+**Goal.** Confirm the two hosts agree, the invariants hold, and the catalogs are
+updated. Depends on Tasks 1–5.
+
+**Requirements.**
+
+- **Host parity.** Mirror the recommendation/collection/dispatch contract into
+  `opencode/agents/chapter-coordinator.md` so it matches `drafting.md`; confirm the
+  capture agent doc exists for both hosts and they describe the same routing/discipline.
+- **Rule-reference sweep.** `git grep -n -iE "invent" -- '*.md'`; confirm no step body
+  still carries a flat "do not invent canon" absolute that should defer to Rule 1, and
+  that the reveal/knowledge hard prohibition is intact everywhere it belongs.
+- **Knowledge-boundary invariant.** Confirm nothing in the capture path writes
+  `knowledge/`; the only writer remains the deferred scene-knowledge-update step.
+- **TODO check.** `git grep -n "TODO" -- agents/orchestrator.md`; confirm the invention
+  TODO at line 42 is gone (the unrelated line-106 TODO is out of scope, leave it).
+- **ROADMAP.md.** Check M3.1–M3.8. Add a one-line Note if the canon-subfolder name was
+  chosen, recording it.
+- **Sprint file.** Mark each completed task in this file `[x]`.
+
+**Done when.** Both hosts agree, the invariants and TODO check hold, ROADMAP M3.1–M3.8
+are checked, and all Sprint tasks are checked.
 
 ---
 
 ## Out of scope for this Sprint
 
-- Any change to scene-drafter prompt files (`opencode/agents/scene-drafter.md`,
-  `scene-drafter-opus.md`). They still write `sceneNN.md` / `sceneNN-notes.md`; only
-  the coordinator's post-assembly handling of those files changes.
-- Versioned draft naming (`draft-vNN.md`) and the prose-chain rework — that is
-  Milestone 4. This Sprint keeps the single `draft.md` per attempt.
-- Editing `project-layouts.md` or the folder-tree examples (they already show only
-  `draft.md`).
-- Adding an executable check that a run left only `draft.md` / `notes.md`. The step is
-  LLM-run; acceptance is by inspection of the step body, not a harness.
-- Introducing a new `transient_outputs` frontmatter field or otherwise changing the
-  orchestrator frontmatter contract. Transient files are described in the body.
-- Any change to other step bodies (`metaphor_fix` etc.), the storyboard schema, or
-  `install.sh` / the check script.
+- **Versioned draft naming and the draft-version provenance stamp** — that is Milestone
+  4 (M4.3). This Sprint annotates captures with source scene + beat + attempt and leaves
+  the annotation extensible; it does not build the draft-version counter.
+- **The scene knowledge update step** — deferred. This Sprint deliberately does *not*
+  write `knowledge/`; that step remains its only writer.
+- **Continuity review / cross-chapter reveals ledger** — deferred; not a prerequisite
+  for bounded capture.
+- **Any executable check.** The step bodies and agent docs are LLM-run; acceptance is by
+  inspection plus grep invariants, not a harness.
+- **New pipeline steps or `pipeline-state.md` edits.** Capture is a dispatched subagent
+  role inside the existing `drafting` step, not a new step.
