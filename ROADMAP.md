@@ -51,13 +51,19 @@ shared persist-vs-delete rule in `chapters.md` for host parity.
 
 ---
 
-## M3 — Bounded canon invention
+## M3 — Bounded canon invention + capture
 
 Replace the blanket "do not invent canon" with one bounded rule; resolve the
-`orchestrator.md` TODO.
+`orchestrator.md` TODO; add a coordinator-managed **capture agent** that records the
+continuity-relevant inventions the rule permits into the right canonical files.
 
 Done when: a single statement of the rule exists and is referenced from the step
-bodies; the contradictory TODO is gone.
+bodies; the contradictory TODO is gone; the drafting coordinator dispatches a capture
+agent that writes permitted inventions to `timeline.md` / `profile.md` / an
+agent-generated `canon/` subfolder (never `knowledge/`), with annotated, edit-policy-
+respecting, non-blocking writes, at parity on both hosts.
+
+### The rule
 
 - [ ] M3.1 Write the rule (in `canon.md` or `update-rules.md`): invent only when canon
   and plan are silent, it cannot contradict existing canon, it fits genre/register/period,
@@ -68,7 +74,45 @@ bodies; the contradictory TODO is gone.
   prohibition for reveal- and knowledge-load-bearing facts.
 - [ ] M3.3 Resolve the `orchestrator.md` invention TODO.
 
-Notes: —
+### The capture agent
+
+A new subagent role dispatched by the drafting coordinator (and the OpenCode
+`chapter-coordinator`), **not** a new pipeline step. The sandboxed scene-drafters stay
+sandboxed — they only emit *recommendations*; the capture agent is the one role permitted
+to write character and canon files.
+
+- [ ] M3.4 Recommendation hand-off. Define the schema a scene-drafter emits in its
+  `sceneNN-notes.md` for each continuity-relevant invention: the invented fact, the target
+  (`character_id`(s) or world-scope), the fact-type (`event` / `identity` / `world`), and the
+  source scene+beat. Add a line to the `drafting.md` subagent prompt contract instructing
+  subagents to record these (they still write nothing outside their notes/prose).
+- [ ] M3.5 Coordinator collection + dispatch. The coordinator gathers recommendations while
+  assembling `notes.md` (drafting step 8) and dispatches the capture agent **before** the
+  step-9 fragment deletion, so nothing is lost when `sceneNN-notes.md` is removed. Capture
+  is gated like deletion: it runs only on a completed assembly, never on a failure/abandon
+  path.
+- [ ] M3.6 Capture agent definition + routing. Write the agent (a host doc under `agents/`
+  plus an `opencode/agents/` counterpart). Routing:
+  character `event` → `characters/<id>/timeline.md`; invented stable identity color →
+  `characters/<id>/profile.md`; **never `knowledge/`** (reserved for the deferred
+  scene-knowledge-update step and reveal-sensitive — `characters.md:61`); non-character /
+  `world` facts → a new agent-generated subfolder under `canon/` (kept distinct from
+  human-authored canon); a walk-on with no folder → create a `status: stub` folder per
+  `characters.md` then write. Capture only records inventions the M3.1 rule permits;
+  reveal-/knowledge-load-bearing facts are still recorded as open questions, never captured.
+- [ ] M3.7 Write discipline. Each write is annotated with source scene+beat, draft-version
+  provenance (the M4.3 stamp — "which draft did this come from"), and an
+  `invented, unreviewed` marker; respects the target file's `edit_policy` (no silent write
+  to a locked / propose-only file — emit a proposal / log instead); and is non-blocking —
+  a capture failure never blocks draft completion, it is logged in `notes.md`. Captured
+  writes ride drafting's existing `review_required: true` gate.
+- [ ] M3.8 Host parity. Mirror the coordinator dispatch and the capture agent across the
+  `.claude` drafting coordinator (`agents/steps/drafting.md`) and
+  `opencode/agents/chapter-coordinator.md`.
+
+Notes: knowledge/ is deliberately out of bounds for capture — it stays the sole province of
+the deferred scene-knowledge-update step, which protects reveal timing. M3.7's provenance
+annotation depends on M4.3's per-draft-version stamp.
 
 ---
 
@@ -88,7 +132,9 @@ keep their step names; the report→fix adjacency invariant is documented.
   (`compliance_report`, `prose_pass`, `metaphor_identify`, `metaphor_fix`,
   `anti_ai_report`) to read `<latest-draft>`.
 - [ ] M4.3 Add provenance to each draft version (frontmatter stamp `produced_by` / `reads`,
-  or an attempt-level manifest).
+  or an attempt-level manifest). This is also the "which draft did this come from" stamp that
+  M3.7's capture annotations reference — define it so a captured invention can name its source
+  draft version.
 - [ ] M4.4 Document the report→fix adjacency invariant: no draft increment between a report
   and its paired fix.
 - [ ] M4.5 Sweep the rename through docs that hard-code `draft.md` (`chapters.md`,
