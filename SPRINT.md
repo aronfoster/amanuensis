@@ -1,357 +1,285 @@
-# Sprint 6 — Milestone 1: Pipeline step-list consistency
+# Sprint 7 — Milestone 2: Drafting artifact cleanup
 
-This Sprint makes every step list in the repository agree with the actual step
-workflow files in `agents/steps/`, designates `templates/pipeline-state.md` as the
-single canonical source of the default step sequence, removes the duplicated
-enumeration from `agents/orchestrator.md`, and adds an executable consistency check
-guarded by CI in this repo. It also ships a portable version of that check to
-consuming projects: `install.sh` installs a CI workflow that validates the
-consuming project's own `pipeline-state.md` against the step files installed via the
-Amanuensis submodule.
+This Sprint makes a drafting run leave only durable artifacts behind. The
+Claude-side step body (`agents/steps/drafting.md`) is brought to parity with the
+OpenCode coordinator (`opencode/agents/chapter-coordinator.md`), which already
+deletes the per-scene working files after assembly. After this Sprint, a completed
+drafting attempt folder contains `draft.md` and `notes.md` only; the per-scene
+`sceneNN.md` / `sceneNN-notes.md` fragments are deleted once their content has been
+folded into those two combined files. The frontmatter and Outputs section of
+`drafting.md` stop advertising the scene fragments as durable outputs, and a single
+place in the docs (`agents/chapters.md`) records why some per-attempt files persist
+as audit records while the scene fragments are transient.
 
-After this Sprint, a maintainer cannot merge a change that adds, removes, or
-renames a step workflow file without either updating the canonical list to match or
-failing CI; and a consuming project gets the same protection against a
-`pipeline-state.md` that references a step the installed Amanuensis version does not
-provide.
+This is a documentation/prose-contract milestone: every change edits a Markdown step
+body or support doc. No code, no scripts, no schema changes. The step bodies are run
+by an LLM coordinator, so "a run leaves draft.md and notes.md only" is enforced by
+the instructions the coordinator follows, not by an executable test; acceptance is by
+inspection of those instructions plus grep invariants on the frontmatter.
 
 ## Background — what is and isn't wrong today
 
 Established by inspection during planning; tasks should not re-derive this:
 
-- `templates/pipeline-state.md` is **already correct**: its 13 steps
-  (`character_extraction` … `anti_ai_report`, `anti_ai_fix`) match the 13 files in
-  `agents/steps/` exactly. This file becomes the canonical source; it is not being
-  rewritten, only annotated and pointed-to.
-- `examples/smoke/pipeline-state.md:25` is **stale**: it ends with the monolithic
-  `anti_ai` instead of the `anti_ai_report` / `anti_ai_fix` split. This is the only
-  fixture edit M1.1 requires.
-- `agents/orchestrator.md:60-74` embeds the full step list as part of its "State
-  file format" example, ending with the same stale monolithic `anti_ai`. Removing
-  this enumeration (M1.2) eliminates that stale reference as a side effect, so it is
-  not separately patched.
-- No **other** file embeds an ordered or monolithic step list. `README.md` has only
-  prose; `agents/workflows.md` uses prose plus file links and already references
-  `anti-ai-report.md` / `anti-ai-fix.md` correctly; `templates/project-AGENTS.md`
-  carries an unordered partial catalog of step files with no `anti_ai` entry;
-  `examples/smoke/README.md` says "canonical step list" as a reference, not an
-  enumeration. M1.3 is therefore a **verification sweep**, not a set of edits —
-  fix anything a fresh grep turns up, but expect to find nothing.
+- `opencode/agents/chapter-coordinator.md:35` is **already correct**: it instructs
+  the coordinator to "Delete the scene-drafter's scene and notes files once their
+  entire contents are in the chapter draft and notes files." This is the reference
+  behavior the Claude-side step is being brought up to. Its only gap is that it does
+  not point at the persist-vs-delete rationale; Task 3 adds a one-line pointer for
+  host symmetry.
+- `agents/steps/drafting.md` is the file that **lags**. Three things are wrong:
+  - Frontmatter `outputs:` (lines 7–11) lists `scene01.md` and `scene01-notes.md`
+    as durable outputs alongside `draft.md` and `notes.md`.
+  - The Behavior section assembles `draft.md` (step 7, Assembly rules) and `notes.md`
+    (step 8, Notes assembly) but **never deletes** the scene fragments afterward.
+  - The Outputs section (lines 158–163) documents `sceneNN.md` / `sceneNN-notes.md`
+    as outputs ("Working artifacts the coordinator reads during assembly").
+- **Deletion is safe by construction.** `draft.md` already absorbs all scene prose
+  (Assembly rules) and `notes.md` already absorbs every per-scene notes file, broken
+  out by scene (Notes assembly). So by the time the fragments are deleted, their
+  entire content is captured in a durable combined file. The deletion is gated on
+  that capture — it is not unconditional.
+- **Drafting is the only step that produces transient fragment files.** The other
+  coordinator step, `metaphor_fix`, has its subagents append in place into
+  `metaphors.md`; it writes no per-entry fragment files. So this milestone's cleanup
+  is scoped entirely to the drafting step; no other step body produces orphan
+  fragments to reconcile.
+- `agents/chapters.md:57` already describes the per-attempt working artifacts under
+  `drafts/attemptNN/` (reviewer reports, compliance and prose-pass outputs, metaphor
+  working files, line-pass and anti-AI outputs). This is the natural and only home
+  for the audit-record-vs-transient-fragment distinction (Task 2); no new doc is
+  created.
+- `agents/project-layouts.md` shows only `draft.md` in its folder trees, never the
+  scene fragments, so it needs **no** edit. Verify, don't rewrite.
 
 ## Definition of done
 
 The Sprint is complete when:
 
-1. ROADMAP.md tasks M1.1, M1.2, and M1.3 are checked.
-2. `examples/smoke/pipeline-state.md` lists `anti_ai_report` and `anti_ai_fix`
-   instead of `anti_ai`, and its step list matches `templates/pipeline-state.md`
-   exactly (same steps, same order).
-3. `agents/orchestrator.md` contains **no** enumerated step list. Its "State file
-   format" section points to `templates/pipeline-state.md` as the canonical example
-   of both the file format and the default step sequence, retaining only prose that
-   describes the frontmatter fields and the `[>]` / `[x]` / `[ ]` marker semantics.
-4. `templates/pipeline-state.md` carries a short note declaring it the canonical
-   default sequence and stating that its step set must match `agents/steps/`.
-5. `scripts/check-pipeline-state.sh` exists, is executable, is POSIX-sh-compatible,
-   and implements the two modes specified in Task 3. It exits non-zero with a clear,
-   path-naming message on any mismatch and zero on success.
-6. A CI workflow in this repo (`.github/workflows/`) runs the check on push and pull
-   request and would fail if the template, the smoke fixture, or the `agents/steps/`
-   set drifted out of agreement.
-7. `install.sh` installs a consumer-side CI workflow
-   (`templates/dispatcher/.github/workflows/pipeline-state-check.yml` →
-   `<project>/.github/workflows/pipeline-state-check.yml`) in addition to the two
-   dispatcher files, idempotently, creating `.github/workflows/` if missing. The
-   installed workflow invokes `amanuensis/scripts/check-pipeline-state.sh` in
-   resolvable mode against the consuming project's `pipeline-state.md`.
-8. A fresh grep confirms no other hard-coded step list remains
-   (`git grep -n "anti_ai\b" -- '*.md' '*.yaml' '*.sh'` returns nothing outside
-   ROADMAP/SPRINT planning prose).
-9. `AGENTS.md` lists the new script and the consumer workflow template in its Core
-   documents, and its Setup section notes that `install.sh` now also installs the
-   check workflow.
+1. ROADMAP.md tasks M2.1, M2.2, and M2.3 are checked.
+2. `agents/steps/drafting.md` frontmatter `outputs:` lists **only**
+   `<chapter-folder>/drafts/<latest-attempt>/draft.md` and
+   `<chapter-folder>/drafts/<latest-attempt>/notes.md`. The `scene01.md` and
+   `scene01-notes.md` lines are gone.
+3. `agents/steps/drafting.md` Behavior section contains an explicit post-assembly
+   deletion step: after `draft.md` and `notes.md` are assembled, the coordinator
+   deletes each `sceneNN.md` and `sceneNN-notes.md`, gated on its content already
+   being captured in `draft.md` / `notes.md`. The deletion is suppressed on the
+   failure paths (blocker recorded, assembly not completed).
+4. `agents/steps/drafting.md` Outputs section no longer presents the scene fragments
+   as durable outputs; it documents `draft.md` and `notes.md` as the durable outputs
+   and describes the scene fragments (in prose, not as an outputs entry) as transient
+   working files created during the run and deleted after assembly.
+5. `agents/chapters.md` records the audit-record-vs-transient-fragment distinction:
+   `notes.md`, `reviewer-actions.md`, `metaphors.md`, and `anti-ai.md` persist as
+   per-attempt records; the per-scene `sceneNN.md` / `sceneNN-notes.md` fragments are
+   transient and deleted after assembly because their content is captured in the
+   combined files.
+6. `opencode/agents/chapter-coordinator.md` still instructs deletion and now points
+   at the same persist-vs-delete distinction, so the two hosts describe the same
+   contract. Its existing safety condition ("once their entire contents are in the
+   chapter draft and notes files") is preserved.
+7. A drafting attempt folder, after a run that follows the updated `drafting.md`,
+   would contain `draft.md` and `notes.md` only — confirmed by reading the step body,
+   since the step is LLM-run and has no executable harness.
 
 ## Conventions adopted by this Sprint
 
 Locked at the start so individual tasks don't rediscover them.
 
-**Canonical source.** `templates/pipeline-state.md` is the single source of the
-**default** step sequence. "Canonical list" everywhere in this Sprint means the
-ordered step list in that file. The ground truth for *which steps exist* is the set
-of files in `agents/steps/`; the canonical list must equal that set.
+**Durable vs transient.** A per-attempt file is **durable** (an audit record) if it
+is the only place its content lives and a human or downstream step may need it later:
+`draft.md`, `notes.md`, and the later-stage records `reviewer-actions.md`,
+`metaphors.md`, `anti-ai.md`. A file is **transient** if its entire content is folded
+into a durable combined file during the same step: the per-scene `sceneNN.md` and
+`sceneNN-notes.md` fragments. Transient files are deleted after assembly; durable
+files are never deleted by the step that writes them.
 
-**Consuming projects may legitimately differ.** Per `agents/orchestrator.md`, a
-consuming project customizes its own `pipeline-state.md` (steps may be omitted or
-reordered per project or project type). Therefore the consumer-facing check is
-**resolvable-only** — every listed step must resolve to an installed step file — and
-is **never** exhaustive. Only this repo's own template and fixture are held to
-exhaustive, ordered agreement.
+**Deletion is gated, not unconditional.** The coordinator deletes a scene fragment
+only after confirming its content is present in the durable combined file
+(`sceneNN.md` → `draft.md`, `sceneNN-notes.md` → `notes.md`). On any failure path —
+a subagent reports a blocker, assembly does not complete, a scene file is missing —
+the fragments are **not** deleted and the blocker is recorded in `notes.md`, matching
+the step's existing failure handling. This preserves the working files for diagnosis
+when a run cannot complete.
 
-**Two check modes.** The script supports:
-- *resolvable* (default): every `step_id` in a given `pipeline-state.md` resolves to
-  `<steps-dir>/<step-id-with-dashes>.md`. Used for consuming projects and for the
-  smoke fixture.
-- *exhaustive*: resolvable, **plus** every `<steps-dir>/*.md` basename appears in the
-  list (no step file omitted). Used for `templates/pipeline-state.md`.
+**`outputs:` means durable outputs.** Per `agents/orchestrator.md`, frontmatter is
+descriptive, not enforced. This Sprint adopts the reading that `outputs:` lists the
+**durable** artifacts a step leaves behind. Transient working files are described in
+the body, not listed in `outputs:`. No new frontmatter field is introduced; the
+orchestrator frontmatter contract is unchanged.
 
-**Order vs set.** Membership is the rule against the step-files directory (the
-filesystem has no inherent order). Ordered equality is enforced only between the
-smoke fixture and the template (both are ordered lists in this repo).
+**Reference direction.** `opencode/agents/chapter-coordinator.md` is the behavioral
+reference (it already deletes). `agents/steps/drafting.md` is brought up to it. The
+OpenCode file changes only by gaining a pointer to the shared persist-vs-delete rule
+(Task 3); its deletion instruction and safety condition are not rewritten.
 
-**step_id → file path.** `step_id` snake_case → dashes → `<steps-dir>/<…>.md`, the
-existing convention documented in `agents/orchestrator.md`. The script reuses it; it
-does not invent a new mapping.
+**Single documentation home.** The persist-vs-delete distinction is documented once,
+in `agents/chapters.md`, next to the existing per-attempt artifacts description. Step
+bodies and the OpenCode coordinator may reference it but do not restate the full list.
 
-**Script style.** `scripts/check-pipeline-state.sh`, `#!/bin/sh`, no bashisms,
-executable, clear error messages that name the offending path, non-zero exit on
-failure — consistent with the existing `install.sh`.
-
-**Mirror destination paths for installable files.** The consumer CI workflow source
-lives at `templates/dispatcher/.github/workflows/pipeline-state-check.yml` and is
-copied verbatim to the same relative path under the consuming project root. This
-extends the Sprint-5 dispatcher convention (mirror source path == destination path)
-to a third installed file.
-
-**Revisiting the Sprint-5 minimal-install decision.** Sprint 5 locked "`install.sh`
-copies only the two dispatcher files" and "does not modify the consuming project's
-`.github`." This Sprint deliberately revises that: `install.sh` now also installs the
-namespaced check workflow into the consumer's `.github/workflows/`. The file name is
-Amanuensis-specific so it cannot clobber a consumer's unrelated workflows. No other
-Sprint-5 install behavior changes.
-
-**Submodule checkout in the consumer workflow.** The shipped workflow checks out
-submodules (`actions/checkout` with `submodules: recursive`) so that
-`amanuensis/scripts/check-pipeline-state.sh` and `amanuensis/agents/steps/` are
-present when it runs. This is a hard requirement of the workflow, not optional.
-
-**Scope.** This Sprint adds files (the script, the internal CI workflow, the consumer
-workflow template) and edits a small number of existing files (`orchestrator.md`,
-`templates/pipeline-state.md`, `examples/smoke/pipeline-state.md`, `install.sh`,
-`AGENTS.md`, `ROADMAP.md`, and the smoke README). No step workflow bodies change. No
-renames of existing step files.
+**Scope.** This Sprint edits `agents/steps/drafting.md`, `agents/chapters.md`,
+`opencode/agents/chapter-coordinator.md`, `ROADMAP.md`, and this Sprint file. It does
+**not** change scene-drafter prompt files, `project-layouts.md`, any other step body,
+the storyboard schema, or any script. No file is renamed.
 
 ---
 
 ## Tasks
 
-### Task 1 — Fix the stale step in the smoke fixture [x]
+### Task 1 — Delete scene fragments after assembly; reconcile `drafting.md` frontmatter and Outputs [ ]
 
-**Goal.** Bring `examples/smoke/pipeline-state.md` into agreement with the canonical
-list (M1.1).
+**Goal.** Bring `agents/steps/drafting.md` to parity with the OpenCode coordinator:
+the run deletes the per-scene fragments after assembly, and the file stops advertising
+them as durable outputs. Closes **M2.1** and **M2.2**. All edits are within this one
+file so a single developer owns it end to end.
 
 **Requirements.**
 
-- In `examples/smoke/pipeline-state.md`, replace the single `- [ ] anti_ai` line with
-  the two lines `- [ ] anti_ai_report` and `- [ ] anti_ai_fix`, in that order, so the
-  fixture's full step list matches `templates/pipeline-state.md` step-for-step and
-  order-for-order.
-- Do not change the marker position (`[>]` stays on `character_extraction`) or the
-  frontmatter beyond what an honest edit requires. Leave `last_updated` as-is unless
-  the developer chooses to refresh it; it is not load-bearing for this milestone.
-- Confirm `examples/smoke/README.md` still reads correctly afterward. Its line about a
-  "canonical step list with `[>]` on `character_extraction`" is a reference, not an
-  enumeration, and should need no change — verify, don't rewrite.
+- **Frontmatter (M2.2).** In the `outputs:` block, remove the
+  `<chapter-folder>/drafts/<latest-attempt>/scene01.md` and
+  `<chapter-folder>/drafts/<latest-attempt>/scene01-notes.md` lines. After the edit,
+  `outputs:` lists exactly `draft.md` and `notes.md` (with their full
+  `<chapter-folder>/drafts/<latest-attempt>/` paths). Do not add a new frontmatter
+  key for the fragments — they are described in the body, not the frontmatter.
+- **Behavior — add the deletion step (M2.1).** After the existing Notes-assembly step
+  (currently step 8 in "Coordinator responsibilities"), add a step that deletes each
+  `sceneNN.md` and `sceneNN-notes.md` from `<chapter-folder>/drafts/<latest-attempt>/`
+  once its content is captured: the scene prose is in `draft.md` and the scene notes
+  are in `notes.md`. Mirror the OpenCode wording — deletion happens "once their entire
+  contents are in the chapter draft and notes files." State the gate explicitly so a
+  reader cannot read it as an unconditional `rm`.
+- **Behavior — guard the failure paths.** Make clear (in the new deletion step and/or
+  the existing "Failure handling" / "Safety rules" subsections) that the fragments are
+  **not** deleted when the run cannot complete assembly — e.g. a subagent reports a
+  blocker, a scene file is missing, or assembly is abandoned. On those paths the
+  fragments are preserved and the blocker is recorded in `notes.md`, consistent with
+  the step's existing failure handling. The Open-questions exit path (no `draft.md`
+  written) likewise performs no deletion.
+- **Outputs section.** Rewrite the Outputs list so `draft.md` and `notes.md` are the
+  durable outputs. Remove the `sceneNN.md` and `sceneNN-notes.md` bullets as durable
+  outputs; instead add a short prose line (in the Outputs section or the deletion
+  step) noting they are transient working files written by subagents during the run
+  and deleted after assembly, so they are not part of the durable output set. Do not
+  delete the Behavior-section references to subagents *writing* `sceneNN.md` /
+  `sceneNN-notes.md` (steps 5–6 and the subagent contract) — those files are still
+  created transiently; only their status as durable outputs changes.
+- Keep all other prose intact: scene grouping, subagent contract, assembly rules,
+  notes assembly format, out-of-scope, and open-questions handling are unchanged.
 
-**Done when.** `examples/smoke/pipeline-state.md` ends with `anti_ai_report` then
-`anti_ai_fix`, and a diff of its step list against `templates/pipeline-state.md`'s
-step list is empty.
+**Done when.** `drafting.md` frontmatter `outputs:` names only `draft.md` and
+`notes.md`; the Behavior section has an explicit, capture-gated deletion step for the
+scene fragments with the failure paths excluded; and the Outputs section presents
+`draft.md` / `notes.md` as durable while describing the fragments as transient.
 
 ---
 
-### Task 2 — Make `templates/pipeline-state.md` canonical; strip the orchestrator's list [x]
+### Task 2 — Document the audit-record vs transient-fragment distinction in `chapters.md` [ ]
 
-**Goal.** Single-source the default sequence (M1.2, documentation half): the template
-is canonical, and `agents/orchestrator.md` stops duplicating it.
+**Goal.** Record, in one place, why some per-attempt files persist and the scene
+fragments do not. Closes **M2.3**.
 
 **Requirements.**
 
-- In `agents/orchestrator.md`, remove the enumerated step list from the "State file
-  format" section (currently the fenced example containing `- [>] character_extraction`
-  … `- [ ] anti_ai`). Per the locked decision, **remove the list entirely** — do not
-  leave an elided skeleton of real step_ids.
-  - Replace it with a pointer: `templates/pipeline-state.md` is the canonical example
-    of both the file format and the default step sequence.
-  - Retain (as prose, not as an enumeration) the description of the frontmatter fields
-    (`project_type`, `last_updated`) and the `[>]` / `[x]` / `[ ]` marker semantics,
-    plus the existing note that a project's list may be customized and the dispatcher
-    reads whatever list is present. None of that surrounding prose names specific
-    steps, so it stays.
-  - After the edit, `agents/orchestrator.md` must contain zero step_id enumerations.
-    The `step_id → path` mapping paragraph stays; it references the convention, not a
-    list.
-- In `templates/pipeline-state.md`, add a short note (a sentence or two, e.g. under
-  the `## Steps` heading or in a comment) stating that this file is the canonical
-  default step sequence and that its step set must match the files in
-  `amanuensis/agents/steps/`. Keep it brief; this is a signpost, not a spec.
-- Do not change the actual step lines in the template — they are already correct.
+- Edit `agents/chapters.md`, at or near the existing per-attempt artifacts
+  description (the `draft.md` section, around line 57, which already enumerates the
+  working files under `drafts/attemptNN/`). Add a short, clearly-scoped passage that:
+  - States that some per-attempt files are **durable audit records** kept for human
+    review and downstream steps: `notes.md` (the run record), and the later-stage
+    review/report files `reviewer-actions.md`, `metaphors.md`, and `anti-ai.md`,
+    alongside the prose `draft.md`.
+  - States that the per-scene `sceneNN.md` / `sceneNN-notes.md` fragments are
+    **transient**: their entire content is folded into `draft.md` and `notes.md`
+    during the drafting step, and they are deleted after assembly. The general rule:
+    a working file is deletable once its content is captured in a durable combined
+    artifact.
+- Keep it brief and consistent with the file's existing tone — a few sentences or a
+  short list, not a new top-level section unless that reads more naturally. Do not
+  restate the drafting step's full behavior; this is the rationale, the step body is
+  the procedure.
+- Do not edit `project-layouts.md` (its trees show only `draft.md` and are correct).
 
-**Done when.** `agents/orchestrator.md` enumerates no steps and points to the
-template as canonical; `templates/pipeline-state.md` declares itself canonical; the
-two files do not contradict each other.
+**Done when.** `agents/chapters.md` names the persisted set (`notes.md`,
+`reviewer-actions.md`, `metaphors.md`, `anti-ai.md`, plus `draft.md`) as durable
+records and the scene fragments as transient-deleted-after-assembly, with the
+capture-based rule stated once.
 
 ---
 
-### Task 3 — Consistency-check script [x]
+### Task 3 — Point the OpenCode coordinator at the shared rule [ ]
 
-**Goal.** Provide the executable check that backs both the internal CI (Task 4) and
-the consumer workflow (Task 5). This is the M1.2 "add a check" deliverable.
+**Goal.** Keep the two hosts describing the same contract without rewriting the
+OpenCode coordinator's already-correct deletion instruction.
 
 **Requirements.**
 
-- Path: `scripts/check-pipeline-state.sh`, `#!/bin/sh`, executable, no bashisms,
-  error-loud and non-zero on failure — matching `install.sh`'s style.
-- Invocation (the developer chooses exact flag spelling; this is the required
-  behavior):
-  - `check-pipeline-state.sh <pipeline-state-file> <steps-dir>` — **resolvable** mode:
-    parse the `## Steps` list from `<pipeline-state-file>`, extract each `step_id`
-    (the snake_case token after the `- [ ]` / `- [>]` / `- [x]` marker), convert
-    snake → dashes, and assert `<steps-dir>/<step-id-with-dashes>.md` exists. Fail,
-    naming the offending `step_id` and the path it expected, if any does not.
-  - `check-pipeline-state.sh --exhaustive <pipeline-state-file> <steps-dir>` —
-    **exhaustive** mode: everything resolvable mode does, **plus** assert that every
-    `<steps-dir>/*.md` basename (dashes → snake) appears in the list. Fail, naming any
-    step file that is missing from the list.
-- Parsing contract: step lines are list items whose marker is `[ ]`, `[>]`, or `[x]`
-  followed by a single snake_case token. The `## Steps` heading delimits the block;
-  lines outside it are ignored. The developer may tighten this, but it must handle the
-  template and the smoke fixture as written.
-- On success, exit 0 and print a one-line confirmation naming the file checked and the
-  mode. On any failure, exit non-zero. Do not modify any file — this is read-only.
-- The script must be runnable both from the repo root and from a consuming project via
-  the submodule path (`amanuensis/scripts/check-pipeline-state.sh`). It must not assume
-  its own location relative to the target files — both paths are passed as arguments.
+- In `opencode/agents/chapter-coordinator.md`, preserve the existing deletion bullet
+  and its safety condition ("Delete the scene-drafter's scene and notes files once
+  their entire contents are in the chapter draft and notes files").
+- Add a brief pointer making the persist-vs-delete intent explicit and consistent
+  with Task 2: the scene and notes fragments are transient and deleted after
+  assembly, while the chapter draft and run notes (and later review/report files)
+  persist. A one-line reference to the distinction documented in the Amanuensis
+  `chapters.md` (reached via the project's workflow paths, the same way this file
+  already references `update-rules.md` / `agentic-drafting.md`) is sufficient — do not
+  inline the full persist list into this host file.
+- Make no other behavioral change to the coordinator (scene grouping, attempt-folder
+  creation, dispatch, assembly, the `wc` word-count report all stay).
 
-**Done when.** Running the script in exhaustive mode on `templates/pipeline-state.md`
-against `agents/steps/` exits 0; running resolvable mode on
-`examples/smoke/pipeline-state.md` against `agents/steps/` exits 0; temporarily
-introducing a bogus step line, or hiding a step file, makes the relevant mode exit
-non-zero with a message naming the discrepancy.
+**Done when.** `chapter-coordinator.md` still instructs gated deletion and now points
+at the shared persist-vs-delete distinction, matching the Claude-side step and
+`chapters.md`.
 
 ---
 
-### Task 4 — Internal CI workflow [x]
+### Task 4 — Verification sweep, ROADMAP, closeout [ ]
 
-**Goal.** Guard this repo against step-list drift on every push and pull request
-(M1.2 "add a check," CI half). Depends on Tasks 1–3.
-
-**Requirements.**
-
-- Add a GitHub Actions workflow under `.github/workflows/` in this repo (name is the
-  developer's call, e.g. `pipeline-state-check.yml`). This repo has no existing CI;
-  this introduces it. Keep it minimal — a single job on `push` and `pull_request`.
-- The job must run, at minimum:
-  - `scripts/check-pipeline-state.sh --exhaustive templates/pipeline-state.md agents/steps`
-  - `scripts/check-pipeline-state.sh examples/smoke/pipeline-state.md agents/steps`
-    (resolvable; the fixture may in principle omit steps, though today it does not)
-  - An ordered-equality assertion between the smoke fixture's step list and the
-    template's step list (e.g. `diff` of the two extracted, ordered step-id
-    sequences). Fail if they differ. The extraction can reuse the script's parsing or
-    a small inline `grep`/`sed`; the developer decides, but the property — fixture
-    order == template order — must be enforced.
-- The workflow needs no secrets and no submodule checkout (everything it reads lives
-  in this repo). Use a stock `actions/checkout`.
-- A red run must be a real signal: verify locally that breaking any of the three
-  invariants (add/remove a step file without updating the template; desync the
-  fixture from the template; reorder the fixture) makes the job fail.
-
-**Done when.** The workflow exists, runs the three checks, and passes on the current
-(post-Task-1/2) tree; a deliberately introduced drift fails it.
-
----
-
-### Task 5 — Ship the consumer validator via `install.sh` [x]
-
-**Goal.** Give consuming projects a rolldown path: a CI workflow, installed by
-`install.sh`, that validates their own `pipeline-state.md` against the step files in
-their installed Amanuensis submodule (M1.2 consumer-facing extension). Depends on
-Task 3.
+**Goal.** Confirm the milestone's "done when" holds, update the catalogs, and check
+the boxes. Depends on Tasks 1–3.
 
 **Requirements.**
 
-- Author the consumer workflow source at
-  `templates/dispatcher/.github/workflows/pipeline-state-check.yml`, mirroring the
-  dispatcher source-path convention so the install copy is structurally trivial.
-  - The workflow runs on the consumer's `push` / `pull_request`.
-  - It checks out the consumer repo **with submodules** (`actions/checkout` with
-    `submodules: recursive`) so `amanuensis/` is populated.
-  - It invokes `sh amanuensis/scripts/check-pipeline-state.sh pipeline-state.md
-    amanuensis/agents/steps` (resolvable mode) against the consumer's project-root
-    `pipeline-state.md`. Resolvable, never exhaustive — the consumer's list may
-    legitimately be a subset or reordering.
-  - Keep it self-contained and host-agnostic; it is a plain GitHub Actions file the
-    consumer can edit after install.
-- Update `install.sh`:
-  - In addition to the two dispatcher files, copy
-    `templates/dispatcher/.github/workflows/pipeline-state-check.yml` to
-    `<target>/.github/workflows/pipeline-state-check.yml`, creating
-    `<target>/.github/workflows/` if missing.
-  - Keep the existing behavior intact: idempotent overwrite, fail loud and non-zero if
-    a source file is missing (now three source files, not two), do not create the
-    target project root, print a summary listing all copied files.
-  - Preserve POSIX-sh compatibility and the self-locating behavior already in the
-    script. The new copy is one more of the same operation, not a new mechanism.
-- Do not have `install.sh` run the check, modify the consumer's other workflows, or
-  touch anything beyond the three namespaced files. It installs; it does not execute.
+- **Frontmatter invariant.** Confirm `agents/steps/drafting.md`'s `outputs:` block
+  contains no `scene` line (e.g. `git grep -n "scene01" -- agents/steps/drafting.md`
+  returns only legitimate Behavior/contract references to subagents writing or the
+  coordinator deleting `sceneNN.md` / `sceneNN-notes.md`, and **nothing** inside the
+  frontmatter `outputs:` block). Read the frontmatter by eye to confirm only
+  `draft.md` and `notes.md` remain.
+- **Behavioral read-through.** Read the updated `drafting.md` Behavior and Outputs
+  sections and confirm a faithful run would leave `draft.md` and `notes.md` only, with
+  deletion gated on capture and suppressed on failure paths. This is the acceptance
+  for an LLM-run step — there is no executable harness.
+- **Host parity check.** Confirm `drafting.md`, `chapter-coordinator.md`, and
+  `chapters.md` agree: same deletion behavior, same safety condition, same
+  persist-vs-delete framing, no contradiction.
+- **Sweep.** `git grep -n "scene01\|scene02\|sceneNN" -- '*.md'` across the repo;
+  confirm no remaining file lists the scene fragments as durable outputs or as
+  expected persisted artifacts. Background says drafting.md is the only such file; if
+  the sweep turns up another (it shouldn't), reconcile it the same way. Record what
+  the sweep found in the commit message.
+- **ROADMAP.md.** Check M2.1, M2.2, and M2.3. Optionally add a one-line Note that the
+  OpenCode coordinator was also pointed at the shared rule for host parity. Do not
+  edit other milestones.
+- **Sprint file.** Mark each completed task in this file as `[x]`.
 
-**Done when.** `./install.sh /tmp/test-target` (empty pre-existing dir) creates all
-three files including `/tmp/test-target/.github/workflows/pipeline-state-check.yml`
-matching the source byte-for-byte; re-running is a clean no-op-equivalent overwrite;
-a missing source file fails loudly; the installed workflow, read by eye, calls the
-submodule script in resolvable mode against the consumer's `pipeline-state.md`.
-
----
-
-### Task 6 — Sweep, docs, ROADMAP, verification [x]
-
-**Goal.** Close M1.3, update the catalogs, and check the boxes. Depends on Tasks 1–5.
-
-**Requirements.**
-
-- **M1.3 verification sweep.** Run `git grep -n "anti_ai\b"` and
-  `git grep -ln "\[>\] \|\[ \] "` across `*.md` / `*.yaml` and confirm no hard-coded
-  ordered or monolithic step list survives outside `templates/pipeline-state.md` and
-  `examples/smoke/pipeline-state.md`. Background says you should find nothing else; if
-  you do (a list in `README.md`, `agents/workflows.md`, or
-  `templates/project-AGENTS.md`), replace it with a reference to the canonical
-  template rather than re-enumerating. Record in the commit message what the sweep
-  found.
-- **`AGENTS.md`.** Add `scripts/check-pipeline-state.sh` and
-  `templates/dispatcher/.github/workflows/pipeline-state-check.yml` to the Core
-  documents section with a one-line description each. In the Setup section, note that
-  `install.sh` now also installs the pipeline-state check workflow into the consuming
-  project's `.github/workflows/`. Do not rewrite unrelated sections.
-- **`examples/smoke/README.md`.** Optionally add one line to the recipe showing the
-  maintainer how to run `scripts/check-pipeline-state.sh` against the fixture, since
-  the smoke fixture is now a checked artifact. Keep it short; this is a convenience,
-  not a required step of the smoke test.
-- **`ROADMAP.md`.** Check M1.1, M1.2, and M1.3. Update the milestone's "Done when" is
-  satisfied; if it helps a future reader, add a one-line Note that the milestone also
-  shipped a consumer-side validator (an intentional extension beyond the original
-  three bullets). Do not edit other milestones.
-- **Acceptance run.** Execute, and confirm green:
-  - `scripts/check-pipeline-state.sh --exhaustive templates/pipeline-state.md agents/steps` → exit 0.
-  - `scripts/check-pipeline-state.sh examples/smoke/pipeline-state.md agents/steps` → exit 0.
-  - Ordered equality of the smoke fixture and template step lists.
-  - `./install.sh /tmp/test-target` produces all three files; re-run clean.
-  - `git grep -n "anti_ai\b" -- '*.md' '*.yaml' '*.sh'` returns nothing outside
-    ROADMAP/SPRINT planning prose.
-  - `agents/orchestrator.md` contains no enumerated step list.
-- Mark each completed task in this Sprint file as `[x]`.
-
-**Done when.** The sweep is clean, `AGENTS.md` lists the new artifacts, ROADMAP M1.1–
-M1.3 are checked, the acceptance commands pass, and all Sprint tasks are checked.
+**Done when.** The frontmatter invariant holds, the step body reads as
+draft.md-and-notes.md-only with gated deletion, the three files agree, ROADMAP
+M2.1–M2.3 are checked, and all Sprint tasks are checked.
 
 ---
 
 ## Out of scope for this Sprint
 
-- Holding consuming projects' `pipeline-state.md` to the *exhaustive* canonical list.
-  Consumers customize their sequence; only resolvability is checked downstream.
-- Per-project-type canonical lists (separate `book` / `series` default sequences).
-  There is one template today; multiple canonical lists are a future concern.
-- Auto-running the check inside `install.sh`, or having `install.sh` modify any
-  consumer file other than the three namespaced ones.
-- Any change to step workflow bodies in `agents/steps/`, or renaming step files.
-- Reworking the smoke test itself (Milestone-5 territory) beyond the optional
-  one-line check note.
-- The `agents/orchestrator.md` TODO about agents inventing missing canon (Milestone 3).
+- Any change to scene-drafter prompt files (`opencode/agents/scene-drafter.md`,
+  `scene-drafter-opus.md`). They still write `sceneNN.md` / `sceneNN-notes.md`; only
+  the coordinator's post-assembly handling of those files changes.
+- Versioned draft naming (`draft-vNN.md`) and the prose-chain rework — that is
+  Milestone 4. This Sprint keeps the single `draft.md` per attempt.
+- Editing `project-layouts.md` or the folder-tree examples (they already show only
+  `draft.md`).
+- Adding an executable check that a run left only `draft.md` / `notes.md`. The step is
+  LLM-run; acceptance is by inspection of the step body, not a harness.
+- Introducing a new `transient_outputs` frontmatter field or otherwise changing the
+  orchestrator frontmatter contract. Transient files are described in the body.
+- Any change to other step bodies (`metaphor_fix` etc.), the storyboard schema, or
+  `install.sh` / the check script.
