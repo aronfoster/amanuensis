@@ -11,6 +11,8 @@ To redo a step, move the `[>]` marker up to that step and change downstream `[x]
 
 ## Steps
 
+<!-- This file is the canonical default step sequence for an Amanuensis project. Its step set must match the files in `amanuensis/agents/steps/`. -->
+
 - [>] character_extraction
 - [ ] scene_generation
 - [ ] storyboarding

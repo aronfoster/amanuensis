@@ -1,0 +1,25 @@
+# pipeline-state-check.yml — verify the consumer's pipeline-state.md.
+#
+# Installed by Amanuensis (always overwritten on re-install). You can edit
+# this file after install if you need to adjust triggers or runner; the
+# installer will restore it to the canonical version on the next run.
+#
+# Runs the resolvable check: every step_id listed in pipeline-state.md must
+# have a matching <step-id>.md under amanuensis/agents/steps/. We do NOT
+# pass --exhaustive — consumers may legitimately omit or reorder steps.
+
+name: pipeline-state-check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Check pipeline-state.md against amanuensis/agents/steps
+        run: sh amanuensis/scripts/check-pipeline-state.sh pipeline-state.md amanuensis/agents/steps

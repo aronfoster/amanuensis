@@ -134,7 +134,7 @@ renames of existing step files.
 
 ## Tasks
 
-### Task 1 — Fix the stale step in the smoke fixture [ ]
+### Task 1 — Fix the stale step in the smoke fixture [x]
 
 **Goal.** Bring `examples/smoke/pipeline-state.md` into agreement with the canonical
 list (M1.1).
@@ -158,7 +158,7 @@ step list is empty.
 
 ---
 
-### Task 2 — Make `templates/pipeline-state.md` canonical; strip the orchestrator's list [ ]
+### Task 2 — Make `templates/pipeline-state.md` canonical; strip the orchestrator's list [x]
 
 **Goal.** Single-source the default sequence (M1.2, documentation half): the template
 is canonical, and `agents/orchestrator.md` stops duplicating it.
@@ -191,7 +191,7 @@ two files do not contradict each other.
 
 ---
 
-### Task 3 — Consistency-check script [ ]
+### Task 3 — Consistency-check script [x]
 
 **Goal.** Provide the executable check that backs both the internal CI (Task 4) and
 the consumer workflow (Task 5). This is the M1.2 "add a check" deliverable.
@@ -229,7 +229,7 @@ non-zero with a message naming the discrepancy.
 
 ---
 
-### Task 4 — Internal CI workflow [ ]
+### Task 4 — Internal CI workflow [x]
 
 **Goal.** Guard this repo against step-list drift on every push and pull request
 (M1.2 "add a check," CI half). Depends on Tasks 1–3.
@@ -259,7 +259,7 @@ non-zero with a message naming the discrepancy.
 
 ---
 
-### Task 5 — Ship the consumer validator via `install.sh` [ ]
+### Task 5 — Ship the consumer validator via `install.sh` [x]
 
 **Goal.** Give consuming projects a rolldown path: a CI workflow, installed by
 `install.sh`, that validates their own `pipeline-state.md` against the step files in
@@ -301,7 +301,7 @@ submodule script in resolvable mode against the consumer's `pipeline-state.md`.
 
 ---
 
-### Task 6 — Sweep, docs, ROADMAP, verification [ ]
+### Task 6 — Sweep, docs, ROADMAP, verification [x]
 
 **Goal.** Close M1.3, update the catalogs, and check the boxes. Depends on Tasks 1–5.
 

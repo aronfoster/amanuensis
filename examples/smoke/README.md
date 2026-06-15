@@ -52,6 +52,16 @@ README.md
 .gitignore
 ```
 
+## Verify the fixture (optional)
+
+The smoke fixture's `pipeline-state.md` is a checked artifact. From the Amanuensis repo root, you can confirm every listed step resolves to an installed step file with:
+
+```sh
+sh scripts/check-pipeline-state.sh examples/smoke/pipeline-state.md agents/steps
+```
+
+This is a convenience for maintainers, not a required step of the smoke test — the same check runs in CI.
+
 ## Run — Claude Code
 
 ```sh

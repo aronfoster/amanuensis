@@ -22,4 +22,5 @@ To redo a step, move the `[>]` marker up to that step and change downstream `[x]
 - [ ] metaphor_fix
 - [ ] metaphor_apply
 - [ ] line_pass
-- [ ] anti_ai
+- [ ] anti_ai_report
+- [ ] anti_ai_fix

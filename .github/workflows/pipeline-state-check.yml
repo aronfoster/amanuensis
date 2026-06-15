@@ -1,0 +1,34 @@
+name: pipeline-state-check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Exhaustive check (template vs agents/steps)
+        run: |
+          set -e
+          sh scripts/check-pipeline-state.sh --exhaustive templates/pipeline-state.md agents/steps
+
+      - name: Resolvable check (smoke fixture)
+        run: |
+          set -e
+          sh scripts/check-pipeline-state.sh examples/smoke/pipeline-state.md agents/steps
+
+      - name: Ordered-equality of step lists (template == smoke fixture)
+        run: |
+          set -e
+          tmpl_steps="$(mktemp)"
+          smoke_steps="$(mktemp)"
+          grep -E '^- \[.\] ' templates/pipeline-state.md | sed 's/^- \[.\] //' > "$tmpl_steps"
+          grep -E '^- \[.\] ' examples/smoke/pipeline-state.md | sed 's/^- \[.\] //' > "$smoke_steps"
+          if ! diff -u "$tmpl_steps" "$smoke_steps"; then
+            echo "ERROR: ordered step lists differ between templates/pipeline-state.md and examples/smoke/pipeline-state.md" >&2
+            exit 1
+          fi

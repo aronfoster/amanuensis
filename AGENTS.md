@@ -33,13 +33,15 @@ Amanuensis is an orchestrator-driven pipeline for long-form writing. Each projec
 - `templates/amanuensis-project.yaml` — project-level config template.
 - `templates/project-AGENTS.md` — adapter template for consuming repositories.
 - `templates/voice.md` — starter voice profile that a consuming project copies to its project-root `voice.md`. The voice-consuming steps read the project-root `voice.md`, not this template; this repo holds only the starter.
-- `install.sh` — copies the dispatcher files into a consuming project's `.claude/commands/` and `.opencode/agents/` folders.
+- `install.sh` — copies the dispatcher files into a consuming project's `.claude/commands/` and `.opencode/agents/` folders, and installs the pipeline-state check workflow into `.github/workflows/`.
 - `templates/dispatcher/.claude/commands/next-step.md` — Claude Code slash command implementing the dispatcher.
 - `templates/dispatcher/.opencode/agents/next-step.md` — OpenCode agent implementing the dispatcher at parity with the Claude Code version.
+- `scripts/check-pipeline-state.sh` — consistency check between a `pipeline-state.md` and an `agents/steps/` directory, in resolvable (default) or exhaustive mode.
+- `templates/dispatcher/.github/workflows/pipeline-state-check.yml` — consumer-side CI workflow installed by `install.sh`; validates the consumer's `pipeline-state.md` against the installed Amanuensis step files.
 
 ## Setup
 
-From the consuming project's root, run `./amanuensis/install.sh` to copy the dispatcher into `.claude/commands/next-step.md` and `.opencode/agents/next-step.md`. Prerequisite: Amanuensis must be present at `<project>/amanuensis/` (typically as a git submodule). See `templates/dispatcher/` and `agents/orchestrator.md` for the source-of-truth dispatcher contract.
+From the consuming project's root, run `./amanuensis/install.sh` to copy the dispatcher into `.claude/commands/next-step.md` and `.opencode/agents/next-step.md`. `install.sh` also installs the pipeline-state check workflow into `.github/workflows/pipeline-state-check.yml`, creating that directory if missing. Prerequisite: Amanuensis must be present at `<project>/amanuensis/` (typically as a git submodule). See `templates/dispatcher/` and `agents/orchestrator.md` for the source-of-truth dispatcher contract.
 
 ## Step workflows
 
