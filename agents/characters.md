@@ -90,4 +90,4 @@ When a character is expected to appear in an upcoming scene and no character fol
 
 Use the character's `character_id` (snake_case) as the folder name. If the character is named but their role is not yet settled, create a minimal profile and mark `status: stub` in the frontmatter.
 
-Do not invent canon to fill empty fields. Record uncertainty explicitly.
+Invention here is governed by Rule 1 in `agents/update-rules.md`. A character's identity and other character-knowledge-load-bearing fields are load-bearing, so Rule 1 forbids inventing them: leave a genuinely-unknown such field uncertain rather than invented, and record that uncertainty explicitly.

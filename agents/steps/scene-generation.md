@@ -24,7 +24,7 @@ Translate the project's story plan into a scene-by-scene plan for the chapter cu
 - `<story-plan>` — the project's planning file. Resolved per project_type by `agents/project-layouts.md`. For `short_story` this is `plot/summary.md` by default; for `book` and `series` it is the per-book overview file. The consuming project's local `AGENTS.md` may override the default.
 - `characters/<character-id>/profile.md` — stable character core for every character relevant to this chapter. Read all profiles, not only POV characters; supporting characters' motivations and continuity constraints affect scene shape.
 - `characters/<character-id>/knowledge/baseline.md` — what each character knows before the story begins. Required to plan reveals and concealments honestly: a scene cannot reveal to a character something they already know, and concealment only matters relative to current knowledge.
-- `canon/**/*.md` — world, setting, and rule files. Scenes are grounded in canon; the step does not invent canon (per `agents/canon.md`).
+- `canon/**/*.md` — world, setting, and rule files. Scenes are grounded in canon. The step may supply a permitted non-load-bearing detail under Rule 1 in `agents/update-rules.md`, but it records load-bearing (reveal/knowledge) or canon-conflicting gaps as open questions rather than inventing them (per `agents/canon.md`).
 
 ## Behavior
 
@@ -106,4 +106,4 @@ In those cases, append a `critical` entry to `open-questions.md` describing the 
 - `agents/chapters.md` — field intent for a scene-list entry.
 - `agents/steps/storyboarding.md` — downstream consumer; reads the `scene-list.md` produced here.
 - `agents/project-layouts.md` — resolution rules for `<story-plan>` and `<chapter-folder>`.
-- `agents/canon.md` — canon priority; this step reads canon but does not invent it.
+- `agents/canon.md` — canon priority; this step reads canon and may supply permitted non-load-bearing detail under Rule 1 in `agents/update-rules.md`, recording load-bearing or conflicting gaps as open questions.

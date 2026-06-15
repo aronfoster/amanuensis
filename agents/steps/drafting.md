@@ -36,7 +36,8 @@ Use this step only after the chapter's storyboard files are complete. This step 
 6. Wait for all subagents to write their scene file (`sceneNN.md`) and scene notes file (`sceneNN-notes.md`) into `<chapter-folder>/drafts/<latest-attempt>/`.
 7. Assemble the scene files in scene order into `<chapter-folder>/drafts/<latest-attempt>/draft.md` (see Assembly rules).
 8. Assemble the scene notes files into `<chapter-folder>/drafts/<latest-attempt>/notes.md`, broken out by scene (see Notes assembly).
-9. Delete each `sceneNN.md` and `sceneNN-notes.md` from `<chapter-folder>/drafts/<latest-attempt>/` once their entire contents are in the chapter draft and notes files — the scene prose in `draft.md`, the scene notes in `notes.md`. The deletion is gated on that capture: delete a fragment only after confirming its content is present in the durable combined file (`sceneNN.md` → `draft.md`, `sceneNN-notes.md` → `notes.md`); it is not an unconditional `rm`. On any failure path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft.md` written — do not delete the fragments. Preserve them for diagnosis and record the blocker in `notes.md`.
+9. Collect the per-scene invention recommendations from the assembled notes (the recommendation entries the subagents recorded in their `sceneNN-notes.md` files, now broken out by scene in `notes.md`) and dispatch the capture agent (`agents/capture/capture-agent.md` on the Claude host; the `opencode/agents/` counterpart on the OpenCode host) with them, the way the metaphor steps dispatch their subagents. Gate this exactly like the fragment deletion below: dispatch capture **only on a completed assembly**. On any failure or abandon path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft.md` written — do **not** dispatch capture; record the blocker in `notes.md`. Capture must run **before** the fragment deletion in the next step, because the recommendations live in the `sceneNN-notes.md` files that deletion removes — running it first ensures nothing is lost. Capture is **non-blocking**: a capture failure is logged in `notes.md` and does **not** prevent `draft.md` from being a completed output; the writes capture makes ride this step's existing `review_required: true` gate.
+10. Delete each `sceneNN.md` and `sceneNN-notes.md` from `<chapter-folder>/drafts/<latest-attempt>/` once their entire contents are in the chapter draft and notes files — the scene prose in `draft.md`, the scene notes in `notes.md`. The deletion is gated on that capture: delete a fragment only after confirming its content is present in the durable combined file (`sceneNN.md` → `draft.md`, `sceneNN-notes.md` → `notes.md`); it is not an unconditional `rm`. On any failure path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft.md` written — do not delete the fragments. Preserve them for diagnosis and record the blocker in `notes.md`.
 
 The coordinator may inspect storyboard frontmatter to group files and determine scene order. The coordinator must not rewrite scene prose during assembly except for mechanical fixes required to combine files, such as removing duplicate titles or normalizing scene separators.
 
@@ -62,13 +63,26 @@ The subagent must not:
 
 - read chapter summaries, scene lists, canon files, character files, or any file outside the inputs handed in by the coordinator
 - dump full canon files or other reference files into the prompt — anything the prose needs from canon must already be in a storyboard block's `canon_active` field
-- invent canon to fill gaps
+- invent a load-bearing reveal/knowledge fact — what a character knows, suspects, falsely believes, or does not know, or any fact that controls reveal timing, is never invented (a hard line; record it as a blocker in `sceneNN-notes.md` instead). A permitted non-load-bearing detail may be supplied in the scene prose under Rule 1 in `agents/update-rules.md`, but it is surfaced as an invention recommendation in `sceneNN-notes.md` (see Invention recommendations); the subagent never writes canon or character files itself
 - move facts across scenes
 - include markdown headings, planning notes, summaries, or commentary in the scene prose file
 - revise another subagent's scene file
 - assemble the chapter draft
 
 Each scene's prose begins with `<!-- scene X, beat Y -->` markers and ends with `<!-- end scene X, beat Y -->` markers around each beat block, matching the structure of the storyboard files it was drafted from. Scene breaks within the assembled draft are indicated by a horizontal rule (`---`); the coordinator inserts those during assembly.
+
+#### Invention recommendations
+
+When a subagent supplies a permitted non-load-bearing detail in its prose under Rule 1 in `agents/update-rules.md`, it must surface that invention as a recommendation in its `sceneNN-notes.md` file. This is how the sandboxed drafter lets a continuity-relevant invention be reviewed without ever writing canon or character files itself: a separate, non-sandboxed capture agent (dispatched later by the coordinator) is what records it into the canonical files. Recording the recommendation is not optional — an invention that no one can see is a silent invention and is not permitted.
+
+Record each invention as a recommendation entry with these fields:
+
+- **invented fact** — the detail the prose introduced, stated plainly.
+- **target** — the `character_id` (or list of `character_id`s) the fact attaches to, or `world` for a world-scope fact with no character owner.
+- **fact-type** — one of `event`, `identity`, or `world`.
+- **source** — the source scene and beat where the invention appears (e.g. `scene 2, beat 3`).
+
+Reveal-/knowledge-load-bearing facts are never invented and so never appear here; if such a detail is missing, the subagent records a blocker instead (see Failure handling), not a recommendation.
 
 ### Subagent prompt contract
 
@@ -96,6 +110,8 @@ Place the full contents of the voice file in your LLM system message. Place the 
 Do not include planning notes, summaries, commentary, or markdown headings in the scene prose file. Do not assemble the chapter.
 
 In the scene notes file, briefly record what you generated, any storyboard constraints that were difficult to satisfy, any uncertainty, and any blockers. Do not put prose in the notes file.
+
+If you supplied any permitted non-load-bearing detail under Rule 1 (a detail canon and the storyboard were silent on), record each one in the notes file as an invention recommendation with: the invented fact; the target (character_id(s) or `world`); the fact-type (event / identity / world); and the source scene and beat. Never invent a reveal- or knowledge-load-bearing fact; if one is missing, record a blocker instead. You still write nothing outside your sceneNN.md and sceneNN-notes.md files, and you never write canon or character files yourself.
 ```
 
 ### Assembly rules
@@ -150,11 +166,11 @@ This step does not include storyboarding, compliance review, continuity review, 
 
 ### Safety rules
 
-- Do not silently invent canon.
-- Protect reveal timing.
+- Do not silently invent canon. Permitted non-load-bearing invention is allowed under Rule 1 in `agents/update-rules.md`, but it must be captured (surfaced as an invention recommendation in `sceneNN-notes.md`), never hidden; load-bearing or canon-conflicting facts are recorded as open questions, not invented.
+- Protect reveal timing. (Hard line — never invented under Rule 1.)
 - Keep prose files free of planning notes.
-- Treat missing information as a storyboard problem, not a drafting problem.
-- Preserve the difference between what a character knows, suspects, falsely believes, and does not know.
+- Treat missing **load-bearing** information as a storyboard problem, not a drafting problem; non-load-bearing gaps may be filled in the scene prose per Rule 1 and surfaced as recommendations.
+- Preserve the difference between what a character knows, suspects, falsely believes, and does not know. (Hard line — never invented under Rule 1.)
 
 ## Outputs
 
@@ -163,7 +179,7 @@ The durable outputs of a completed run are `draft.md` and `notes.md`:
 - **`<chapter-folder>/drafts/<latest-attempt>/draft.md`** — the assembled chapter draft. Contains story text only, with scenes separated by `---`. Beats within a scene retain their `<!-- scene X, beat Y -->` / `<!-- end scene X, beat Y -->` markers.
 - **`<chapter-folder>/drafts/<latest-attempt>/notes.md`** — the combined run notes. Run metadata (attempt name, chapter path, model) plus the per-scene notes broken out by scene heading. Also captures any beat-index/filename mismatches, assembly notes, and blockers raised by subagents.
 
-The per-scene `sceneNN.md` and `sceneNN-notes.md` files are transient working files written by subagents during the run. Their content is folded into `draft.md` and `notes.md` during assembly, and the coordinator deletes them afterward (see Coordinator responsibilities, step 9), so they are not part of the durable output set. They are preserved only when a run cannot complete assembly.
+The per-scene `sceneNN.md` and `sceneNN-notes.md` files are transient working files written by subagents during the run. Their content is folded into `draft.md` and `notes.md` during assembly, and the coordinator deletes them afterward (see Coordinator responsibilities, step 10), so they are not part of the durable output set. They are preserved only when a run cannot complete assembly.
 
 ## Open questions handling
 
