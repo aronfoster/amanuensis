@@ -149,7 +149,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ## Tasks
 
-### Task 1 — Write the bounded-invention rule; resolve the orchestrator TODO [ ]
+### Task 1 — Write the bounded-invention rule; resolve the orchestrator TODO [x]
 
 **Goal.** Replace the blanket prohibition with one bounded rule and remove the
 self-contradicting TODO. Closes **M3.1** and **M3.3**.
@@ -173,7 +173,7 @@ self-contradicting TODO. Closes **M3.1** and **M3.3**.
 
 ---
 
-### Task 2 — Point the scattered prohibitions at the single rule [ ]
+### Task 2 — Point the scattered prohibitions at the single rule [x]
 
 **Goal.** Make every step body defer to Rule 1 instead of carrying its own absolute,
 while preserving the hard prohibition for reveal/knowledge facts. Closes **M3.2**.
@@ -198,7 +198,7 @@ prohibition is intact and clearly separated from the permitted case.
 
 ---
 
-### Task 3 — Recommendation hand-off schema [ ]
+### Task 3 — Recommendation hand-off schema [x]
 
 **Goal.** Let sandboxed scene-drafters surface continuity-relevant inventions without
 writing canon. Closes **M3.4**.
@@ -219,7 +219,7 @@ contract tells subagents to emit it, with the sandbox preserved.
 
 ---
 
-### Task 4 — Coordinator collection + gated dispatch [ ]
+### Task 4 — Coordinator collection + gated dispatch [x]
 
 **Goal.** Have the coordinator gather recommendations and dispatch capture at the right
 point in the run. Closes **M3.5**.
@@ -240,7 +240,7 @@ notes assembly and fragment deletion, gated on completion and non-blocking on fa
 
 ---
 
-### Task 5 — Capture agent definition: routing + write discipline [ ]
+### Task 5 — Capture agent definition: routing + write discipline [x]
 
 **Goal.** Write the agent the coordinator dispatches. Closes **M3.6** and **M3.7**.
 
@@ -265,7 +265,7 @@ edit-policy-respecting, knowledge-excluded write discipline.
 
 ---
 
-### Task 6 — Host parity, verification sweep, closeout [ ]
+### Task 6 — Host parity, verification sweep, closeout [x]
 
 **Goal.** Confirm the two hosts agree, the invariants hold, and the catalogs are
 updated. Depends on Tasks 1–5.

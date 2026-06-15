@@ -39,7 +39,7 @@ The body of a step workflow file describes what the step does. Existing step wor
 - write only to the declared outputs
 - treat the file system as the only state
 - produce no notes or logs about what was done — the artifacts themselves are the record
-- if blocked, write to the project's `open-questions.md` and exit; do not invent missing canon (TODO: we **do** want agents to invent missing canon. They must make sense, and they cannot conflict with existing canon. If canon doesn't specify what John ordered during the breakfast scene, the drafter should be free to invent it instead of halting. The drafter should not have him eat pop tarts if it's medieval fantasy. Figure out how to word this here and in the agent files.)
+- if blocked, write to the project's `open-questions.md` and exit. A missing detail is not automatically a block: under Rule 1 (`agents/update-rules.md`) a drafter may invent the permitted case — a non-load-bearing, non-conflicting, register-appropriate detail — rather than halting. Only when the missing fact is load-bearing for reveal timing or character knowledge, or would conflict with existing canon, does the step record an open question and exit instead of inventing.
 
 ## State file format
 

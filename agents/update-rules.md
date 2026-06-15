@@ -3,7 +3,28 @@
 These rules exist to keep agentic edits safe.
 
 ## Rule 1: do not silently invent canon
-If information is missing, record uncertainty instead of making up a settled answer.
+An agent may invent a missing detail only when **all four** of these hold:
+
+1. canon and the plan are silent on it;
+2. it cannot contradict any existing canon;
+3. it fits the work's genre, register, and period; and
+4. it is **not** load-bearing for reveal timing or character knowledge.
+
+When all four hold, the agent may invent the detail rather than halting (the
+breakfast-order case: if canon does not say what a character ordered, supply
+something that fits — never pop tarts in a medieval fantasy). When any one fails —
+the detail is settled in canon, would conflict with it, breaks register, or is
+load-bearing — the agent does **not** invent it; it records an open question instead.
+
+The reveal-/knowledge-load-bearing prohibition is a hard line: nothing a character
+knows, suspects, or believes, and no fact that controls reveal timing, may be
+invented under this rule. Those are always open questions.
+
+"Silently" is what this rule forbids. Permitted invention must be *captured, not
+hidden*: it is recorded into the appropriate canonical files so it stops being a
+guess and becomes reviewable truth (the capture mechanism is defined in the drafting
+workflow). An invention that no one can see or review is a silent invention and is
+not permitted.
 
 ## Rule 2: protect reveal timing
 A character must not know something before the story allows it.
