@@ -33,9 +33,17 @@ Default priority order:
 
 ## Canon handling rule
 
-Do not silently invent settled world facts.
+World facts are the highest-priority, settled tier (see the priority order above).
+A settled or load-bearing world fact must never be silently invented.
 
-If a needed fact is unknown:
+Whether a *missing* world fact may be invented at all is governed by the single
+bounded-invention rule — **Rule 1 in `agents/update-rules.md`** — not restated here.
+In short: an agent may supply a missing world detail only in the bounded, non-load-
+bearing, non-conflicting, register-appropriate case Rule 1 permits, and only when that
+invention is captured rather than hidden. Anything settled, load-bearing, or in
+conflict with existing canon is off-limits.
+
+If a needed fact falls outside what Rule 1 permits:
 - record an open question
 - note the uncertainty
 - avoid pretending canon is settled when it is not
