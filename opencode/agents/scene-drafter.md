@@ -36,6 +36,8 @@ Write prose only to the scene file path provided by the coordinator.
 
 Write generation notes only to the scene notes file path provided by the coordinator. Briefly record what you generated, any storyboard constraints that were difficult to satisfy, any uncertainty, and any blockers. Do not put prose in the notes file.
 
+If you supplied any permitted non-load-bearing detail under Rule 1 in the Amanuensis `update-rules.md` (a detail canon and the storyboard were silent on), record each one in the notes file as an invention recommendation with: the invented fact; the target (`character_id`(s) or `world`); the fact-type (`event` / `identity` / `world`); and the source scene and beat. Never invent a reveal- or knowledge-load-bearing fact; if one is missing, record a blocker instead. You write nothing outside your scene and scene-notes files, and you never write canon or character files yourself.
+
 Do not include markdown headings, planning notes, summaries, commentary, explanations, or metadata in the scene prose file. Do not assemble the chapter draft. Do not revise another scene file.
 
 If the assigned storyboard files are not sufficient to draft the scene without reading other files, stop and report the missing requirement to the coordinator instead of guessing.
