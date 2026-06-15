@@ -43,39 +43,11 @@ The body of a step workflow file describes what the step does. Existing step wor
 
 ## State file format
 
-`pipeline-state.md` lives at the project root. Format:
+`pipeline-state.md` lives at the project root. The canonical example of both the file format and the default step sequence is `templates/pipeline-state.md` — see that file for a full, working specimen.
 
-```markdown
----
-project_type: short_story
-last_updated: 2026-05-04T14:32:18-06:00
----
+The frontmatter carries `project_type` (read by step workflows that need to resolve folder layout) and `last_updated` (updated by the dispatcher on every advance). No other fields are required at MVP. `project_type` is set in `amanuensis-project.yaml` at the project root; the template lives at `templates/amanuensis-project.yaml`.
 
-# Pipeline State
-
-The line marked `[>]` is the next step the dispatcher will run. `[x]` is complete. `[ ]` is pending.
-
-To redo a step, move the `[>]` marker to that step and change downstream `[x]` markers back to `[ ]`.
-
-## Steps
-
-- [>] character_extraction
-- [ ] scene_generation
-- [ ] storyboarding
-- [ ] drafting
-- [ ] compliance_report
-- [ ] compliance_fix
-- [ ] prose_pass
-- [ ] metaphor_identify
-- [ ] metaphor_fix
-- [ ] metaphor_apply
-- [ ] line_pass
-- [ ] anti_ai
-```
-
-The frontmatter carries `project_type` (read by step workflows that need to resolve folder layout) and `last_updated` (updated by the dispatcher on every advance). No other fields are required at MVP.
-
-`project_type` is set in `amanuensis-project.yaml` at the project root; the template lives at `templates/amanuensis-project.yaml`.
+The body contains a `## Steps` section listing each step on its own line with a marker: `[>]` is the next step the dispatcher will run, `[x]` is complete, and `[ ]` is pending. To redo a step, move the `[>]` marker up to that step and change downstream `[x]` markers back to `[ ]`.
 
 The step list is the project's plan. It may differ between project types, or be customized per project. The dispatcher does not assume a fixed sequence — it reads whatever list is in the file.
 
