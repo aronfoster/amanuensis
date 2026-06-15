@@ -39,14 +39,15 @@ Done when: a drafting run leaves `draft.md` and `notes.md` only; `sceneNN.md` /
 `sceneNN-notes.md` removed; `drafting.md` frontmatter no longer lists them as durable
 outputs.
 
-- [ ] M2.1 Add post-assembly deletion of `sceneNN.md` / `sceneNN-notes.md` to
+- [x] M2.1 Add post-assembly deletion of `sceneNN.md` / `sceneNN-notes.md` to
   `drafting.md`, mirroring `opencode/agents/chapter-coordinator.md`.
-- [ ] M2.2 Reconcile `drafting.md` frontmatter: drop the per-scene fragments from
+- [x] M2.2 Reconcile `drafting.md` frontmatter: drop the per-scene fragments from
   durable outputs or mark them transient.
-- [ ] M2.3 Document the audit-record vs transient-fragment distinction (persist
+- [x] M2.3 Document the audit-record vs transient-fragment distinction (persist
   `reviewer-actions.md`, `metaphors.md`, `anti-ai.md`, `notes.md`; delete scene fragments).
 
-Notes: —
+Notes: The OpenCode coordinator (`chapter-coordinator.md`) was also pointed at the
+shared persist-vs-delete rule in `chapters.md` for host parity.
 
 ---
 

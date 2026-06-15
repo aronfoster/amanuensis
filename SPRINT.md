@@ -127,7 +127,7 @@ the storyboard schema, or any script. No file is renamed.
 
 ## Tasks
 
-### Task 1 — Delete scene fragments after assembly; reconcile `drafting.md` frontmatter and Outputs [ ]
+### Task 1 — Delete scene fragments after assembly; reconcile `drafting.md` frontmatter and Outputs [x]
 
 **Goal.** Bring `agents/steps/drafting.md` to parity with the OpenCode coordinator:
 the run deletes the per-scene fragments after assembly, and the file stops advertising
@@ -174,7 +174,7 @@ scene fragments with the failure paths excluded; and the Outputs section present
 
 ---
 
-### Task 2 — Document the audit-record vs transient-fragment distinction in `chapters.md` [ ]
+### Task 2 — Document the audit-record vs transient-fragment distinction in `chapters.md` [x]
 
 **Goal.** Record, in one place, why some per-attempt files persist and the scene
 fragments do not. Closes **M2.3**.
@@ -206,7 +206,7 @@ capture-based rule stated once.
 
 ---
 
-### Task 3 — Point the OpenCode coordinator at the shared rule [ ]
+### Task 3 — Point the OpenCode coordinator at the shared rule [x]
 
 **Goal.** Keep the two hosts describing the same contract without rewriting the
 OpenCode coordinator's already-correct deletion instruction.
@@ -232,7 +232,7 @@ at the shared persist-vs-delete distinction, matching the Claude-side step and
 
 ---
 
-### Task 4 — Verification sweep, ROADMAP, closeout [ ]
+### Task 4 — Verification sweep, ROADMAP, closeout [x]
 
 **Goal.** Confirm the milestone's "done when" holds, update the catalogs, and check
 the boxes. Depends on Tasks 1–3.
