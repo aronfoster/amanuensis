@@ -15,15 +15,18 @@ Make every step list agree with `agents/steps/` and single-source it.
 Done when: all step lists match the step files; `orchestrator.md` references the
 canonical list instead of duplicating it; the smoke fixture is checked against it.
 
-- [ ] M1.1 Propagate the `anti_ai_report`/`anti_ai_fix` split into
+- [x] M1.1 Propagate the `anti_ai_report`/`anti_ai_fix` split into
   `examples/smoke/pipeline-state.md`, the `orchestrator.md` state example, and any
   README references still showing monolithic `anti_ai`.
-- [ ] M1.2 Make `templates/pipeline-state.md` canonical; point `orchestrator.md` at it
+- [x] M1.2 Make `templates/pipeline-state.md` canonical; point `orchestrator.md` at it
   rather than re-listing; add a check that the smoke fixture's step set matches.
-- [ ] M1.3 Replace any other hard-coded step lists (README, `workflows.md`, adapter
+- [x] M1.3 Replace any other hard-coded step lists (README, `workflows.md`, adapter
   template) with references.
 
-Notes: —
+Notes: Also shipped a consumer-side validator — `scripts/check-pipeline-state.sh` plus
+a CI workflow template (`templates/dispatcher/.github/workflows/pipeline-state-check.yml`)
+installed by `install.sh` — so consuming projects' `pipeline-state.md` files are
+checked against their installed Amanuensis step set on push and pull request.
 
 ---
 
