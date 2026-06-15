@@ -56,6 +56,8 @@ Use this file for story text only. Planning notes should not live here.
 
 The assembled chapter prose for a given attempt lives at `drafts/attemptNN/draft.md` inside the chapter folder. Per-attempt working artifacts (per-scene files, notes, reviewer reports, compliance and prose-pass outputs, metaphor working files, line-pass and anti-AI outputs) all live alongside it under the same `drafts/attemptNN/` directory.
 
+Some of these per-attempt files are **durable audit records**, kept for human review and downstream steps: `notes.md` (the run record), plus the later-stage review/report files `reviewer-actions.md`, `metaphors.md`, and `anti-ai.md`, alongside the prose `draft.md`. The per-scene `sceneNN.md` / `sceneNN-notes.md` fragments are **transient**: their entire content is folded into `draft.md` and `notes.md` during the drafting step, and they are deleted after assembly. The general rule: a working file is deletable once its content is captured in a durable combined artifact.
+
 ### `aftermath.md`
 Post-chapter delta record.
 

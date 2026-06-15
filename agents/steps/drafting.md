@@ -6,8 +6,6 @@ inputs:
   - voice.md
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/draft.md
-  - <chapter-folder>/drafts/<latest-attempt>/scene01.md
-  - <chapter-folder>/drafts/<latest-attempt>/scene01-notes.md
   - <chapter-folder>/drafts/<latest-attempt>/notes.md
 ---
 
@@ -38,6 +36,7 @@ Use this step only after the chapter's storyboard files are complete. This step 
 6. Wait for all subagents to write their scene file (`sceneNN.md`) and scene notes file (`sceneNN-notes.md`) into `<chapter-folder>/drafts/<latest-attempt>/`.
 7. Assemble the scene files in scene order into `<chapter-folder>/drafts/<latest-attempt>/draft.md` (see Assembly rules).
 8. Assemble the scene notes files into `<chapter-folder>/drafts/<latest-attempt>/notes.md`, broken out by scene (see Notes assembly).
+9. Delete each `sceneNN.md` and `sceneNN-notes.md` from `<chapter-folder>/drafts/<latest-attempt>/` once their entire contents are in the chapter draft and notes files — the scene prose in `draft.md`, the scene notes in `notes.md`. The deletion is gated on that capture: delete a fragment only after confirming its content is present in the durable combined file (`sceneNN.md` → `draft.md`, `sceneNN-notes.md` → `notes.md`); it is not an unconditional `rm`. On any failure path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft.md` written — do not delete the fragments. Preserve them for diagnosis and record the blocker in `notes.md`.
 
 The coordinator may inspect storyboard frontmatter to group files and determine scene order. The coordinator must not rewrite scene prose during assembly except for mechanical fixes required to combine files, such as removing duplicate titles or normalizing scene separators.
 
@@ -143,6 +142,8 @@ If a subagent cannot draft from the storyboard files alone, it stops and reports
 
 If two scene files conflict in tone, continuity, or repeated exposition, the coordinator records the issue in `notes.md`. The coordinator must not silently solve continuity problems by adding new canon or changing reveal timing.
 
+When the run cannot complete assembly — a blocker is raised, a scene file is missing, or the step is abandoned — the per-scene fragments are preserved, not deleted, so the partial run can be diagnosed.
+
 ### Out of scope
 
 This step does not include storyboarding, compliance review, continuity review, metaphor checks, anti-AI passes, character knowledge updates, or aftermath updates. Those are separate steps that run after this one.
@@ -157,10 +158,12 @@ This step does not include storyboarding, compliance review, continuity review, 
 
 ## Outputs
 
+The durable outputs of a completed run are `draft.md` and `notes.md`:
+
 - **`<chapter-folder>/drafts/<latest-attempt>/draft.md`** — the assembled chapter draft. Contains story text only, with scenes separated by `---`. Beats within a scene retain their `<!-- scene X, beat Y -->` / `<!-- end scene X, beat Y -->` markers.
-- **`<chapter-folder>/drafts/<latest-attempt>/sceneNN.md`** (one per scene) — per-scene prose written by each subagent. Working artifacts the coordinator reads during assembly. Prose only; no headings, notes, or commentary.
-- **`<chapter-folder>/drafts/<latest-attempt>/sceneNN-notes.md`** (one per scene) — per-scene generation notes written by each subagent. Records what was generated, difficult constraints, uncertainty, and blockers. No prose.
 - **`<chapter-folder>/drafts/<latest-attempt>/notes.md`** — the combined run notes. Run metadata (attempt name, chapter path, model) plus the per-scene notes broken out by scene heading. Also captures any beat-index/filename mismatches, assembly notes, and blockers raised by subagents.
+
+The per-scene `sceneNN.md` and `sceneNN-notes.md` files are transient working files written by subagents during the run. Their content is folded into `draft.md` and `notes.md` during assembly, and the coordinator deletes them afterward (see Coordinator responsibilities, step 9), so they are not part of the durable output set. They are preserved only when a run cannot complete assembly.
 
 ## Open questions handling
 
