@@ -32,7 +32,7 @@ Responsibilities:
 - Mechanically assemble scene files into the attempt's combined chapter draft.
 - Mechanically assemble scene notes files into the attempt's `notes.md`, broken out by scene.
 - Put assembly notes in `notes.md`, not in the draft.
-- Delete the scene-drafter's scene and notes files once their entire contents are in the chapter draft and notes files.
+- Delete the scene-drafter's scene and notes files once their entire contents are in the chapter draft and notes files. The per-scene scene and notes fragments are transient and removed after assembly, while the chapter draft and run notes (and later review/report files) persist — see the persist-vs-delete distinction documented in the Amanuensis `chapters.md` (via the workflow paths in the project's `AGENTS.md`).
 - Use `wc` and print the chapter word count in your completion report.
 
 Do not include storyboarding, compliance review, continuity review, metaphor checks, anti-AI passes, character knowledge updates, or aftermath updates in this workflow.
