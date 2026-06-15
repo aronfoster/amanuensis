@@ -12,6 +12,8 @@
 #       -> <target>/.opencode/agents/next-step.md
 #   templates/dispatcher/.claude/hooks/session-start.sh
 #       -> <target>/.claude/hooks/session-start.sh
+#   templates/dispatcher/.github/workflows/pipeline-state-check.yml
+#       -> <target>/.github/workflows/pipeline-state-check.yml
 #
 # Created only if missing (project scaffold; preserves user edits and
 # pipeline state on re-run):
@@ -64,6 +66,7 @@ fi
 src_claude=$script_dir/templates/dispatcher/.claude/commands/next-step.md
 src_opencode=$script_dir/templates/dispatcher/.opencode/agents/next-step.md
 src_session_hook=$script_dir/templates/dispatcher/.claude/hooks/session-start.sh
+src_workflow=$script_dir/templates/dispatcher/.github/workflows/pipeline-state-check.yml
 src_settings=$script_dir/templates/dispatcher/.claude/settings.json
 src_project_yaml=$script_dir/templates/amanuensis-project.yaml
 src_pipeline_state=$script_dir/templates/pipeline-state.md
@@ -71,7 +74,7 @@ src_agents=$script_dir/templates/project-AGENTS.md
 src_voice=$script_dir/templates/voice.md
 
 for src in "$src_claude" "$src_opencode" "$src_session_hook" \
-           "$src_settings" "$src_project_yaml" \
+           "$src_workflow" "$src_settings" "$src_project_yaml" \
            "$src_pipeline_state" "$src_agents" "$src_voice"; do
     if [ ! -f "$src" ]; then
         err "missing source file: $src"
@@ -83,22 +86,27 @@ done
 dst_claude_dir=$target/.claude/commands
 dst_opencode_dir=$target/.opencode/agents
 dst_hooks_dir=$target/.claude/hooks
+dst_workflows_dir=$target/.github/workflows
 dst_claude=$dst_claude_dir/next-step.md
 dst_opencode=$dst_opencode_dir/next-step.md
 dst_session_hook=$dst_hooks_dir/session-start.sh
+dst_workflow=$dst_workflows_dir/pipeline-state-check.yml
 
 mkdir -p "$dst_claude_dir"
 mkdir -p "$dst_opencode_dir"
 mkdir -p "$dst_hooks_dir"
+mkdir -p "$dst_workflows_dir"
 
 cp "$src_claude" "$dst_claude"
 cp "$src_opencode" "$dst_opencode"
 cp "$src_session_hook" "$dst_session_hook"
 chmod +x "$dst_session_hook"
+cp "$src_workflow" "$dst_workflow"
 
 printf '  %s -> %s\n' "$src_claude" "$dst_claude"
 printf '  %s -> %s\n' "$src_opencode" "$dst_opencode"
 printf '  %s -> %s\n' "$src_session_hook" "$dst_session_hook"
+printf '  %s -> %s\n' "$src_workflow" "$dst_workflow"
 
 # Scaffold destinations (create only if missing).
 dst_project_yaml=$target/amanuensis-project.yaml
