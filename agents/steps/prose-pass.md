@@ -2,7 +2,7 @@
 step_id: prose_pass
 review_required: true
 inputs:
-  - <chapter-folder>/drafts/<latest-attempt>/draft-compliance.md
+  - <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
   - <chapter-folder>/storyboards/*-storyboard.md
   - voice.md
 outputs:
@@ -29,13 +29,13 @@ It does three things:
 
 This pass should be **selective**. It does not try to perfect every line. It identifies the places where prose is actively costing the chapter clarity, force, or pleasure.
 
-This step produces a report only. The `KEEP / TIGHTEN / FLATTEN / REWRITE` recommendations it emits are advisory — the step does **not** write to the prose. The human applies fixes manually to the chapter draft before `metaphor_identify` runs.
+This step produces a report only. The `KEEP / TIGHTEN / FLATTEN / REWRITE` recommendations it emits are advisory — the step does **not** write to the prose. Until M5's `prose_fix` step lands as the prose-advancing consumer of this report, any human-applied prose changes that happen between `prose_pass` and `metaphor_identify` must result in a new `draft-vNN.md` recorded in `draft-manifest.md`; otherwise the pipeline should not advance as if prose was applied. `prose_pass` itself does not mint a draft version — it reads `<latest-draft>` and emits an advisory report.
 
 ---
 
 ## Inputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md` — the latest prose, post-compliance fixes. This is the text the pass reviews.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the latest prose, resolved at step start. This is the text the pass reviews; the step does not mint a new draft version.
 - `<chapter-folder>/storyboards/*-storyboard.md` — the chapter's storyboard blocks, used to judge whether the prose is serving the scene as designed.
 - `voice.md` — the project-root voice file (a sibling of `pipeline-state.md`, not the copy inside the `amanuensis/` submodule; overridable by the path named in the consuming project's local AGENTS.md). Used to judge POV and voice consistency. If no voice file can be found, see Open questions handling.
 
@@ -44,6 +44,8 @@ This step produces a report only. The `KEEP / TIGHTEN / FLATTEN / REWRITE` recom
 ## Output
 
 Write a report in markdown to `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md`.
+
+Begin the report with a `Reviewed-draft: draft-vNN.md` header line naming the resolved `<latest-draft>` this pass reviewed. The future M5 `prose_fix` step will consume this stamp to detect stale recommendations against a newer draft; record it here for consistency with the other report-emitting steps even though no automated consumer reads it this Sprint.
 
 For each issue:
 - quote the line or short passage
@@ -59,7 +61,7 @@ Do **not** rewrite the whole chapter.
 Do **not** produce line edits for every issue.
 Do **not** praise at length.
 Do **not** fix spelling, punctuation, or grammar unless they materially affect rhythm or clarity.
-Do **not** modify the prose file. The recommendations are advisory; the human applies fixes manually before `metaphor_identify` runs.
+Do **not** modify the prose file. The recommendations are advisory; until M5's `prose_fix` lands, any human-applied prose changes between `prose_pass` and `metaphor_identify` must produce a new `draft-vNN.md` recorded in `draft-manifest.md`, or the pipeline should not advance as if prose was applied.
 
 End with:
 - `Top priorities`
@@ -310,7 +312,7 @@ Be selective, concrete, and unsentimental.
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md` — the advisory report described above. Contains `Top priorities`, per-finding entries using the Findings template, a `Chapter-level diagnosis` section (with `What the prose is already doing well`, `Repeated failure modes`, `Best revision strategy`), and `Lines worth preserving`. The step does not modify the prose file; the human applies fixes manually before `metaphor_identify` runs.
+- `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md` — the advisory report described above. Begins with a `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this pass reviewed, then contains `Top priorities`, per-finding entries using the Findings template, a `Chapter-level diagnosis` section (with `What the prose is already doing well`, `Repeated failure modes`, `Best revision strategy`), and `Lines worth preserving`. The step does not modify the prose file. Until M5's `prose_fix` lands as the prose-advancing consumer of this report, any human-applied prose changes between `prose_pass` and `metaphor_identify` must produce a new `draft-vNN.md` recorded in `draft-manifest.md`, or the pipeline should not advance as if prose was applied.
 
 ## Open questions handling
 

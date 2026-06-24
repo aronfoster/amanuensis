@@ -3,10 +3,11 @@ step_id: anti_ai_fix
 review_required: false
 inputs:
   - <chapter-folder>/drafts/<latest-attempt>/anti-ai.md
-  - <chapter-folder>/drafts/<latest-attempt>/draft-line.md
+  - <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
 outputs:
-  - <chapter-folder>/drafts/<latest-attempt>/draft-anti-ai.md
+  - <chapter-folder>/drafts/<latest-attempt>/<next-draft>
   - <chapter-folder>/drafts/<latest-attempt>/anti-ai.md
+  - <chapter-folder>/drafts/<latest-attempt>/draft-manifest.md
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -15,14 +16,16 @@ See `agents/orchestrator.md` for the step workflow contract.
 
 ## Purpose
 
-Apply the human-annotated fixes recorded in `anti-ai.md` to the line-pass draft, producing a revised prose file (`draft-anti-ai.md`) that resolves the AI-pattern flags the human marked `FIX`. The step is surgical: it changes only what is annotated, preserves everything else, and records what it did (and what it could not do) by appending to `anti-ai.md`. Items annotated `ESCALATE` are not blockers — they are recorded as escalated and the step continues. This step runs after `anti_ai_report` and after a human has reviewed and annotated the report.
+Apply the human-annotated fixes recorded in `anti-ai.md` to the current draft (`<latest-draft>`), producing a new versioned prose file (`<next-draft>`) that resolves the AI-pattern flags the human marked `FIX`. The step is surgical: it changes only what is annotated, preserves everything else, and records what it did (and what it could not do) by appending to `anti-ai.md`. Items annotated `ESCALATE` are not blockers — they are recorded as escalated and the step continues. This step runs after `anti_ai_report` and after a human has reviewed and annotated the report.
 
-Anti-AI is the last step in the pipeline. `draft-anti-ai.md` is the final manuscript output.
+Anti-AI is the last step in the pipeline. The `<next-draft>` this step writes — the highest-numbered `draft-vNN.md` in the attempt directory — is the final manuscript output.
 
 ## Inputs
 
 - `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — the report produced by `anti_ai_report`, annotated by the human. Each flagged entry should carry one of `FIX` / `FIX: <instruction>` / `SKIP` / `ESCALATE`, or take the per-category bulk default declared at the head of its category subsection. An unannotated report with no bulk defaults is not a valid input. See "Open questions handling" below.
-- `<chapter-folder>/drafts/<latest-attempt>/draft-line.md` — the prose this step revises. Read-only at this step's input boundary; revisions are written to a new file.
+
+  At step start, before acting on any entry, read the `Reviewed-draft: draft-vNN.md` header at the top of `anti-ai.md` and confirm it equals `<latest-draft>`. If it does not, see "Open questions handling" below — this is a stale-report blocker.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the current draft this step revises. Resolved at step start; read-only at this step's input boundary, revisions are written to `<next-draft>`.
 
 Do not read storyboards, canon files, character files, the voice file, or any other file. Anti-AI's whole identity is being context-free; the fix step preserves that.
 
@@ -44,9 +47,9 @@ A bulk header on a category declared `BULK not permitted` in the report's BULK e
 
 For each entry whose effective annotation is `FIX` or `FIX: <instruction>`:
 
-1. Locate the prose in `draft-line.md` corresponding to the flag (the quote in the report is the anchor).
+1. Locate the prose in `<latest-draft>` corresponding to the flag (the quote in the report is the anchor).
 2. Apply the smallest local edit that resolves the flag, following the category's fix rule (see below). If the annotation is `FIX: <instruction>`, follow the instruction exactly.
-3. Write the revised prose into `draft-anti-ai.md` (see Outputs).
+3. Write the revised prose into `<next-draft>` (see Outputs).
 4. Append an `Applied:` block to `anti-ai.md`:
 
    ```markdown
@@ -101,16 +104,25 @@ For each entry whose effective annotation is `ESCALATE` (whether by direct annot
 - The em-dash category is the only category licensed to restructure the sentence containing the flag. All other categories edit only the flagged construction itself plus minimal agreement repair.
 - Collateral edits to sentences adjacent to a flagged sentence are forbidden in every category, including em dashes.
 - If a fix to one flag would introduce a new flag (e.g., a copula-avoidance rewrite that produces an em dash), stop and append an `Escalated:` block rather than proceeding.
-- Preserve block comment markers (`<!-- scene x, beat y -->`) and scene breaks (`---`) exactly as they appear in `draft-line.md`.
-- Preserve the line-pass apply log block-comment at the end of `draft-line.md`. Do not modify it. Append an anti-ai apply-log block-comment after it in `draft-anti-ai.md`.
-- The output file (`draft-anti-ai.md`) must contain the full prose of the chapter, with all applied edits in place — not a diff and not just the changed sections. Everything not touched by a `FIX` annotation is copied through verbatim from `draft-line.md`.
+- Preserve block comment markers (`<!-- scene x, beat y -->`) and scene breaks (`---`) exactly as they appear in `<latest-draft>`.
+- Preserve the line-pass apply log block-comment at the end of `<latest-draft>` (carried over from the prior line-pass run). Copy it through verbatim. Do not modify it. Append the anti-ai apply-log block-comment after it in `<next-draft>`.
+- The output file (`<next-draft>`) must contain the full prose of the chapter, with all applied edits in place — not a diff and not just the changed sections. Everything not touched by a `FIX` annotation is copied through verbatim from `<latest-draft>`.
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/draft-anti-ai.md` — the full revised prose. This is a new file produced by this step; the original `draft-line.md` is not modified. All unchanged prose is copied through verbatim, with annotated edits applied in place. Block comment markers, scene breaks, and the existing line-pass log are preserved. An anti-AI apply-log block comment is appended at the end summarizing the run.
-- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — the same input file, with `Applied:` blocks appended for each effective-FIX entry actioned and `Escalated:` blocks appended for each `ESCALATE` entry. Pre-existing content (the report and the human's annotations) is not modified; this step only appends.
+- `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — the full revised prose, written as the next versioned draft file (e.g., if `<latest-draft>` is `draft-v05.md`, this writes `draft-v06.md`). The original `<latest-draft>` is not modified. All unchanged prose is copied through verbatim, with annotated edits applied in place. Block comment markers, scene breaks, and the existing line-pass log are preserved. An anti-AI apply-log block comment is appended at the end summarizing the run. Because anti-AI is the last step in the pipeline, this `<next-draft>` is the final manuscript output for the attempt.
+- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — the same input file, with `Applied:` blocks appended for each effective-FIX entry actioned and `Escalated:` blocks appended for each `ESCALATE` entry. Pre-existing content (the report, its `Reviewed-draft` header, and the human's annotations) is not modified; this step only appends.
+- `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` — append a per-version entry for `<next-draft>` after a successful prose write, following the schema in `agents/project-layouts.md`. Example:
 
-### Apply log at the end of `draft-anti-ai.md`
+  ```markdown
+  ## draft-v06.md
+  - produced_by: anti_ai_fix
+  - read_from: [draft-v05.md]
+  - side_artifacts: [anti-ai.md]
+  - apply_log: tally block comment at end of `draft-v06.md`; per-entry blocks in `anti-ai.md`
+  ```
+
+### Apply log at the end of `<next-draft>`
 
 ```markdown
 <!--
@@ -131,13 +143,19 @@ Notes: [any non-routine observation; usually empty]
 -->
 ```
 
-The detailed per-entry `Applied:` and `Escalated:` blocks live in `anti-ai.md`, not in the prose file. The block-comment at the end of `draft-anti-ai.md` is a tally only.
+The detailed per-entry `Applied:` and `Escalated:` blocks live in `anti-ai.md`, not in the prose file. The block-comment at the end of `<next-draft>` is a tally only.
 
 ## Open questions handling
 
 `ESCALATE`-annotated items are **not** blockers. The step appends an `Escalated:` block for each one and continues. Categories that fall through to `ESCALATE` from invalid bare `FIX` are likewise not blockers; they are recorded and the step continues.
 
-Open-questions handling fires only when the input itself is unusable. The canonical case: `anti-ai.md` exists but contains no annotations *and* no bulk headers (every flag is bare). Other unusable-input cases include a missing `anti-ai.md` or a missing `draft-line.md`. In any of these, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate annotations and do not write a partial `draft-anti-ai.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+Open-questions handling fires only when the input itself is unusable. Named blocker conditions:
+
+- **Unannotated report with no bulk headers.** `anti-ai.md` exists but contains no annotations *and* no bulk headers (every flag is bare).
+- **Missing inputs.** `anti-ai.md` is missing, or `<latest-draft>` cannot be resolved (no `draft-vNN.md` in the attempt directory).
+- **Stale report.** The `Reviewed-draft:` header at the top of `anti-ai.md` names a draft other than `<latest-draft>`. The report was generated against a different draft than the current one, which means a prose-advancing step has slipped in between `anti_ai_report` and `anti_ai_fix`. Applying the annotations to `<latest-draft>` would be applying notes against the wrong prose. The paired report→fix adjacency invariant must hold; only the human can decide whether to rerun `anti_ai_report` against the current draft or to roll back. (This invariant will be documented canonically by a later step in the sprint; for now the local check lives here.)
+
+In any of these, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate annotations and do not write a partial `<next-draft>`. The next dispatcher invocation will re-run this step after the human resolves the blocker.
 
 ## Anti-Patterns
 

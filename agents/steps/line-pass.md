@@ -2,11 +2,12 @@
 step_id: line_pass
 review_required: true
 inputs:
-  - <chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md
-  - <chapter-folder>/drafts/<latest-attempt>/draft-line.md
+  - <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
+  - <chapter-folder>/drafts/<latest-attempt>/<next-draft>
   - voice.md
 outputs:
-  - <chapter-folder>/drafts/<latest-attempt>/draft-line.md
+  - <chapter-folder>/drafts/<latest-attempt>/<next-draft>
+  - <chapter-folder>/drafts/<latest-attempt>/draft-manifest.md
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -21,8 +22,8 @@ This pass runs after the metaphor pipeline and before any final proofread. It do
 
 ## Inputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md` — the prose after metaphor-apply has run; the source for unedited chunks and following-context windows.
-- `<chapter-folder>/drafts/<latest-attempt>/draft-line.md` — the in-progress output; the source for preceding-context windows once any chunk has been written. This file appears in both `inputs` and `outputs` because the step writes chunk-by-chunk and reads previously-finalized chunks back as preceding-context. The frontmatter records both roles explicitly; behavior is unchanged from the legacy doc.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the prose this step starts from (typically the output of the prior prose-advancing step); the source for unedited chunks and following-context windows. Resolved at step start. Line-pass is paired with no upstream report step, so there is no `Reviewed-draft` stamp to consult; the step reads `<latest-draft>` directly.
+- `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — the in-progress output; the source for preceding-context windows once any chunk has been written. This placeholder appears in both `inputs` and `outputs` because the step writes chunk-by-chunk and reads previously-finalized chunks back as preceding-context. The frontmatter records both roles explicitly; behavior is unchanged from the legacy doc, which used the step-named filename `draft-line.md` for the same dual role.
 - `voice.md` — the project-root voice file (a sibling of `pipeline-state.md`, not the copy inside the `amanuensis/` submodule; overridable by the path named in the consuming project's top-level `AGENTS.md`), passed in full as the system message; calibration anchor for the whole pass. If no voice file can be found, see Open questions handling.
 
 Do not read the storyboard, canon files, character files, or the apply log from the metaphor step. Voice spec, the chunk, and the surrounding context windows are the entire input. If something needs more than that to fix, it is not a line-level problem.
@@ -71,8 +72,8 @@ The context windows exist so the editor can hear the local rhythm it is joining 
 
 Source rules:
 
-- **Preceding context** comes from `<chapter-folder>/drafts/<latest-attempt>/draft-line.md` if the prior region has already been processed; otherwise from `<chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md`. The editor calibrates against the chapter's actual evolving rhythm rather than against a frozen pre-edit state.
-- **Following context** always comes from `<chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md`. The downstream prose has not been edited yet.
+- **Preceding context** comes from `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` (the in-progress output) if the prior region has already been processed; otherwise from `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>`. The editor calibrates against the chapter's actual evolving rhythm rather than against a frozen pre-edit state.
+- **Following context** always comes from `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>`. The downstream prose has not been edited yet.
 - For the first chunk, preceding context is empty; for the last chunk, following context is empty.
 
 Boundary rules:
@@ -86,7 +87,7 @@ The editor must understand that context is read-only — it returns only the rew
 
 Sentences near the start or end of a chunk are fully editable within the current chunk's pass. The preceding context exists exactly so those edge sentences can be tuned to the rhythm they are joining.
 
-Once a chunk has been written to `<chapter-folder>/drafts/<latest-attempt>/draft-line.md`, it is finalized. Subsequent chunks do not modify it. Each chunk's editor sees previous output as read-only preceding context and adjusts the current center to match — never the other way around.
+Once a chunk has been written to `<chapter-folder>/drafts/<latest-attempt>/<next-draft>`, it is finalized. Subsequent chunks do not modify it. Each chunk's editor sees previous output as read-only preceding context and adjusts the current center to match — never the other way around.
 
 If, after the full pass, a seam between two finalized chunks reads badly, that is a separate hand-repair decision. It is not a retroactive rerun of either chunk.
 
@@ -94,7 +95,7 @@ If, after the full pass, a seam between two finalized chunks reads badly, that i
 
 For each chunk:
 
-**Step 1: Identify the chunk's boundaries.** Note the start and end markers (scene break, beat marker, or paragraph). Identify the preceding-context window (from line-draft or metaphor-draft per the source rules) and the following-context window (from metaphor-draft). Record boundaries in the apply log.
+**Step 1: Identify the chunk's boundaries.** Note the start and end markers (scene break, beat marker, or paragraph). Identify the preceding-context window (from `<next-draft>` or `<latest-draft>` per the source rules) and the following-context window (from `<latest-draft>`). Record boundaries in the apply log.
 
 **Step 2: Send the LLM call.**
 
@@ -110,29 +111,29 @@ The voice file sits in the system message because it caches well across chunks.
 - Paragraph count has not dropped sharply (a small change from intentional break-insertion is fine; a large drop means the model collapsed paragraphs and should be rerun).
 - No new figurative language has appeared. Spot-check a few sentences against their originals.
 
-**Step 4: Append to `<chapter-folder>/drafts/<latest-attempt>/draft-line.md`.** Write the rewritten center to the line-draft file, preserving its position in the chapter.
+**Step 4: Append to `<chapter-folder>/drafts/<latest-attempt>/<next-draft>`.** Write the rewritten center to the next-draft file, preserving its position in the chapter.
 
 **Step 5: Record in the apply log.** One entry per chunk (see below).
 
-If a chunk's output fails verification, rerun it once. If it fails twice, copy the source center unchanged into the line-draft and note the skip in the apply log.
+If a chunk's output fails verification, rerun it once. If it fails twice, copy the source center unchanged from `<latest-draft>` into `<next-draft>` and note the skip in the apply log.
 
 ### Apply log
 
-At the end of `<chapter-folder>/drafts/<latest-attempt>/draft-line.md`, append:
+At the end of `<chapter-folder>/drafts/<latest-attempt>/<next-draft>`, append:
 
 ```markdown
 <!--
 Line-pass log
 
 - Chunk 1: [start marker] → [end marker], ~N words
-  - Preceding context: none (chapter opening) | ~N words from [line-draft|metaphor-draft]
-  - Following context: ~N words from metaphor-draft
+  - Preceding context: none (chapter opening) | ~N words from [next-draft|latest-draft]
+  - Following context: ~N words from latest-draft
   - Edits: [brief category summary, e.g. "tightened 4 sideways-qualification clauses, cut 6 hedges, broke 1 paragraph for rhythm"]
   - Notes: [judgment calls, retained sentences, or "no notes"]
 
 - Chunk 2: [start marker] → [end marker], ~N words
-  - Preceding context: ~N words from line-draft
-  - Following context: ~N words from metaphor-draft
+  - Preceding context: ~N words from next-draft
+  - Following context: ~N words from latest-draft
   - Edits: ...
   - Notes: ...
 
@@ -165,7 +166,7 @@ The log records every chunk and every judgment call. Volume of edits is too high
 
 **Editing the context windows.** Preceding and following context are read-only. If the rewritten output extends into either, the chunk has failed verification — rerun it. Do not patch the bleed by hand.
 
-**Retroactive seam repair.** Once a chunk is finalized in `<chapter-folder>/drafts/<latest-attempt>/draft-line.md`, subsequent chunks do not modify it. Each editor adjusts the current center to match the prior output, never the reverse.
+**Retroactive seam repair.** Once a chunk is finalized in `<chapter-folder>/drafts/<latest-attempt>/<next-draft>`, subsequent chunks do not modify it. Each editor adjusts the current center to match the prior output, never the reverse.
 
 **Collapsing paragraphs.** Inserting a paragraph break for rhythm is in scope. Merging paragraphs is not.
 
@@ -175,8 +176,24 @@ The log records every chunk and every judgment call. Volume of edits is too high
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/draft-line.md` — identical to `<chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md` except for the sentence-level edits this pass produces, with a block-comment apply log appended at the end. Do not modify `draft-metaphor.md`. The file is written chunk-by-chunk; previously-finalized chunks are read back as preceding-context for later chunks (see Context windows).
+- `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — identical to `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` except for the sentence-level edits this pass produces, with a block-comment apply log appended at the end. Written as the next versioned draft file (e.g., if `<latest-draft>` is `draft-v04.md`, this writes `draft-v05.md`). Do not modify `<latest-draft>`. The file is written chunk-by-chunk; previously-finalized chunks are read back as preceding-context for later chunks (see Context windows).
+- `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` — append a per-version entry for `<next-draft>` after the final chunk is written, following the schema in `agents/project-layouts.md`. Line-pass has no side-artifact apply log; the apply log lives in the block comment at the end of the produced prose file. Example:
+
+  ```markdown
+  ## draft-v05.md
+  - produced_by: line_pass
+  - read_from: [draft-v04.md]
+  - side_artifacts: []
+  - apply_log: apply log at end of `draft-v05.md`
+  ```
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs — including a missing project-root `voice.md` (or the override named in the project's `AGENTS.md`) — append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+Line-pass has no paired upstream report, so there is no `Reviewed-draft` stamp to check; the stale-report blocker does not apply to this step.
+
+Named blocker conditions:
+
+- **Missing inputs.** `<latest-draft>` cannot be resolved (no `draft-vNN.md` in the attempt directory).
+- **Missing voice file.** Project-root `voice.md` (or the override named in the project's `AGENTS.md`) is missing.
+
+In either case, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.

@@ -3,7 +3,7 @@ step_id: metaphor_fix
 review_required: true
 inputs:
   - <chapter-folder>/drafts/<latest-attempt>/metaphors.md
-  - <chapter-folder>/drafts/<latest-attempt>/draft-compliance.md
+  - <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
   - <chapter-folder>/storyboards/*-storyboard.md
   - voice.md
 outputs:
@@ -21,7 +21,7 @@ Coordinator step that turns the human-annotated `metaphors.md` working file into
 ## Inputs
 
 - **`<chapter-folder>/drafts/<latest-attempt>/metaphors.md`** — the human-reviewed working file produced by `metaphor_identify` and annotated by the human. Each entry the human wants acted on carries an action word (`FLATTEN`, `REPLACE: [target image]`, or `WORKSHOP`) below the flag line and may carry inline corrections to identify fields. Entries the human accepted as-is have no action word; entries the human rejected have been deleted from the file.
-- **`<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md`** — the latest prose. The coordinator extracts the surrounding paragraph for each annotated entry's flagged sentence and passes only that paragraph to the subagent. Subagents do not receive the full draft.
+- **`<chapter-folder>/drafts/<latest-attempt>/<latest-draft>`** — the latest prose, resolved at step start. The coordinator extracts the surrounding paragraph for each annotated entry's flagged sentence and passes only that paragraph to the subagent. Subagents do not receive the full draft. The paragraph the coordinator extracts must come from the same draft version stamped at the top of `metaphors.md` (the `Reviewed-draft:` line written by `metaphor_identify`); if `<latest-draft>` has advanced past that stamp the annotations are stale — see Open questions handling. This step does not mint a new draft version.
 - **`<chapter-folder>/storyboards/*-storyboard.md`** — passed to `WORKSHOP` subagents only. The coordinator selects the storyboard block for the entry's beat and passes that single block to the workshop subagent. Not passed to flatten or replace subagents.
 - **`voice.md`** — the project-root voice file (a sibling of `pipeline-state.md`, not the copy inside the `amanuensis/` submodule). A project may override the location by pointing at a different voice file in its top-level `AGENTS.md`; the coordinator passes whichever path is in effect. Passed to `WORKSHOP` subagents only. Not passed to flatten or replace subagents. If a `WORKSHOP` entry needs the voice file and none can be found, see Open questions handling.
 
@@ -29,10 +29,10 @@ Coordinator step that turns the human-annotated `metaphors.md` working file into
 
 ### Coordinator responsibilities
 
-1. **Read `metaphors.md`.** Walk the file entry by entry. Identify every entry annotated with an action word: `FLATTEN`, `REPLACE: [target image]`, or `WORKSHOP`. Skip entries with no action word — the human has accepted them as-is. Entries the human deleted are not present in the file and require no handling.
+1. **Read `metaphors.md`.** Walk the file entry by entry. Identify every entry annotated with an action word: `FLATTEN`, `REPLACE: [target image]`, or `WORKSHOP`. Skip entries with no action word — the human has accepted them as-is. Entries the human deleted are not present in the file and require no handling. The `Reviewed-draft: draft-vNN.md` header at the top of `metaphors.md` (written by `metaphor_identify`) is preserved as-is; this step does not rewrite or refresh it. Confirm that resolved `<latest-draft>` matches that stamp; if it does not, the annotations are stale (see Open questions handling).
 2. **For each annotated entry, prepare the subagent payload.** The payload contains only what the subagent's prompt contract requires:
    - The full entry block as it currently appears in `metaphors.md` (including any inline corrections or notes the human added below the action word).
-   - The surrounding paragraph for the flagged sentence, extracted from `draft-compliance.md`. "Surrounding paragraph" means the paragraph containing the flagged quote, with no additional context.
+   - The surrounding paragraph for the flagged sentence, extracted from `<latest-draft>` (which must match the `Reviewed-draft:` stamp in `metaphors.md`). "Surrounding paragraph" means the paragraph containing the flagged quote, with no additional context.
    - For `WORKSHOP` entries only: the storyboard block for the entry's beat (one storyboard file's contents), plus the path/contents of the voice file.
    Subagents do not read `metaphors.md` as a whole, do not read the rest of the draft, and do not read each other's entries.
 3. **Dispatch one subagent per annotated entry, in parallel where the host supports it.** Pick the subagent prompt contract by annotation type:
@@ -59,10 +59,12 @@ The coordinator waits for all subagents to finish appending their variants and t
 
 ## Outputs
 
-- **`<chapter-folder>/drafts/<latest-attempt>/metaphors.md`** — the same working file, with rewrite variants appended below every annotated entry. Entries with no action word are unchanged. The file remains the audit record of every figurative decision in the chapter and becomes the input to `metaphor_apply` after the human selects one variant per entry.
+- **`<chapter-folder>/drafts/<latest-attempt>/metaphors.md`** — the same working file, with rewrite variants appended below every annotated entry. The `Reviewed-draft: draft-vNN.md` header written by `metaphor_identify` is preserved unchanged. Entries with no action word are unchanged. The file remains the audit record of every figurative decision in the chapter and becomes the input to `metaphor_apply` after the human selects one variant per entry.
 
 ## Open questions handling
 
 If `metaphors.md` is missing, append a blocker to the project-root `open-questions.md` and exit without advancing the pipeline marker. If `metaphors.md` exists but contains no annotated entries (every entry was either accepted as-is or deleted), append a blocker to `open-questions.md` noting that `metaphor_fix` was invoked with nothing to do — either the human intended to advance directly to `metaphor_apply` (move the marker) or annotation is incomplete — and exit without advancing.
+
+If the resolved `<latest-draft>` does not match the `Reviewed-draft:` stamp at the top of `metaphors.md`, the annotations are stale: a newer draft has been minted since `metaphor_identify` ran. Append a blocker to `open-questions.md` describing the mismatch (annotated draft vs. current `<latest-draft>`) and exit without dispatching subagents. The human either re-runs `metaphor_identify` against the new draft or rolls the draft back to the stamped version.
 
 For other ambiguous or missing inputs (the draft is missing, a workshop entry's storyboard cannot be located, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) is needed by a `WORKSHOP` entry but does not exist, etc.), append the blocker to `open-questions.md` and exit without advancing. Do not fabricate inputs and do not write partial variants. The next dispatcher invocation will re-run this step after the human resolves the blocker.

@@ -3,9 +3,11 @@ step_id: metaphor_apply
 review_required: false
 inputs:
   - <chapter-folder>/drafts/<latest-attempt>/metaphors.md
-  - <chapter-folder>/drafts/<latest-attempt>/draft-compliance.md
+  - <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
 outputs:
-  - <chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md
+  - <chapter-folder>/drafts/<latest-attempt>/<next-draft>
+  - <chapter-folder>/drafts/<latest-attempt>/metaphors.md
+  - <chapter-folder>/drafts/<latest-attempt>/draft-manifest.md
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -19,7 +21,9 @@ Substitutes the surviving variants from the working metaphors file into the draf
 ## Inputs
 
 - `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — the working file after human selection. Each surviving entry carries the variant the human kept. Variants may be FLATTEN paragraphs, REPLACE paragraphs, or WORKSHOP sentences. Note: since `metaphor_fix`'s workshop subagent no longer runs an integration phase (the integration phase was removed; integration now happens here), surviving WORKSHOP entries arrive as bare individual sentences rather than fully-integrated paragraphs. Step 3 of Behavior already handles this through its "sentence variant" branch — no behavior change is required, but you should not be surprised to see workshop variants as one-line candidates.
-- `<chapter-folder>/drafts/<latest-attempt>/draft-compliance.md` — the current prose (the latest prose-revising step's output before this one).
+
+  At step start, before substituting any variant, read the `Reviewed-draft: draft-vNN.md` header at the top of `metaphors.md` and confirm it equals `<latest-draft>`. If it does not, see "Open questions handling" below — this is a stale-report blocker.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the current prose (the latest prose-revising step's output before this one). Resolved at step start.
 
 Do not read the storyboard, canon files, or the selected voice file or profile. The variants have already been generated and chosen under those constraints. Apply locates each change in the draft and integrates it; it does not re-evaluate the rewrite.
 
@@ -39,7 +43,7 @@ If the entry is ambiguous — multiple variants left in, or none — use your be
 
 **Step 2: Locate the change in the draft.**
 
-Find the original sentence in `draft-compliance.md` using the entry's `Quote` field. Treat the quote as a guide, not a string to match. Minor differences — punctuation, smart vs. straight quotes, whitespace, a typo on either side, an em-dash that became a comma — should not stop you. Find the sentence the entry is clearly about and proceed.
+Find the original sentence in `<latest-draft>` using the entry's `Quote` field. Treat the quote as a guide, not a string to match. Minor differences — punctuation, smart vs. straight quotes, whitespace, a typo on either side, an em-dash that became a comma — should not stop you. Find the sentence the entry is clearly about and proceed.
 
 If the surviving variant is a paragraph, identify the corresponding paragraph in the draft (the one containing the original sentence) as the substitution target.
 
@@ -56,7 +60,7 @@ Scene breaks, section headers, block comment markers, dialogue formatting, and a
 
 ### Apply log
 
-At the end of `draft-metaphor.md`, append a block comment:
+At the end of `<next-draft>`, append a block comment:
 
 ```markdown
 <!--
@@ -94,8 +98,23 @@ The log records every entry and every judgment call. It is the audit trail for t
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/draft-metaphor.md` — identical to `draft-compliance.md` except for the substitutions described above, with the apply-log block comment appended at the end. Do not modify `draft-compliance.md` or `metaphors.md`.
+- `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — identical to `<latest-draft>` except for the substitutions described above, with the apply-log block comment appended at the end. Written as the next versioned draft file (e.g., if `<latest-draft>` is `draft-v03.md`, this writes `draft-v04.md`). Do not modify `<latest-draft>` or `metaphors.md`.
+- `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — unchanged in content by this step; listed as an output only because the manifest entry records it as the side artifact consulted. The apply log for this run lives in the block comment at the end of `<next-draft>`, not here.
+- `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` — append a per-version entry for `<next-draft>` after a successful prose write, following the schema in `agents/project-layouts.md`. Example:
+
+  ```markdown
+  ## draft-v04.md
+  - produced_by: metaphor_apply
+  - read_from: [draft-v03.md]
+  - side_artifacts: [metaphors.md]
+  - apply_log: apply log at end of `draft-v04.md`
+  ```
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+Named blocker conditions:
+
+- **Missing or ambiguous inputs.** `metaphors.md` is missing, contains no surviving variants, or `<latest-draft>` cannot be resolved.
+- **Stale report.** The `Reviewed-draft:` header at the top of `metaphors.md` names a draft other than `<latest-draft>`. The paired report→fix adjacency invariant requires that the metaphor pipeline (`metaphor_identify` + `metaphor_fix`) ran against the same draft this step is applying to; if a prose-advancing step slipped in between, the recorded variants target the wrong sentences. Only the human can decide whether to rerun the metaphor pipeline against the current draft or to roll back. (This invariant will be documented canonically by a later step in the sprint.)
+
+In any of these, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
