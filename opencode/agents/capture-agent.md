@@ -78,7 +78,7 @@ A newly created `canon/generated/` file or stub folder is your own and is writte
 
 **Only capture Rule 1 inventions.** Reveal-/knowledge-load-bearing facts are open questions, never captured.
 
-**Non-blocking.** A capture failure — a missing target, an `edit_policy` block, a malformed recommendation, any error — **never blocks draft completion.** Log it in the attempt's `notes.md` and continue with the remaining recommendations. `draft.md` is a completed output regardless. Captured writes ride drafting's existing `review_required: true` gate: the human reviews them (along with the `invented, unreviewed` markers) before any downstream step relies on them.
+**Non-blocking.** A capture failure — a missing target, an `edit_policy` block, a malformed recommendation, any error — **never blocks draft completion.** Log it in the attempt's `notes.md` and continue with the remaining recommendations. `draft-v01.md` is a completed output regardless. Captured writes ride drafting's existing `review_required: true` gate: the human reviews them (along with the `invented, unreviewed` markers) before any downstream step relies on them.
 
 ## Output
 

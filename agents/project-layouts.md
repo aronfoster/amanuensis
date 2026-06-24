@@ -10,11 +10,27 @@ The three project types are `short_story`, `book`, and `series`.
 - `pipeline-state.md` and `amanuensis-project.yaml` also live at the project root.
 - **Folder paths replace filename prefixes.** Older convention used numeric prefixes like `01-01-summary.md` to encode book and chapter. The new convention uses folder structure: `<book-folder>/<chapter-folder>/summary.md`. Files inside a chapter folder use unprefixed canonical names; book and chapter identity come from the folder path, not the filename.
 - `<latest-attempt>` resolves to the highest-numbered `attemptNN` directory under the chapter's `drafts/`. If none exists and the step expects one, the step creates `attempt01`.
+- `<latest-draft>` resolves to the highest-numbered `draft-vNN.md` file in the current `<latest-attempt>` directory. Resolution is performed at step start.
+- `<next-draft>` resolves to one greater than `<latest-draft>`, zero-padded to two digits (e.g., if `<latest-draft>` is `draft-v03.md` then `<next-draft>` is `draft-v04.md`). When a step creates a brand-new attempt with no existing drafts (the drafting step), `<next-draft>` is `draft-v01.md`.
 - `<story-plan>` resolves to the project's top-level planning file for the work in flight. Defaults by `project_type`:
   - `short_story`: `plot/summary.md`
   - `book`: `plot/<book-folder>/overview.md`
   - `series`: `plot/<book-folder>/overview.md` (per book in flight)
   Consuming projects may override this resolution in their local `AGENTS.md` if the project keeps its planning file elsewhere.
+
+### Attempt-level provenance: `draft-manifest.md`
+
+Each attempt directory carries a `draft-manifest.md` alongside its versioned draft files at `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md`. The manifest is the provenance source for the attempt, not in-file frontmatter: draft files remain manuscript-only prose (see `agents/steps/drafting.md:131`).
+
+The manifest records, per draft version, at minimum:
+
+- the draft file (`draft-v01.md`, `draft-v02.md`, etc.)
+- `produced_by` — the step that wrote this version
+- `read_from` — the draft version(s) the producing step read as input
+- side artifacts consulted or updated during the step (e.g., `reviewer-actions.md`, `metaphors.md`, `anti-ai.md`)
+- a short note or pointer to the producing step's apply log, when one exists
+
+Only prose-bearing draft files are versioned. Side artifacts (`reviewer-actions.md`, `metaphors.md`, `anti-ai.md`, `prose-pass.md`, `notes.md`) keep their semantic names and are not versioned. M3 capture annotations (the "invented, unreviewed" writes) may cite a draft version recorded here when they need a draft-version stamp.
 
 ## short_story
 
@@ -41,9 +57,12 @@ story-project/
     storyboards/
     drafts/
       attempt01/
-        draft.md
+        draft-v01.md
+        draft-manifest.md
       attempt02/
-        draft.md
+        draft-v01.md
+        draft-v02.md
+        draft-manifest.md
     aftermath.md
 ```
 
@@ -85,7 +104,8 @@ book-project/
         storyboards/
         drafts/
           attempt01/
-            draft.md
+            draft-v01.md
+            draft-manifest.md
         aftermath.md
       chapter02/
         summary.md
@@ -93,9 +113,12 @@ book-project/
         storyboards/
         drafts/
           attempt01/
-            draft.md
+            draft-v01.md
+            draft-manifest.md
           attempt02/
-            draft.md
+            draft-v01.md
+            draft-v02.md
+            draft-manifest.md
         aftermath.md
 ```
 
@@ -138,7 +161,8 @@ series-project/
         storyboards/
         drafts/
           attempt01/
-            draft.md
+            draft-v01.md
+            draft-manifest.md
         aftermath.md
     book2/
       overview.md
@@ -149,9 +173,12 @@ series-project/
         storyboards/
         drafts/
           attempt01/
-            draft.md
+            draft-v01.md
+            draft-manifest.md
           attempt02/
-            draft.md
+            draft-v01.md
+            draft-v02.md
+            draft-manifest.md
         aftermath.md
 ```
 

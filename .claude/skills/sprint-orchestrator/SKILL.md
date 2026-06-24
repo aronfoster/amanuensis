@@ -84,23 +84,42 @@ fan-out.
    - instruct the agent to **edit files but NOT commit and NOT push** — you
      commit between waves,
    - for same-file bundles, tell the one agent to do the tasks in a stated
-     order so the edits compose.
+     order so the edits compose,
+   - for **parallel agents sharing a contract** (e.g. one writes a field
+     another reads), pre-decide the exact surface — field name, header text,
+     phrasing — and inject it into every brief that touches it; don't let
+     parallel agents converge on it by luck,
+   - for a **seam a later wave must find** (a TODO phrase, a parenthetical,
+     a marker line), spell out the exact text so the next wave can grep for
+     it; mention in the later wave's brief what to grep for,
+   - for **sweep tasks** (rename a name everywhere it appears as current
+     behavior), hand over the verification grep and tell the agent to act on
+     every current-behavior hit — don't pre-enumerate files; you'll miss
+     some.
    - Launch independent agents in a single message so they run concurrently.
-2. **Verify yourself after agents return.** Do not trust summaries blindly:
+2. **Wait for every agent in the wave to ack.** Some agents run async and
+   return via a later `<task-notification>` — the wave isn't done until all
+   have notified. An environmental stop-hook nudging about uncommitted state
+   mid-wave is advisory; tell the user you're waiting and don't commit a
+   partial wave to silence it.
+3. **Verify yourself after agents return.** Do not trust summaries blindly:
    `git status`, `git diff` on shared files, spot-read new files, and run any
    acceptance check the sprint defines (e.g. a grep that must return nothing,
    a numbering invariant, a "no flat prohibition remains" sweep). A subagent
    reporting success is a claim, not evidence.
-3. **Handle failures before moving on.** Fix or re-dispatch what's broken, but
+4. **Handle failures before moving on.** Fix or re-dispatch what's broken, but
    bound it: if a task still fails its check after one re-dispatch, stop and
-   surface it to the human with the evidence rather than looping. And mind the
-   dependency graph — a wave that fails verification blocks every later wave
-   that consumes its output, so don't spawn a downstream wave whose inputs
-   aren't verified-good. Independent tasks that passed can still proceed.
-4. **Commit the wave** with a descriptive message naming the tasks/IDs it
+   surface it to the human with the evidence rather than looping. Prefer
+   `SendMessage` to nudge an agent that returned close-but-incomplete (keeps
+   its context); spawn a fresh Agent when the brief itself was wrong. And
+   mind the dependency graph — a wave that fails verification blocks every
+   later wave that consumes its output, so don't spawn a downstream wave
+   whose inputs aren't verified-good. Independent tasks that passed can
+   still proceed.
+5. **Commit the wave** with a descriptive message naming the tasks/IDs it
    closes. One commit per wave is fine; per-task commits are also fine. Follow
    the repo's commit-message conventions.
-5. **Update a TodoWrite list** (if available) as waves complete, so progress is
+6. **Update a TodoWrite list** (if available) as waves complete, so progress is
    visible — and so the wave plan survives a context reset partway through a
    long sprint.
 

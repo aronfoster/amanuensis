@@ -144,7 +144,7 @@ If an entry reads as prose, rewrite it as specification.
 
 One paragraph of production notes, maximum five sentences. Direct the drafter: what happens, what the prose must accomplish, what the drafter must not do. Present-tense, plain language, no subordinate clauses doing sensory work.
 
-The test: if a sentence could appear unedited in the novel, it is prose and belongs in draft.md.
+The test: if a sentence could appear unedited in the novel, it is prose and belongs in the chapter draft (`<latest-draft>`), not in a storyboard.
 
 - **Specification:** "Open with Louise alone, registering the dream as present but unexamined. Françoise and Miss Aubert arrive; dressing proceeds as ordinary household routine. Mid-routine, during the hairpin placement, the surge lands per Must Preserve. Louise delivers 'I slept fine' as a prepared lie. Close with her moving into the day."
 - **Prose (do not use):** "Louise wakes with the dream still curled beneath her eyelids, and as Françoise's hands begin their ordinary work, something stranger waits beneath them, until at the careful setting of a hairpin the wrongness cracks through — and Louise, trained in stillness, gives it nowhere to go."

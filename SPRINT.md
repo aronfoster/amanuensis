@@ -45,7 +45,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ## Tasks
 
-### Task 1 — Define draft-version placeholders and manifest contract [ ]
+### Task 1 — Define draft-version placeholders and manifest contract [x]
 
 **Goal.** Establish the naming/provenance vocabulary every later task uses. Closes **M4.1** and the core of **M4.3**.
 
@@ -66,7 +66,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 2 — Convert drafting to produce `draft-v01.md` and initialize provenance [ ]
+### Task 2 — Convert drafting to produce `draft-v01.md` and initialize provenance [x]
 
 **Goal.** Make the first prose output versioned from birth. Closes the drafting part of **M4.1-M4.3**.
 
@@ -83,7 +83,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 3 — Convert report-only/read-only steps to `<latest-draft>` [ ]
+### Task 3 — Convert report-only/read-only steps to `<latest-draft>` [x]
 
 **Goal.** Make every non-prose-writing step follow the latest version without minting one. Closes the read-only half of **M4.2**.
 
@@ -103,7 +103,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 4 — Convert prose-advancing fix/apply steps to `<next-draft>` [ ]
+### Task 4 — Convert prose-advancing fix/apply steps to `<next-draft>` [x]
 
 **Goal.** Make every current prose-writing step produce a numbered draft version. Closes the write half of **M4.2** and most of **M4.3**.
 
@@ -122,7 +122,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 5 — Document report->fix adjacency and stale-report handling [ ]
+### Task 5 — Document report->fix adjacency and stale-report handling [x]
 
 **Goal.** Prevent annotations from being applied to the wrong draft version once drafts are numbered. Closes **M4.4**.
 
@@ -141,7 +141,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 6 — Sweep docs, examples, catalog text, and verification invariants [ ]
+### Task 6 — Sweep docs, examples, catalog text, and verification invariants [x]
 
 **Goal.** Bring the visible project docs into the versioned-draft model and close the Sprint cleanly. Closes **M4.5**.
 

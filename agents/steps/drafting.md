@@ -5,8 +5,9 @@ inputs:
   - <chapter-folder>/storyboards/*-storyboard.md
   - voice.md
 outputs:
-  - <chapter-folder>/drafts/<latest-attempt>/draft.md
+  - <chapter-folder>/drafts/<latest-attempt>/draft-v01.md
   - <chapter-folder>/drafts/<latest-attempt>/notes.md
+  - <chapter-folder>/drafts/<latest-attempt>/draft-manifest.md
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -34,10 +35,26 @@ Use this step only after the chapter's storyboard files are complete. This step 
 4. Create `<chapter-folder>/drafts/<latest-attempt>/notes.md` recording the attempt name, date, model if known, chapter path, and which storyboard files were assigned to each scene.
 5. Dispatch one subagent per scene, in parallel where the host supports it. Give each subagent only the allowed inputs for its assigned scene (see Subagent prompt contract).
 6. Wait for all subagents to write their scene file (`sceneNN.md`) and scene notes file (`sceneNN-notes.md`) into `<chapter-folder>/drafts/<latest-attempt>/`.
-7. Assemble the scene files in scene order into `<chapter-folder>/drafts/<latest-attempt>/draft.md` (see Assembly rules).
+7. Assemble the scene files in scene order into `<chapter-folder>/drafts/<latest-attempt>/draft-v01.md` (see Assembly rules).
 8. Assemble the scene notes files into `<chapter-folder>/drafts/<latest-attempt>/notes.md`, broken out by scene (see Notes assembly).
-9. Collect the per-scene invention recommendations from the assembled notes (the recommendation entries the subagents recorded in their `sceneNN-notes.md` files, now broken out by scene in `notes.md`) and dispatch the capture agent (`agents/capture/capture-agent.md` on the Claude host; the `opencode/agents/` counterpart on the OpenCode host) with them, the way the metaphor steps dispatch their subagents. Gate this exactly like the fragment deletion below: dispatch capture **only on a completed assembly**. On any failure or abandon path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft.md` written — do **not** dispatch capture; record the blocker in `notes.md`. Capture must run **before** the fragment deletion in the next step, because the recommendations live in the `sceneNN-notes.md` files that deletion removes — running it first ensures nothing is lost. Capture is **non-blocking**: a capture failure is logged in `notes.md` and does **not** prevent `draft.md` from being a completed output; the writes capture makes ride this step's existing `review_required: true` gate.
-10. Delete each `sceneNN.md` and `sceneNN-notes.md` from `<chapter-folder>/drafts/<latest-attempt>/` once their entire contents are in the chapter draft and notes files — the scene prose in `draft.md`, the scene notes in `notes.md`. The deletion is gated on that capture: delete a fragment only after confirming its content is present in the durable combined file (`sceneNN.md` → `draft.md`, `sceneNN-notes.md` → `notes.md`); it is not an unconditional `rm`. On any failure path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft.md` written — do not delete the fragments. Preserve them for diagnosis and record the blocker in `notes.md`.
+9. Write `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` with a per-version entry for `draft-v01.md`, using the manifest format defined in `agents/project-layouts.md` (see "Attempt-level provenance: draft-manifest.md"). The entry records `produced_by: drafting`, `read_from: []` (drafting is the first prose-producing step in the attempt, so it consumes no prior versioned prose), the storyboard files the coordinator consulted as the assembly source, and a pointer to `notes.md` for run details. Gate this exactly like the capture dispatch and fragment deletion below: write the manifest **only on a completed assembly**. On any failure or abandon path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft-v01.md` written — do **not** write the manifest; record the blocker in `notes.md`.
+
+   An example of the entry drafting writes:
+
+   ```md
+   ## draft-v01.md
+
+   - produced_by: drafting
+   - read_from: []
+   - consulted:
+     - <chapter-folder>/storyboards/beat01-storyboard.md
+     - <chapter-folder>/storyboards/beat02-storyboard.md
+     - <chapter-folder>/storyboards/beat03-storyboard.md
+   - run details: see notes.md
+   ```
+
+10. Collect the per-scene invention recommendations from the assembled notes (the recommendation entries the subagents recorded in their `sceneNN-notes.md` files, now broken out by scene in `notes.md`) and dispatch the capture agent (`agents/capture/capture-agent.md` on the Claude host; the `opencode/agents/` counterpart on the OpenCode host) with them, the way the metaphor steps dispatch their subagents. Gate this exactly like the fragment deletion below: dispatch capture **only on a completed assembly**. On any failure or abandon path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft-v01.md` written — do **not** dispatch capture; record the blocker in `notes.md`. Capture must run **before** the fragment deletion in the next step, because the recommendations live in the `sceneNN-notes.md` files that deletion removes — running it first ensures nothing is lost. Capture is **non-blocking**: a capture failure is logged in `notes.md` and does **not** prevent `draft-v01.md` from being a completed output; the writes capture makes ride this step's existing `review_required: true` gate.
+11. Delete each `sceneNN.md` and `sceneNN-notes.md` from `<chapter-folder>/drafts/<latest-attempt>/` once their entire contents are in the chapter draft and notes files — the scene prose in `draft-v01.md`, the scene notes in `notes.md`. The deletion is gated on that capture: delete a fragment only after confirming its content is present in the durable combined file (`sceneNN.md` → `draft-v01.md`, `sceneNN-notes.md` → `notes.md`); it is not an unconditional `rm`. On any failure path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft-v01.md` written — do not delete the fragments. Preserve them for diagnosis and record the blocker in `notes.md`.
 
 The coordinator may inspect storyboard frontmatter to group files and determine scene order. The coordinator must not rewrite scene prose during assembly except for mechanical fixes required to combine files, such as removing duplicate titles or normalizing scene separators.
 
@@ -123,7 +140,7 @@ Assembly is mechanical:
 1. Read scene files in scene order.
 2. Strip any accidental headings, notes, or wrappers that are not prose.
 3. Place a horizontal rule (`---`) between scenes.
-4. Write the result to `<chapter-folder>/drafts/<latest-attempt>/draft.md`.
+4. Write the result to `<chapter-folder>/drafts/<latest-attempt>/draft-v01.md`.
 5. Record assembly notes in `notes.md`, not in the draft.
 
 The combined draft contains story text only.
@@ -174,13 +191,14 @@ This step does not include storyboarding, compliance review, continuity review, 
 
 ## Outputs
 
-The durable outputs of a completed run are `draft.md` and `notes.md`:
+The durable outputs of a completed run are `draft-v01.md`, `notes.md`, and `draft-manifest.md`:
 
-- **`<chapter-folder>/drafts/<latest-attempt>/draft.md`** — the assembled chapter draft. Contains story text only, with scenes separated by `---`. Beats within a scene retain their `<!-- scene X, beat Y -->` / `<!-- end scene X, beat Y -->` markers.
+- **`<chapter-folder>/drafts/<latest-attempt>/draft-v01.md`** — the assembled chapter draft. Contains story text only, with scenes separated by `---`. Beats within a scene retain their `<!-- scene X, beat Y -->` / `<!-- end scene X, beat Y -->` markers.
 - **`<chapter-folder>/drafts/<latest-attempt>/notes.md`** — the combined run notes. Run metadata (attempt name, chapter path, model) plus the per-scene notes broken out by scene heading. Also captures any beat-index/filename mismatches, assembly notes, and blockers raised by subagents.
+- **`<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md`** — the attempt's provenance index. Holds the per-version entry for `draft-v01.md` (and, in later steps, for any subsequent `draft-vNN.md`) as defined in `agents/project-layouts.md`.
 
-The per-scene `sceneNN.md` and `sceneNN-notes.md` files are transient working files written by subagents during the run. Their content is folded into `draft.md` and `notes.md` during assembly, and the coordinator deletes them afterward (see Coordinator responsibilities, step 10), so they are not part of the durable output set. They are preserved only when a run cannot complete assembly.
+The per-scene `sceneNN.md` and `sceneNN-notes.md` files are transient working files written by subagents during the run. Their content is folded into `draft-v01.md` and `notes.md` during assembly, and the coordinator deletes them afterward (see Coordinator responsibilities, step 11), so they are not part of the durable output set. They are preserved only when a run cannot complete assembly.
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs — for example, the chapter has no storyboard files, storyboards are missing `scene_ref` or `beat_index` frontmatter required to group and order them, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) does not exist, or a subagent reports that its storyboard files do not contain enough to draft from — append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write a partial `draft.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker (typically by editing storyboards).
+If the step cannot complete because of missing or ambiguous inputs — for example, the chapter has no storyboard files, storyboards are missing `scene_ref` or `beat_index` frontmatter required to group and order them, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) does not exist, or a subagent reports that its storyboard files do not contain enough to draft from — append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write a partial `draft-v01.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker (typically by editing storyboards).

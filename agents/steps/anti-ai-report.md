@@ -2,7 +2,7 @@
 step_id: anti_ai_report
 review_required: true
 inputs:
-  - <chapter-folder>/drafts/<latest-attempt>/draft-line.md
+  - <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/anti-ai.md
 ---
@@ -15,19 +15,25 @@ See `agents/orchestrator.md` for the step workflow contract.
 
 Hygiene workflow. Identifies patterns that signal AI-generated prose to trained readers. Reports findings; does not fix. Fixing is the separate `anti_ai_fix` step.
 
-This pass is the second-to-last step in the pipeline. It runs against the line-pass output (`draft-line.md`), the latest prose available in the attempt folder. It operates on surface and structural signals only — it has no awareness of canon, storyboard requirements, or voice spec. Do not use it to evaluate whether prose is good. Use it to find patterns that will get a reader's guard up.
+This pass is the second-to-last step in the pipeline. It runs against `<latest-draft>` resolved at step start — the latest prose available in the attempt folder, which in the canonical pipeline order will be the line-pass output. It operates on surface and structural signals only — it has no awareness of canon, storyboard requirements, or voice spec. Do not use it to evaluate whether prose is good. Use it to find patterns that will get a reader's guard up. This step does not mint a new draft version.
 
 The report is the human review artifact that gates the fix step. After this step runs, the human annotates the report; `anti_ai_fix` then reads the annotated report and applies edits to the prose.
 
 ## Inputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/draft-line.md` — the latest prose, after line pass. This is the only file this step reads. The pass is context-free by design.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the latest prose, resolved at step start. In the canonical pipeline order this will be the line-pass output. This is the only file this step reads. The pass is context-free by design.
 
 ## Behavior
 
 Scan the input prose for the nine pattern categories below and the flagged-words list. Report every instance found. Do not evaluate whether a pattern's use seems intentional or defensible — that is a human judgment downstream.
 
 The output file is one report per chapter; append across scenes with a scene header.
+
+The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed; the downstream `anti_ai_fix` step reads this stamp to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix adjacency invariant for the canonical statement.
+
+```markdown
+Reviewed-draft: draft-vNN.md
+```
 
 Begin each scene's section with:
 
@@ -319,8 +325,8 @@ Bulk headers are only valid on categories declared `BULK permitted` in the BULK 
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — one report per chapter, with a `## Anti-AI Report — Scene <scene-id>` header per scene, a BULK eligibility block at the head of each scene section, the per-category flag sections (only those with hits), a `### Flagged Words` section, and a `### Summary — Scene <scene-id>` block at the end of each scene tallying counts per category and a total. The file is the human review artifact that the human annotates with the grammar above before `anti_ai_fix` runs.
+- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — one report per chapter. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers. Subsequent runs against the same draft append below and preserve the stamp; a run against a newer draft (stale-report recovery path) overwrites the file with a fresh stamp. Has a `## Anti-AI Report — Scene <scene-id>` header per scene, a BULK eligibility block at the head of each scene section, the per-category flag sections (only those with hits), a `### Flagged Words` section, and a `### Summary — Scene <scene-id>` block at the end of each scene tallying counts per category and a total. The file is the human review artifact that the human annotates with the grammar above before `anti_ai_fix` runs; `anti_ai_fix` reads the reviewed-draft stamp to detect stale annotations.
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. Anti-AI report is unusual in that it is a context-free pass against a single file; blockers are rare (effectively limited to `draft-line.md` being missing or empty), but the same handling applies.
+If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. Anti-AI report is unusual in that it is a context-free pass against a single file; blockers are rare (effectively limited to `<latest-draft>` being missing or empty), but the same handling applies.

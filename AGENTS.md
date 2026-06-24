@@ -52,14 +52,14 @@ This is the catalog of step files this repo *provides to* consuming projects, no
 - `agents/steps/storyboarding.md` — produces per-beat storyboard blocks from the chapter's scene list, summary, character knowledge, and canon.
 - `agents/steps/drafting.md` — chapter coordinator that dispatches per-scene subagents and assembles their output into a single draft.
 - `agents/steps/compliance-report.md` — checks the draft against storyboard Must-Contain / Must-Not-Contain requirements and canon, producing an annotated `reviewer-actions.md` report.
-- `agents/steps/compliance-fix.md` — applies the human-annotated fixes from `reviewer-actions.md` to the draft, producing `draft-compliance.md`.
-- `agents/steps/prose-pass.md` — advisory prose-quality pass that produces a report only; the human applies fixes manually before `metaphor_identify` runs.
+- `agents/steps/compliance-fix.md` — applies the human-annotated fixes from `reviewer-actions.md` to `<latest-draft>`, producing the next `draft-vNN.md` and appending an entry to the attempt's `draft-manifest.md`.
+- `agents/steps/prose-pass.md` — advisory prose-quality pass that produces a report only; the human applies fixes manually before `metaphor_identify` runs, following the manual prose-edit handoff in `agents/chapters.md` (copy `<latest-draft>` to the next `draft-vNN.md` and record a `human_prose_edit` manifest entry).
 - `agents/steps/metaphor-identify.md` — extracts every live metaphor and simile from the latest prose into `metaphors.md`.
 - `agents/steps/metaphor-fix.md` — coordinator step that dispatches one subagent per annotated entry in parallel (FLATTEN / REPLACE / WORKSHOP) and reassembles their variants into `metaphors.md`.
-- `agents/steps/metaphor-apply.md` — applies the human-selected variant to the prose, producing `draft-metaphor.md`.
-- `agents/steps/line-pass.md` — chunked line-level voice and rhythm pass, producing `draft-line.md`.
+- `agents/steps/metaphor-apply.md` — applies the human-selected variant to `<latest-draft>`, producing the next `draft-vNN.md` and appending an entry to the attempt's `draft-manifest.md`.
+- `agents/steps/line-pass.md` — chunked line-level voice and rhythm pass over `<latest-draft>`, producing the next `draft-vNN.md` and appending an entry to the attempt's `draft-manifest.md`.
 - `agents/steps/anti-ai-report.md` — scans the line-pass output for AI-pattern flags across nine categories plus a flagged-words list, producing the annotated `anti-ai.md` report.
-- `agents/steps/anti-ai-fix.md` — applies the human-annotated fixes from `anti-ai.md` to the line-pass draft, producing `draft-anti-ai.md` (the final manuscript output).
+- `agents/steps/anti-ai-fix.md` — applies the human-annotated fixes from `anti-ai.md` to `<latest-draft>`, producing the next `draft-vNN.md` (the final manuscript output) and appending an entry to the attempt's `draft-manifest.md`.
 
 ## Support documents
 

@@ -19,7 +19,7 @@ Every step workflow file has frontmatter that declares the step's contract:
 step_id: metaphor_identify
 review_required: true
 inputs:
-  - <chapter-folder>/drafts/<latest-attempt>/draft.md
+  - <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/metaphors.md
 ---
@@ -104,6 +104,22 @@ See `agents/project-layouts.md`.
 How a step knows which chapter is "the current chapter" for book and series projects is an open question deferred to the book/series rollout phase. For short_story projects there is only one chapter and the question doesn't arise.
 
 TODO: this doesn't feel ideal but I should see it in practice before proposing a new solution
+
+## Report→fix adjacency invariant
+
+No prose-advancing step may run between a report and its paired fix/apply unless that report is regenerated against the new `<latest-draft>`. Each prose-advancing fix/apply step verifies this at step start by comparing the paired side artifact's `Reviewed-draft:` header against the current `<latest-draft>`. On mismatch the fix/apply step appends a stale-report blocker to the project-root `open-questions.md` and exits without advancing the marker.
+
+The pairs governed by this invariant in the current pipeline:
+
+- `compliance_report` → `compliance_fix`, stamped in `reviewer-actions.md`.
+- `metaphor_identify` / `metaphor_fix` → `metaphor_apply`, stamped in `metaphors.md`.
+- `anti_ai_report` → `anti_ai_fix`, stamped in `anti-ai.md`.
+
+The stamp is written by the report-emitting step the first time it creates its side artifact (`compliance_report`, `metaphor_identify`, `anti_ai_report`). On a rerun against an unchanged `<latest-draft>` the stamp is preserved and the step continues normally. On a rerun against a different `<latest-draft>` — the recovery path for a stale-report blocker — the report-emitting step **overwrites** its side artifact and writes a fresh top-of-file stamp matching the new `<latest-draft>`; the previous run's findings against the superseded draft are discarded, because their prose anchors no longer apply. `metaphor_fix` is not a report-emitting step: it preserves whatever stamp it inherits from `metaphor_identify` and never refreshes it. The paired fix/apply step reads the top-of-file stamp at step start.
+
+`prose_pass` records a `Reviewed-draft:` stamp in `prose-pass.md` for consistency with this invariant, but has no paired prose-advancing consumer in this Sprint; M5 will add `prose_fix` as that consumer and the stamp will become load-bearing then. `line_pass` is a prose-advancing step with no upstream report, so the invariant does not apply to it.
+
+The stale-report exit is a human decision point, not an automatic recovery. The fix/apply step appends a blocker to `open-questions.md` recording the stamped draft, the current `<latest-draft>`, and which intervening step advanced the prose. The human then decides between rerunning the report-emitting step (which overwrites the side artifact as described above), rolling the draft back to the stamped version, or accepting a stale apply with an explicit override. The fix/apply step does not silently apply old annotations to a newer draft.
 
 ## What the orchestrator does not do
 
