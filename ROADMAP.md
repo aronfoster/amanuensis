@@ -129,9 +129,9 @@ keep their step names; the report→fix adjacency invariant is documented.
 
 - [ ] M4.1 Define `<latest-draft>` resolution (highest-numbered `draft-vNN.md` in the
   attempt), parallel to `<latest-attempt>`. Drafting produces `draft-v01.md`.
-- [ ] M4.2 Convert prose-advancing steps (`drafting`, `compliance_fix`, `metaphor_apply`,
-  `line_pass`, `anti_ai_fix`) to write `<next-draft>`; convert prose-reading steps
-  (`compliance_report`, `prose_pass`, `metaphor_identify`, `metaphor_fix`,
+- [ ] M4.2 Convert prose-advancing steps (`drafting`, `compliance_fix`,
+  `metaphor_apply`, `line_pass`, `anti_ai_fix`) to write `<next-draft>`; convert prose-reading
+  steps (`compliance_report`, `prose_pass`, `metaphor_identify`, `metaphor_fix`,
   `anti_ai_report`) to read `<latest-draft>`.
 - [ ] M4.3 Add provenance to each draft version (frontmatter stamp `produced_by` / `reads`,
   or an attempt-level manifest). This is also the "which draft did this come from" stamp that
@@ -143,7 +143,10 @@ keep their step names; the report→fix adjacency invariant is documented.
   `project-layouts.md`, schema examples) and the canonical state list.
 
 Notes: side-artifacts (`reviewer-actions.md`, `metaphors.md`, `anti-ai.md`,
-`prose-pass.md`) stay step-named; only prose-bearing files are versioned.
+`prose-pass.md`) stay step-named; only prose-bearing files are versioned. Sprint 9 is planned
+around an attempt-level `draft-manifest.md` rather than per-draft frontmatter, because the
+drafting contract keeps prose files manuscript-only. `prose_fix` remains deferred to M5; M4
+only makes the versioned naming model ready for it.
 
 ---
 
