@@ -240,3 +240,14 @@ Notes: —
 ---
 
 ## Deferred
+
+- storyboard_review_fix apply step (after M6 proves out)
+- story-level reveals ledger with buildup (couples to continuity review; matters for book/series)
+- continuity review step
+- scene knowledge update step
+- post-chapter update step
+- chapter selection for book/series ("which chapter is current?")
+- pre-writing pipeline (vague idea -> plan)
+- multi-host beyond Claude Code / OpenCode
+- per-attempt comparison tooling (revisit after M7's archive model)
+- multi-work concurrency
