@@ -1,306 +1,178 @@
-# Sprint 8 — Milestone 3: Bounded canon invention + capture
+# Sprint 9 — Milestone 4: Versioned draft naming
 
-This Sprint replaces the project's blanket "do not invent canon" stance with one
-bounded rule, resolves the contradictory `orchestrator.md` TODO, and adds a
-coordinator-managed **capture agent** that records the continuity-relevant inventions
-the rule permits into the right canonical files. After this Sprint: a single statement
-of the invention rule exists and the step bodies reference it rather than restating a
-flat prohibition; the drafting coordinator dispatches a capture agent that writes
-permitted inventions to `timeline.md` / `profile.md` / an agent-generated `canon/`
-subfolder — **never** `knowledge/` — with annotated, edit-policy-respecting,
-non-blocking writes; and both hosts (Claude step bodies and the OpenCode coordinator)
-describe the same contract.
+This Sprint decouples prose-bearing draft filenames from the step that produced them. After this Sprint: `drafting` creates `draft-v01.md`; every prose-advancing step writes the next numbered `draft-vNN.md`; report-only and setup steps read `<latest-draft>` without incrementing it; side artifacts stay step-named; and the attempt records provenance in a manifest so later capture annotations and implementation agents can answer which draft version a fact came from.
 
-Like Sprint 7 this is a documentation/prose-contract milestone: every change edits a
-Markdown step body, support doc, or agent prompt. No code, no scripts, no schema
-changes. The behavior is enforced by the instructions the LLM coordinator and its
-subagents follow, not by an executable test; acceptance is by inspection of those
-instructions plus grep invariants.
+This is still a documentation/prose-contract milestone. The implementation edits will be Markdown step bodies, support docs, templates, and examples. No runtime dispatcher code is required unless verification shows a script or template has a hard-coded prose filename that would leave the docs inconsistent.
 
 ## Background — what is and isn't wrong today
 
 Established by inspection during planning; tasks should not re-derive this.
 
-- **The contradiction lives at `agents/orchestrator.md:42`.** The dispatcher contract
-  says "do not invent missing canon," immediately followed by a TODO stating the
-  opposite intent: that drafters *should* be free to invent non-load-bearing detail
-  (the "what did John order at breakfast" case) so long as it makes sense and does not
-  conflict with canon. This TODO is the thing M3.3 closes; its example is the seed of
-  the rule's wording.
-- **The canonical prohibition is `agents/update-rules.md:5` — "Rule 1: do not silently
-  invent canon."** This is the single statement the rest of the repo should defer to.
-  `agents/canon.md:36` ("Do not silently invent settled world facts.") is the
-  world-truth restatement. The rule (M3.1) is best written as a qualification of Rule 1
-  — the *silently* and *settled/load-bearing* qualifiers are already doing the work;
-  the bounded rule makes the permitted case explicit and names the exceptions.
-- **The flat prohibition is scattered across these step bodies** and must be pointed at
-  the single rule rather than each carrying its own absolute (M3.2):
-  `agents/steps/drafting.md:65` and `:153`, `agents/steps/scene-generation.md:27` and
-  `:109`, `agents/steps/character-extraction.md:43`, `agents/characters.md:93`, and the
-  OpenCode `opencode/agents/chapter-coordinator.md:40`. `storyboarding.md` is named in
-  the ROADMAP task; confirm whether it carries an invention prohibition and reference
-  the rule there too if so, otherwise no edit.
-- **`knowledge/` is off-limits to capture by existing contract.**
-  `agents/characters.md:61`: "Knowledge items are only written to these files during
-  the scene knowledge update workflow, after drafting confirms what the scene
-  committed." That workflow is deferred (see ROADMAP Deferred list). `knowledge/` is
-  also the reveal-sensitive state M3's hard prohibition protects. Capture therefore
-  never writes `knowledge/`; the eggs-class fact is a `timeline.md` event, and invented
-  identity color is a `profile.md` field.
-- **Stub-folder creation already has a procedure.** `agents/characters.md:74–91`
-  defines how to create a character folder for a not-yet-present character, including
-  `status: stub` frontmatter and the minimum files. The capture agent's
-  walk-on-with-no-folder path reuses this procedure; it does not invent a new one.
-- **The drafting subagents are sandboxed and cannot be the writers.**
-  `agents/steps/drafting.md:61–69`: scene-drafters may read only the inputs handed to
-  them and write only their own `sceneNN.md` / `sceneNN-notes.md`; they are explicitly
-  barred from reading or writing canon and character files. So capture cannot be folded
-  into the scene-drafter role — it is a **new, non-sandboxed subagent role** the
-  coordinator dispatches. Precedent for a coordinator dispatching a specialized
-  subagent exists in both hosts: the metaphor subagents under `agents/metaphor/` and
-  the scene-drafters under `opencode/agents/`.
-- **Capture must run before the M2 fragment deletion.** Per Sprint 7,
-  `agents/steps/drafting.md` step 8 assembles `notes.md` and step 9 deletes each
-  `sceneNN-notes.md`. The recommendations capture consumes live in those notes files,
-  so the coordinator must collect them (during step 8) and dispatch capture before the
-  step-9 deletion. Capture is gated the same way deletion is: it runs only on a
-  completed assembly, never on a failure/abandon path.
-- **`edit_policy` already exists.** `agents/update-rules.md:41` (Rule 7) defines the
-  operational-file header field `edit_policy: locked | propose_only | careful_edit |
-  editable` (also in `templates/profile.md:5`). Capture's write discipline respects it:
-  no silent write into a `locked` or `propose_only` target.
-- **`canon/` is world-level truth.** `agents/canon.md:3` and the priority order
-  (`canon/` is rank 1). World-level inventions go into a **new agent-generated subfolder
-  under `canon/`**, kept visibly distinct from human-authored canon. The subfolder name
-  is not yet chosen (see Open decision below).
-- **`agents/project-layouts.md`** shows `canon/` in its folder trees; if a new
-  agent-generated subfolder is named, decide whether the trees need it (low priority —
-  the trees are illustrative, not exhaustive).
-
-## Open decisions (resolve at task start)
-
-1. **Name of the agent-generated `canon/` subfolder.** Candidates: `canon/generated/`,
-   `canon/invented/`, `canon/agent/`. Pick one and use it consistently across the
-   capture agent doc, `canon.md`, and any tree. Flagged to the human at planning time;
-   default to `canon/generated/` if no preference.
-2. **Draft-version provenance (M4 dependency).** M3.7's annotation wants a
-   "which draft did this come from" stamp, which is **M4.3** and M4 is not yet built.
-   Default for this Sprint: capture annotates source **scene + beat + attempt** now (all
-   available today), and the draft-version stamp is folded in when M4 lands. Do not
-   block this Sprint on M4; do leave the annotation shape extensible.
+- **The canonical step order is fixed in `templates/pipeline-state.md`.** The current sequence is `drafting`, `compliance_report`, `compliance_fix`, `prose_pass`, `metaphor_identify`, `metaphor_fix`, `metaphor_apply`, `line_pass`, `anti_ai_report`, `anti_ai_fix` (`templates/pipeline-state.md:18-30`). M4 changes the prose artifact names those steps read/write; it does **not** reorder the step list.
+- **`<latest-attempt>` already means highest-numbered attempt directory.** `agents/project-layouts.md:14` defines it as the highest-numbered `attemptNN` directory under the chapter's `drafts/`; drafting currently creates a new attempt at `agents/steps/drafting.md:35`. M4 adds `<latest-draft>` / `<next-draft>` inside that existing attempt, not a new attempt model.
+- **Drafting currently creates `draft.md` and treats it as prose only.** Frontmatter outputs name `<chapter-folder>/drafts/<latest-attempt>/draft.md` (`agents/steps/drafting.md:9-11`), assembly writes that file (`agents/steps/drafting.md:39`, `:128`), and the output description says the combined draft contains story text only (`agents/steps/drafting.md:131`, `:179-182`). This is the main constraint against putting provenance YAML inside every draft file.
+- **The prose chain is currently step-named and brittle.** `compliance_report` reads `draft.md` (`agents/steps/compliance-report.md:7-10`, `:23-24`); `compliance_fix` reads `draft.md` and writes `draft-compliance.md` (`agents/steps/compliance-fix.md:6-12`, `:31`, `:76-79`); `prose_pass` reads `draft-compliance.md` and writes `prose-pass.md` (`agents/steps/prose-pass.md:6-12`, `:40`, `:46-49`); metaphor identify/fix/apply are wired to `draft-compliance.md` and `draft-metaphor.md` (`agents/steps/metaphor-identify.md:6-10`, `agents/steps/metaphor-fix.md:6-12`, `agents/steps/metaphor-apply.md:6-10`, `:23-25`, `:97-99`); `line_pass` reads `draft-metaphor.md` and writes `draft-line.md` (`agents/steps/line-pass.md:6-12`, `:24-28`, `:178-180`); and anti-AI reads `draft-line.md` / writes `draft-anti-ai.md` (`agents/steps/anti-ai-report.md:6-10`, `agents/steps/anti-ai-fix.md:6-12`, `:24-29`, `:110-113`). This is exactly the coupling M4 removes.
+- **Report-only steps already have durable side artifacts.** Compliance writes `reviewer-actions.md`, prose pass writes `prose-pass.md`, metaphor identify/fix write `metaphors.md`, and anti-AI report/fix write `anti-ai.md` (`agents/steps/compliance-report.md:103-105`, `agents/steps/prose-pass.md:46-49`, `agents/steps/metaphor-identify.md:99-101`, `agents/steps/metaphor-fix.md:62-64`, `agents/steps/anti-ai-report.md:143-145`, `agents/steps/anti-ai-fix.md:110-113`). These remain step-named audit/review files; only prose-bearing drafts become versioned.
+- **`prose_pass` is an intentional report-only gap until M5.** It currently says the human applies its recommendations manually before `metaphor_identify` (`agents/steps/prose-pass.md:34`, `:60-64`). M4 should not invent the `prose_fix` apply step; M5 owns that. For M4, `prose_pass` reads `<latest-draft>` and writes `prose-pass.md`, and `metaphor_identify` still reads `<latest-draft>` after any human/manual edits. M5 will make that transition explicit with a new prose-advancing step.
+- **The orchestrator contract is file-state based.** Step frontmatter declares inputs/outputs (`agents/orchestrator.md:15-36`), steps read/write only declared files (`agents/orchestrator.md:38-44`), and marker advancement is the step body's final action (`agents/orchestrator.md:68`). M4 therefore belongs in step contracts and docs, not in hidden runtime state.
+- **The chapter docs and layouts still teach `draft.md` as the durable draft.** `agents/chapters.md:54-61` and `agents/project-layouts.md:44-49`, `:88-100`, `:141-156` show `draft.md` under attempts. These must be swept so consuming projects learn the versioned convention.
 
 ## Definition of done
 
 The Sprint is complete when:
 
-1. ROADMAP.md tasks M3.1–M3.8 are checked.
-2. A single bounded-invention rule exists (a revision of `update-rules.md` Rule 1,
-   cross-referenced from `canon.md`): invent only when canon and plan are silent, the
-   invention cannot contradict existing canon, it fits genre/register/period, and it is
-   **not** load-bearing for reveal timing or character knowledge; otherwise record an
-   open question.
-3. The scattered flat prohibitions in the step bodies named above reference that single
-   rule instead of each restating an absolute; the **hard** prohibition is preserved
-   verbatim for reveal- and knowledge-load-bearing facts.
-4. The `orchestrator.md:42` TODO is gone, replaced by wording consistent with the rule.
-5. `agents/steps/drafting.md` documents that scene-drafters emit invention
-   *recommendations* in `sceneNN-notes.md` under a defined schema (invented fact;
-   target `character_id`(s) or world-scope; fact-type `event` / `identity` / `world`;
-   source scene + beat), and the subagent prompt contract instructs them to do so —
-   while they still write nothing outside their notes/prose.
-6. `agents/steps/drafting.md` documents the coordinator collecting those
-   recommendations during notes assembly and dispatching the capture agent before the
-   fragment-deletion step, gated on a completed assembly.
-7. A capture agent definition exists for both hosts (a doc under `agents/` plus an
-   `opencode/agents/` counterpart) with the routing and write discipline below.
-8. Routing is specified: character `event` → `characters/<id>/timeline.md`; invented
-   stable identity color → `characters/<id>/profile.md`; **never** `knowledge/`;
-   non-character `world` facts → the chosen agent-generated `canon/` subfolder; a
-   walk-on with no folder → create a `status: stub` folder per `characters.md:74–91`,
-   then write.
-9. Write discipline is specified: each write is annotated (source scene + beat +
-   attempt, extensible to the M4 draft-version stamp, plus an `invented, unreviewed`
-   marker); respects the target file's `edit_policy` (no silent write to a `locked` /
-   `propose_only` file — record a proposal/blocker in `notes.md` instead); and is
-   non-blocking (a capture failure never blocks draft completion — it is logged in
-   `notes.md`). Captured writes ride drafting's existing `review_required: true` gate.
-10. Both hosts agree: the Claude `drafting.md` and the OpenCode `chapter-coordinator.md`
-    describe the same recommendation/collection/dispatch contract.
+1. ROADMAP.md tasks M4.1-M4.5 are checked.
+2. `<latest-draft>` and `<next-draft>` are defined in one source-of-truth support doc: `<latest-draft>` is the highest-numbered `draft-vNN.md` in the current `<latest-attempt>`; `<next-draft>` is one greater than that; drafting creates `draft-v01.md` in its newly created attempt.
+3. Prose-advancing steps write `<next-draft>`: `drafting`, `compliance_fix`, `metaphor_apply`, `line_pass`, and `anti_ai_fix`. M5 will add `prose_fix`; do not add it in this Sprint.
+4. Report/setup steps read `<latest-draft>` without incrementing it: `compliance_report`, `prose_pass`, `metaphor_identify`, `metaphor_fix`, and `anti_ai_report`.
+5. Side artifacts stay step-named: `notes.md`, `reviewer-actions.md`, `prose-pass.md`, `metaphors.md`, and `anti-ai.md` are not renamed to versioned draft filenames.
+6. An attempt-level provenance manifest is specified and all prose-advancing/report-only steps know when to append to it. It records each draft version, producer step, input draft(s), side artifacts consulted/written, and any judgment-log pointer. It is the source M3 capture annotations can reference once they need a draft-version stamp.
+7. The report->fix adjacency invariant is documented: a paired report/fix must consume the same `<latest-draft>` unless the fix itself is the step that increments it. No unrelated prose-advancing step may sit between a report and its paired fix/apply.
+8. Docs and examples that hard-code `draft.md`, `draft-compliance.md`, `draft-metaphor.md`, `draft-line.md`, or `draft-anti-ai.md` as the current prose are swept or explicitly marked legacy/background.
+9. The canonical state list remains the same step order unless a named task says otherwise; M4 is a naming/provenance change, not a pipeline-order change.
 
 ## Conventions adopted by this Sprint
 
 Locked at the start so individual tasks don't rediscover them.
 
-- **One rule, referenced not restated.** The bounded rule is stated once (Rule 1 in
-  `update-rules.md`). Every other file points at it. Only the reveal-/knowledge-
-  load-bearing hard prohibition is repeated where it must be unmissable.
-- **`knowledge/` is never written by capture.** It stays the sole province of the
-  deferred scene-knowledge-update step; this is what protects reveal timing. This is a
-  hard line, not a default.
-- **Capture is a subagent role, not a pipeline step.** It does not appear in
-  `templates/pipeline-state.md`; it is dispatched by the drafting coordinator inside the
-  existing `drafting` step, like the metaphor subagents inside `metaphor_fix`.
-- **Writes are annotated, edit-policy-respecting, and non-blocking.** Capture never
-  silently overwrites human-authored canon and never halts a draft on failure.
-- **Host parity.** The Claude step bodies and the OpenCode coordinator describe the same
-  contract; neither host gains behavior the other lacks.
+- **Attempt-level manifest, not per-draft frontmatter.** `drafting.md` says assembled prose is story text only (`agents/steps/drafting.md:131`), and downstream apply steps preserve prose plus block-comment logs. A manifest keeps provenance machine-readable without contaminating manuscript files.
+- **Only prose-bearing files are versioned.** Review reports, notes, apply logs embedded in side artifacts, and working files keep their semantic names. This preserves existing human review habits and avoids turning every audit artifact into a draft version.
+- **`<latest-draft>` is resolved at step start.** A report step reads the highest existing `draft-vNN.md` and does not create a new one. A fix/apply step reads the report's target draft and writes the next version.
+- **Paired report/fix inputs are stable.** A fix step consumes the same draft the report reviewed; if `<latest-draft>` has advanced since the report was produced, that is a blocker or stale-report condition, not permission to apply old annotations to new prose.
+- **M4 does not add `prose_fix`.** The prose-pass orphan is recognized in ROADMAP M5. M4 makes the naming convention ready for that step, but does not implement the step or solve its apply strategy.
 
 ---
 
 ## Tasks
 
-### Task 1 — Write the bounded-invention rule; resolve the orchestrator TODO [x]
+### Task 1 — Define draft-version placeholders and manifest contract [ ]
 
-**Goal.** Replace the blanket prohibition with one bounded rule and remove the
-self-contradicting TODO. Closes **M3.1** and **M3.3**.
+**Goal.** Establish the naming/provenance vocabulary every later task uses. Closes **M4.1** and the core of **M4.3**.
 
 **Requirements.**
 
-- Revise `agents/update-rules.md` Rule 1 so it states the bounded permission: an agent
-  may invent a detail only when (a) canon and the plan are silent on it, (b) it cannot
-  contradict any existing canon, (c) it fits the work's genre / register / period, and
-  (d) it is **not** load-bearing for reveal timing or character knowledge. Otherwise the
-  agent records an open question rather than inventing. Keep the "silently" framing — the
-  point is that permitted invention is captured (Tasks 3–5), not hidden.
-- Cross-reference the rule from `agents/canon.md` (near line 36) so the world-truth file
-  and the rules file agree; do not restate the full rule in both.
-- Edit `agents/orchestrator.md:42`: remove the parenthetical TODO and reword the bullet
-  so the blocked-path guidance is consistent with the new rule (invent the permitted
-  case; record an open question for the load-bearing/conflicting case).
+- Add a single source-of-truth definition for `<latest-draft>` and `<next-draft>` in the path-resolution docs, near the existing `<latest-attempt>` definition in `agents/project-layouts.md`.
+- Define `<latest-draft>` as the highest-numbered `draft-vNN.md` in the current `<latest-attempt>` directory. Define `<next-draft>` as the next zero-padded number after `<latest-draft>`; if none exists in a newly created attempt, drafting writes `draft-v01.md`.
+- Define an attempt-level manifest file, recommended name: `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md`. The manifest records, at minimum, per draft version:
+  - draft file (`draft-v01.md`, `draft-v02.md`, etc.)
+  - produced_by step
+  - read_from draft version(s)
+  - side artifacts consulted or updated (`reviewer-actions.md`, `metaphors.md`, `anti-ai.md`, etc.)
+  - short note / log pointer when the producing step already has an apply log
+- State that the manifest, not frontmatter inside draft files, is the provenance source because the prose files remain manuscript text.
+- Cross-reference the manifest from the M3 capture/provenance wording if needed so capture annotations can later cite a draft version without embedding provenance in canon writes prematurely.
 
-**Done when.** Rule 1 states the four-part bounded permission and its exceptions;
-`canon.md` references it; the `orchestrator.md` TODO is gone and its bullet matches.
+**Done when.** `<latest-draft>`, `<next-draft>`, and `draft-manifest.md` are defined once; later tasks can update step files by reference rather than re-explaining the convention.
 
 ---
 
-### Task 2 — Point the scattered prohibitions at the single rule [x]
+### Task 2 — Convert drafting to produce `draft-v01.md` and initialize provenance [ ]
 
-**Goal.** Make every step body defer to Rule 1 instead of carrying its own absolute,
-while preserving the hard prohibition for reveal/knowledge facts. Closes **M3.2**.
+**Goal.** Make the first prose output versioned from birth. Closes the drafting part of **M4.1-M4.3**.
 
 **Requirements.**
 
-- In each of `agents/steps/drafting.md` (lines 65 and 153),
-  `agents/steps/scene-generation.md` (27 and 109),
-  `agents/steps/character-extraction.md` (43), and `agents/characters.md` (93), change
-  the flat "do not invent canon" statement to reference the bounded rule — permitted
-  invention is allowed under Rule 1; load-bearing/conflicting facts are still recorded
-  as open questions.
-- **Preserve the hard line.** Where a file protects reveal timing or character
-  knowledge (e.g. `drafting.md` Safety rules, the subagent "preserve what a character
-  knows/suspects/believes" lines), keep the absolute prohibition unmistakable. The
-  bounded permission never reaches reveal-/knowledge-load-bearing facts.
-- Check `agents/steps/storyboarding.md` for an invention prohibition; reference the rule
-  if present, no edit if absent.
+- In `agents/steps/drafting.md`, change frontmatter outputs from `draft.md` to `draft-v01.md` plus `notes.md` and `draft-manifest.md`.
+- Update coordinator responsibility step 7 and Assembly rules so assembly writes `<chapter-folder>/drafts/<latest-attempt>/draft-v01.md`, not `draft.md`.
+- Preserve the existing invariant that the assembled prose file contains story text only. Do not add YAML frontmatter or planning notes to `draft-v01.md`.
+- Initialize `draft-manifest.md` during the completed assembly path with an entry for `draft-v01.md`: `produced_by: drafting`, `read_from: []`, storyboard inputs, and a pointer to `notes.md` for run details.
+- Update fragment deletion language so `sceneNN.md` content is folded into `draft-v01.md`, while `sceneNN-notes.md` content is folded into `notes.md`.
+- Update output descriptions and open-question examples that still say `draft.md`.
 
-**Done when.** The named prohibitions reference Rule 1; the reveal/knowledge hard
-prohibition is intact and clearly separated from the permitted case.
+**Done when.** Drafting creates an attempt whose durable prose is `draft-v01.md`, whose run record is `notes.md`, and whose provenance index is `draft-manifest.md`; no prose-only invariant is broken.
 
 ---
 
-### Task 3 — Recommendation hand-off schema [x]
+### Task 3 — Convert report-only/read-only steps to `<latest-draft>` [ ]
 
-**Goal.** Let sandboxed scene-drafters surface continuity-relevant inventions without
-writing canon. Closes **M3.4**.
+**Goal.** Make every non-prose-writing step follow the latest version without minting one. Closes the read-only half of **M4.2**.
 
 **Requirements.**
 
-- In `agents/steps/drafting.md`, define the schema a subagent records in its
-  `sceneNN-notes.md` for each invention it made under Rule 1: the invented fact; the
-  target (`character_id`(s) or world-scope); the fact-type (`event` / `identity` /
-  `world`); and the source scene + beat.
-- Add a line to the subagent prompt contract (the fenced block around lines 77–99)
-  instructing subagents to record these recommendations in their notes file — and
-  reaffirm they still write nothing outside their prose/notes files and never touch
-  canon or character files themselves.
+- Update these step frontmatters and body text to read `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` instead of a step-named prose file:
+  - `agents/steps/compliance-report.md`
+  - `agents/steps/prose-pass.md`
+  - `agents/steps/metaphor-identify.md`
+  - `agents/steps/metaphor-fix.md`
+  - `agents/steps/anti-ai-report.md`
+- Preserve each step's side-artifact output name: `reviewer-actions.md`, `prose-pass.md`, `metaphors.md`, and `anti-ai.md`.
+- For report files that gate later fixes (`reviewer-actions.md`, `metaphors.md`, `anti-ai.md`), require the report to record the draft version it reviewed, either in a header or a manifest-linked metadata line. The paired fix/apply task must use that recorded version, not blindly apply to a newer draft.
+- In `prose_pass`, keep the report-only behavior and explicitly say M5's future `prose_fix` will be the prose-advancing consumer; until then, any manual prose application must result in a new draft version recorded in the manifest or the pipeline should not advance as if prose was applied.
 
-**Done when.** `drafting.md` specifies the recommendation schema and the subagent
-contract tells subagents to emit it, with the sandbox preserved.
+**Done when.** Report-only steps read the current version and do not create one; their reports carry enough draft-version identity for downstream apply/fix steps to avoid stale annotations.
 
 ---
 
-### Task 4 — Coordinator collection + gated dispatch [x]
+### Task 4 — Convert prose-advancing fix/apply steps to `<next-draft>` [ ]
 
-**Goal.** Have the coordinator gather recommendations and dispatch capture at the right
-point in the run. Closes **M3.5**.
+**Goal.** Make every current prose-writing step produce a numbered draft version. Closes the write half of **M4.2** and most of **M4.3**.
 
 **Requirements.**
 
-- In `agents/steps/drafting.md` "Coordinator responsibilities," add a step (after notes
-  assembly, step 8; before fragment deletion, step 9) in which the coordinator collects
-  the per-scene recommendations and dispatches the capture agent with them.
-- Gate it exactly like deletion: capture runs only on a completed assembly. On any
-  failure/abandon path the coordinator does not dispatch capture and records the
-  blocker in `notes.md`.
-- State explicitly that capture is **non-blocking**: a capture failure is logged in
-  `notes.md` and does not prevent `draft.md` from being a completed output.
+- Update these step frontmatters, Inputs, Behavior, Outputs, and open-question handling:
+  - `agents/steps/compliance-fix.md`: read the draft version recorded by `reviewer-actions.md`; write `<next-draft>`.
+  - `agents/steps/metaphor-apply.md`: read the draft version recorded by `metaphors.md`; write `<next-draft>`.
+  - `agents/steps/line-pass.md`: read `<latest-draft>` at step start; write `<next-draft>` chunk-by-chunk; when it needs preceding context from already-finalized output, read from the in-progress `<next-draft>` rather than a hard-coded `draft-line.md`.
+  - `agents/steps/anti-ai-fix.md`: read the draft version recorded by `anti-ai.md`; write `<next-draft>`.
+- Remove step-named prose outputs from these steps (`draft-compliance.md`, `draft-metaphor.md`, `draft-line.md`, `draft-anti-ai.md`) except where mentioned as legacy examples.
+- Append/update `draft-manifest.md` in each prose-advancing step with `produced_by`, `read_from`, side artifacts used, and log pointer. Existing block-comment apply logs may remain inside the produced prose draft where the step already requires them, but the manifest must identify which draft version they live in.
+- Preserve each step's existing behavioral scope: compliance and anti-AI fixes remain surgical; metaphor apply only applies selected variants; line pass remains chunked and figuratively inert.
 
-**Done when.** `drafting.md` collects recommendations and dispatches capture between
-notes assembly and fragment deletion, gated on completion and non-blocking on failure.
+**Done when.** Every prose-changing step writes the next `draft-vNN.md`, records the provenance entry, and no longer depends on semantic draft filenames to identify current prose.
 
 ---
 
-### Task 5 — Capture agent definition: routing + write discipline [x]
+### Task 5 — Document report->fix adjacency and stale-report handling [ ]
 
-**Goal.** Write the agent the coordinator dispatches. Closes **M3.6** and **M3.7**.
+**Goal.** Prevent annotations from being applied to the wrong draft version once drafts are numbered. Closes **M4.4**.
 
 **Requirements.**
 
-- Create the capture agent doc for the Claude host (under `agents/`, e.g.
-  `agents/capture/` mirroring `agents/metaphor/`) and an `opencode/agents/` counterpart.
-- **Routing.** Character `event` → `characters/<id>/timeline.md`; invented stable
-  identity color → `characters/<id>/profile.md`; **never** `knowledge/` (cite
-  `characters.md:61`); non-character `world` facts → the chosen agent-generated `canon/`
-  subfolder (Open decision 1); a walk-on with no folder → create a `status: stub` folder
-  per `characters.md:74–91`, then write.
-- **Write discipline.** Annotate each write with source scene + beat + attempt (Open
-  decision 2 for the M4 draft-version stamp) and an `invented, unreviewed` marker;
-  respect the target's `edit_policy` (Rule 7) — no silent write to `locked` /
-  `propose_only`, record a proposal/blocker in `notes.md` instead; never write
-  `knowledge/`; only ever record inventions Rule 1 permits (reveal/knowledge facts are
-  open questions, never captured).
+- Add the report->fix adjacency invariant to `agents/orchestrator.md` or the path/provenance section in `agents/project-layouts.md`, then reference it from the affected step bodies rather than restating it in full everywhere.
+- State the invariant precisely: no prose-advancing step may run between a report and its paired fix/apply unless that report is regenerated against the new `<latest-draft>`.
+- Apply the invariant to the three current pairs:
+  - `compliance_report` -> `compliance_fix`
+  - `metaphor_identify` / `metaphor_fix` -> `metaphor_apply`
+  - `anti_ai_report` -> `anti_ai_fix`
+- Define stale-report handling: if a fix/apply step sees that its report references a draft version that is not the expected input version for that pair, it appends a blocker to project-root `open-questions.md` and exits without advancing the marker. Do not silently apply old annotations to a newer draft.
+- Mention `prose_pass` separately: until M5 adds `prose_fix`, it is advisory and does not have a paired fixer in this Sprint.
 
-**Done when.** Both host docs specify the routing table and the annotated,
-edit-policy-respecting, knowledge-excluded write discipline.
+**Done when.** The invariant is documented once, referenced where needed, and each affected fix/apply step knows to block on stale annotations.
 
 ---
 
-### Task 6 — Host parity, verification sweep, closeout [x]
+### Task 6 — Sweep docs, examples, catalog text, and verification invariants [ ]
 
-**Goal.** Confirm the two hosts agree, the invariants hold, and the catalogs are
-updated. Depends on Tasks 1–5.
+**Goal.** Bring the visible project docs into the versioned-draft model and close the Sprint cleanly. Closes **M4.5**.
 
 **Requirements.**
 
-- **Host parity.** Mirror the recommendation/collection/dispatch contract into
-  `opencode/agents/chapter-coordinator.md` so it matches `drafting.md`; confirm the
-  capture agent doc exists for both hosts and they describe the same routing/discipline.
-- **Rule-reference sweep.** `git grep -n -iE "invent" -- '*.md'`; confirm no step body
-  still carries a flat "do not invent canon" absolute that should defer to Rule 1, and
-  that the reveal/knowledge hard prohibition is intact everywhere it belongs.
-- **Knowledge-boundary invariant.** Confirm nothing in the capture path writes
-  `knowledge/`; the only writer remains the deferred scene-knowledge-update step.
-- **TODO check.** `git grep -n "TODO" -- agents/orchestrator.md`; confirm the invention
-  TODO at line 42 is gone (the unrelated line-106 TODO is out of scope, leave it).
-- **ROADMAP.md.** Check M3.1–M3.8. Add a one-line Note if the canon-subfolder name was
-  chosen, recording it.
-- **Sprint file.** Mark each completed task in this file `[x]`.
+- Update support docs and examples that teach hard-coded prose names, including at least:
+  - `agents/chapters.md`
+  - `agents/project-layouts.md`
+  - `agents/workflows.md`
+  - `agents/orchestrator.md` examples/frontmatter snippets if they show `draft.md`
+  - `AGENTS.md` step catalog entries that name step-specific prose outputs
+  - `templates/step-workflow.md` if its placeholder path is misleading
+- Search for hard-coded prose filenames and decide each hit:
+  - replace with `<latest-draft>` / `<next-draft>` / `draft-vNN.md`, or
+  - mark as a deliberate legacy/background reference if it describes old behavior.
+- Required verification greps:
+  - `git grep -n "draft.md\|draft-compliance.md\|draft-metaphor.md\|draft-line.md\|draft-anti-ai.md" -- '*.md'`
+  - `git grep -n "<latest-draft>\|<next-draft>\|draft-manifest.md" -- '*.md'`
+  - `git grep -n "draft-v01.md\|draft-vNN.md" -- '*.md'`
+- Confirm side-artifact names remain stable and are not accidentally versioned: `notes.md`, `reviewer-actions.md`, `prose-pass.md`, `metaphors.md`, and `anti-ai.md`.
+- Update ROADMAP.md M4.1-M4.5 to `[x]` only after Tasks 1-6 pass verification. Add a short M4 note recording the manifest choice and the fact that `prose_fix` remains deferred to M5.
+- Mark this SPRINT.md's tasks `[x]` only after the implementation work is complete.
 
-**Done when.** Both hosts agree, the invariants and TODO check hold, ROADMAP M3.1–M3.8
-are checked, and all Sprint tasks are checked.
+**Done when.** The repo no longer teaches step-named prose drafts as the current model; verification greps have been reviewed; ROADMAP and SPRINT checkboxes reflect the completed implementation.
 
 ---
 
 ## Out of scope for this Sprint
 
-- **Versioned draft naming and the draft-version provenance stamp** — that is Milestone
-  4 (M4.3). This Sprint annotates captures with source scene + beat + attempt and leaves
-  the annotation extensible; it does not build the draft-version counter.
-- **The scene knowledge update step** — deferred. This Sprint deliberately does *not*
-  write `knowledge/`; that step remains its only writer.
-- **Continuity review / cross-chapter reveals ledger** — deferred; not a prerequisite
-  for bounded capture.
-- **Any executable check.** The step bodies and agent docs are LLM-run; acceptance is by
-  inspection plus grep invariants, not a harness.
-- **New pipeline steps or `pipeline-state.md` edits.** Capture is a dispatched subagent
-  role inside the existing `drafting` step, not a new step.
+- **Adding `prose_fix`.** M5 owns the prose-pass annotation grammar, apply strategy, and new pipeline step.
+- **Reordering the canonical step list.** M4 changes artifact naming and provenance; it does not move pipeline stages.
+- **Directional redo/backtracking.** M7 owns archive-on-redo, downstream staleness beyond paired report/fix adjacency, and back/forward dispatcher semantics.
+- **Executable enforcement of draft manifests.** This Sprint documents the contract. Scripts/tests may be updated only if existing verification or templates are already hard-coded to old names.
+- **Changing story text format.** Draft files remain prose-bearing manuscript files; provenance lives beside them, not inside them.
