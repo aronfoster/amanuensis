@@ -29,7 +29,7 @@ Scan the input prose for the nine pattern categories below and the flagged-words
 
 The output file is one report per chapter; append across scenes with a scene header.
 
-When first creating `anti-ai.md`, begin the file with a `Reviewed-draft:` header line naming the resolved `<latest-draft>` this run reviewed. The downstream `anti_ai_fix` step reads this stamp to detect stale annotations against a newer draft. Do not overwrite the stamp on subsequent runs of this step against the same file.
+The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed; the downstream `anti_ai_fix` step reads this stamp to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix adjacency invariant for the canonical statement.
 
 ```markdown
 Reviewed-draft: draft-vNN.md
@@ -325,7 +325,7 @@ Bulk headers are only valid on categories declared `BULK permitted` in the BULK 
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — one report per chapter. When first created, begins with a `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this run reviewed; subsequent runs do not overwrite that stamp. Has a `## Anti-AI Report — Scene <scene-id>` header per scene, a BULK eligibility block at the head of each scene section, the per-category flag sections (only those with hits), a `### Flagged Words` section, and a `### Summary — Scene <scene-id>` block at the end of each scene tallying counts per category and a total. The file is the human review artifact that the human annotates with the grammar above before `anti_ai_fix` runs; `anti_ai_fix` reads the reviewed-draft stamp to detect stale annotations.
+- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — one report per chapter. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers. Subsequent runs against the same draft append below and preserve the stamp; a run against a newer draft (stale-report recovery path) overwrites the file with a fresh stamp. Has a `## Anti-AI Report — Scene <scene-id>` header per scene, a BULK eligibility block at the head of each scene section, the per-category flag sections (only those with hits), a `### Flagged Words` section, and a `### Summary — Scene <scene-id>` block at the end of each scene tallying counts per category and a total. The file is the human review artifact that the human annotates with the grammar above before `anti_ai_fix` runs; `anti_ai_fix` reads the reviewed-draft stamp to detect stale annotations.
 
 ## Open questions handling
 

@@ -35,7 +35,7 @@ Collect every simile and live metaphor in the prose. A **live metaphor** is a co
 
 ### Format
 
-When first creating `metaphors.md`, begin the file with a `Reviewed-draft:` header line naming the resolved `<latest-draft>` this run reviewed. This stamp is the draft-version identity the downstream `metaphor_fix` and `metaphor_apply` steps read to detect stale annotations against a newer draft. Do not overwrite an existing `Reviewed-draft` line on subsequent runs of this step against the same file — `metaphor_fix` preserves it.
+The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed; this stamp is the draft-version identity the downstream `metaphor_fix` and `metaphor_apply` steps read to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix adjacency invariant for the canonical statement. `metaphor_fix` preserves whatever stamp it inherits and does not refresh it.
 
 ```markdown
 Reviewed-draft: draft-vNN.md
@@ -102,7 +102,7 @@ No pattern-level commentary. The summary is a count.
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — one file per chapter; append across scenes with a scene header. When first created, begins with a `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this run reviewed; subsequent runs do not overwrite that stamp. Each scene section contains one entry per figure (in the format above) and a per-scene summary count. The file is a working artifact the human will annotate before `metaphor_fix` runs; `metaphor_fix` and `metaphor_apply` read the reviewed-draft stamp to detect stale annotations.
+- `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — one file per chapter; append across scenes with a scene header. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers. Subsequent runs against the same draft append below and preserve the stamp; a run against a newer draft (stale-report recovery path) overwrites the file with a fresh stamp. Each scene section contains one entry per figure (in the format above) and a per-scene summary count. The file is a working artifact the human will annotate before `metaphor_fix` runs; `metaphor_fix` and `metaphor_apply` read the reviewed-draft stamp to detect stale annotations.
 
 ## Open questions handling
 
