@@ -28,7 +28,7 @@ Default priority order:
 4. book `outline.md`
 5. chapter `summary.md`
 6. chapter `storyboard.md`
-7. chapter `draft.md`
+7. chapter `draft-vNN.md` (the versioned chapter draft; see `agents/chapters.md`)
 8. chapter `aftermath.md`
 
 ## Canon handling rule

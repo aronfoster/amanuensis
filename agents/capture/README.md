@@ -31,4 +31,4 @@ The scene-drafters are sandboxed (`agents/steps/drafting.md`): they may read onl
 - **Never `knowledge/`.** Knowledge files are written only by the deferred scene-knowledge-update step (`agents/characters.md:61`); this protects reveal timing.
 - **Only Rule 1 inventions.** Reveal-/knowledge-load-bearing facts are recorded as open questions, never captured.
 - **Visibly distinct generated canon.** World inventions land in `canon/generated/`, separate from human-authored `canon/` files, with distinguishing frontmatter.
-- **Annotated, edit-policy-respecting, non-blocking.** Every write is traceable and marked `invented, unreviewed`; locked/propose-only targets become `notes.md` proposals; a capture failure never blocks `draft.md`. Captured writes ride drafting's `review_required: true` gate.
+- **Annotated, edit-policy-respecting, non-blocking.** Every write is traceable and marked `invented, unreviewed`; locked/propose-only targets become `notes.md` proposals; a capture failure never blocks `<latest-draft>`. Captured writes ride drafting's `review_required: true` gate.

@@ -85,7 +85,7 @@ A newly created `canon/generated/` file or a freshly created stub folder is the 
 
 **Only capture Rule 1 inventions.** Reveal-/knowledge-load-bearing facts are open questions, never captured (see *What may be captured*).
 
-**Non-blocking.** A capture failure — a missing target, an `edit_policy` block, a malformed recommendation, any error — **never blocks draft completion.** Log it in the attempt's `notes.md` and continue with the remaining recommendations. `draft.md` is a completed output regardless of capture outcome. Captured writes ride drafting's existing `review_required: true` gate: the human reviews them (along with the `invented, unreviewed` markers) before any downstream step relies on them.
+**Non-blocking.** A capture failure — a missing target, an `edit_policy` block, a malformed recommendation, any error — **never blocks draft completion.** Log it in the attempt's `notes.md` and continue with the remaining recommendations. `draft-v01.md` is a completed output regardless of capture outcome. Captured writes ride drafting's existing `review_required: true` gate: the human reviews them (along with the `invented, unreviewed` markers) before any downstream step relies on them.
 
 ---
 
@@ -107,6 +107,6 @@ A newly created `canon/generated/` file or a freshly created stub folder is the 
 
 **Dropping the annotation.** Every write is traceable to scene + beat + attempt and marked `invented, unreviewed`. An un-annotated capture is a silent invention and is not permitted.
 
-**Blocking the draft on a capture problem.** Log it in `notes.md` and move on; `draft.md` still completes.
+**Blocking the draft on a capture problem.** Log it in `notes.md` and move on; `draft-v01.md` still completes.
 
 **Inventing a new stub procedure.** Walk-on folders are created per `agents/characters.md:74–91`, not by an ad-hoc scheme.

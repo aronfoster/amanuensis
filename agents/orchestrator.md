@@ -19,7 +19,7 @@ Every step workflow file has frontmatter that declares the step's contract:
 step_id: metaphor_identify
 review_required: true
 inputs:
-  - <chapter-folder>/drafts/<latest-attempt>/draft.md
+  - <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/metaphors.md
 ---

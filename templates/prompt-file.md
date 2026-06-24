@@ -9,7 +9,7 @@ Replace bracketed placeholders before use.
 ```text
 You are drafting [Scene Name], Chapter [YY] of Book [N]. Follow the project `AGENTS.md`, the drafting workflow, and the selected voice file or profile.
 
-Write to `[chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]`.
+Write to `[chapter-dir]/drafts/[attempt]/draft-vNN.md`.
 
 Do not read any other files. Do not consult the scene list, canon files, or earlier draft attempts. If something feels missing from the storyboards, note it in `[chapter-dir]/drafts/[attempt]/notes.md` after drafting rather than reaching for other files.
 
@@ -42,7 +42,7 @@ Break this into steps: plan the file contents, write the file, review it against
 ```text
 See `agents/steps/metaphor-identify.md` for directions, or the equivalent path in the project's Amanuensis submodule.
 
-Draft: [chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]
+Draft: [chapter-dir]/drafts/[attempt]/draft-vNN.md
 Storyboards: [chapter-dir]/storyboards/ (all relevant [NN-YY-ZZZ-storyboard.md] files)
 
 Output to: [chapter-dir]/drafts/[attempt]/[NN-YY-metaphors.md]
@@ -54,7 +54,7 @@ Output to: [chapter-dir]/drafts/[attempt]/[NN-YY-metaphors.md]
 See `agents/metaphor/metaphor-flatten.md` for directions, or the equivalent path in the project's Amanuensis submodule.
 
 Working file: [chapter-dir]/drafts/[attempt]/[NN-YY-metaphors.md]
-Draft: [chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]
+Draft: [chapter-dir]/drafts/[attempt]/draft-vNN.md
 
 Process all FLATTEN-marked entries. Append variants to each entry in the working file.
 ```
@@ -65,7 +65,7 @@ Process all FLATTEN-marked entries. Append variants to each entry in the working
 See `agents/metaphor/metaphor-replace.md` for directions, or the equivalent path in the project's Amanuensis submodule.
 
 Working file: [chapter-dir]/drafts/[attempt]/[NN-YY-metaphors.md]
-Draft: [chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]
+Draft: [chapter-dir]/drafts/[attempt]/draft-vNN.md
 
 Process all REPLACE-marked entries. Append integration versions to each entry in the working file.
 ```
@@ -76,7 +76,7 @@ Process all REPLACE-marked entries. Append integration versions to each entry in
 See `agents/metaphor/metaphor-workshop.md` for directions, or the equivalent path in the project's Amanuensis submodule.
 
 Working file: [chapter-dir]/drafts/[attempt]/[NN-YY-metaphors.md]
-Draft: [chapter-dir]/drafts/[attempt]/[NN-YY-draft.md]
+Draft: [chapter-dir]/drafts/[attempt]/draft-vNN.md
 Storyboards: [chapter-dir]/storyboards/ (all relevant [NN-YY-ZZZ-storyboard.md] files)
 Voice: [selected voice file or profile]
 

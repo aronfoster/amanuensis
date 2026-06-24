@@ -49,14 +49,14 @@ Each file is an independently draftable block. There is no longer a single chapt
 - The schema for an individual storyboard file is defined in `agents/storyboard-schema.md`.
 - The generation step that produces these files from the scene list is defined in `agents/steps/storyboarding.md`.
 
-### `draft.md`
+### Versioned drafts (`draft-vNN.md`)
 Actual prose.
 
-Use this file for story text only. Planning notes should not live here.
+Use these files for story text only. Planning notes should not live here.
 
-The assembled chapter prose for a given attempt lives at `drafts/attemptNN/draft.md` inside the chapter folder. Per-attempt working artifacts (per-scene files, notes, reviewer reports, compliance and prose-pass outputs, metaphor working files, line-pass and anti-AI outputs) all live alongside it under the same `drafts/attemptNN/` directory.
+Each attempt's prose is recorded as a sequence of versioned drafts under `drafts/attemptNN/` inside the chapter folder. Drafting produces `draft-v01.md`; each subsequent prose-advancing step (compliance fix, metaphor apply, line pass, anti-AI fix) reads `<latest-draft>` and writes the next `draft-vNN.md`. Report-only and setup steps (compliance report, metaphor identify, metaphor fix, prose pass, anti-AI report) read `<latest-draft>` without minting a new version. The attempt's `draft-manifest.md` records, per draft version, which step produced it and which side artifacts it consulted; that manifest is the provenance source, not in-file YAML. Side artifacts (`notes.md`, `reviewer-actions.md`, `metaphors.md`, `prose-pass.md`, `anti-ai.md`) keep their step-named, unversioned filenames and live alongside the drafts under the same `drafts/attemptNN/` directory.
 
-Some of these per-attempt files are **durable audit records**, kept for human review and downstream steps: `notes.md` (the run record), plus the later-stage review/report files `reviewer-actions.md`, `metaphors.md`, and `anti-ai.md`, alongside the prose `draft.md`. The per-scene `sceneNN.md` / `sceneNN-notes.md` fragments are **transient**: their entire content is folded into `draft.md` and `notes.md` during the drafting step, and they are deleted after assembly. The general rule: a working file is deletable once its content is captured in a durable combined artifact.
+Some of these per-attempt files are **durable audit records**, kept for human review and downstream steps: `notes.md` (the run record), plus the later-stage review/report files `reviewer-actions.md`, `metaphors.md`, and `anti-ai.md`, alongside the prose `draft-vNN.md` series and the `draft-manifest.md`. The per-scene `sceneNN.md` / `sceneNN-notes.md` fragments are **transient**: their entire content is folded into `draft-v01.md` and `notes.md` during the drafting step, and they are deleted after assembly. The general rule: a working file is deletable once its content is captured in a durable combined artifact.
 
 ### `aftermath.md`
 Post-chapter delta record.
@@ -80,5 +80,5 @@ Use this file when a chapter surfaces unanswered questions that should not be si
 - `summary.md` = chapter intent
 - `scene-list.md` = scene plan
 - `storyboards/<scene-id>-<beat-id>-storyboard.md` = per-beat draftable block
-- `draft.md` (under `drafts/attemptNN/`) = prose
+- `draft-vNN.md` (under `drafts/attemptNN/`) = prose; the attempt's `draft-manifest.md` is the provenance record
 - `aftermath.md` = what changed after the chapter

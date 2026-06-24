@@ -57,9 +57,12 @@ story-project/
     storyboards/
     drafts/
       attempt01/
-        draft.md
+        draft-v01.md
+        draft-manifest.md
       attempt02/
-        draft.md
+        draft-v01.md
+        draft-v02.md
+        draft-manifest.md
     aftermath.md
 ```
 
@@ -101,7 +104,8 @@ book-project/
         storyboards/
         drafts/
           attempt01/
-            draft.md
+            draft-v01.md
+            draft-manifest.md
         aftermath.md
       chapter02/
         summary.md
@@ -109,9 +113,12 @@ book-project/
         storyboards/
         drafts/
           attempt01/
-            draft.md
+            draft-v01.md
+            draft-manifest.md
           attempt02/
-            draft.md
+            draft-v01.md
+            draft-v02.md
+            draft-manifest.md
         aftermath.md
 ```
 
@@ -154,7 +161,8 @@ series-project/
         storyboards/
         drafts/
           attempt01/
-            draft.md
+            draft-v01.md
+            draft-manifest.md
         aftermath.md
     book2/
       overview.md
@@ -165,9 +173,12 @@ series-project/
         storyboards/
         drafts/
           attempt01/
-            draft.md
+            draft-v01.md
+            draft-manifest.md
           attempt02/
-            draft.md
+            draft-v01.md
+            draft-v02.md
+            draft-manifest.md
         aftermath.md
 ```
 
