@@ -105,6 +105,22 @@ How a step knows which chapter is "the current chapter" for book and series proj
 
 TODO: this doesn't feel ideal but I should see it in practice before proposing a new solution
 
+## Report→fix adjacency invariant
+
+No prose-advancing step may run between a report and its paired fix/apply unless that report is regenerated against the new `<latest-draft>`. Each prose-advancing fix/apply step verifies this at step start by comparing the paired side artifact's `Reviewed-draft:` header against the current `<latest-draft>`. On mismatch the fix/apply step appends a stale-report blocker to the project-root `open-questions.md` and exits without advancing the marker.
+
+The pairs governed by this invariant in the current pipeline:
+
+- `compliance_report` → `compliance_fix`, stamped in `reviewer-actions.md`.
+- `metaphor_identify` / `metaphor_fix` → `metaphor_apply`, stamped in `metaphors.md`.
+- `anti_ai_report` → `anti_ai_fix`, stamped in `anti-ai.md`.
+
+The stamp is written by the report-emitting step the first time it creates its side artifact (`compliance_report`, `metaphor_identify`, `anti_ai_report`). `metaphor_fix` preserves the stamp it inherits — it does not rewrite or refresh it. The paired fix/apply step reads the stamp at step start.
+
+`prose_pass` records a `Reviewed-draft:` stamp in `prose-pass.md` for consistency with this invariant, but has no paired prose-advancing consumer in this Sprint; M5 will add `prose_fix` as that consumer and the stamp will become load-bearing then. `line_pass` is a prose-advancing step with no upstream report, so the invariant does not apply to it.
+
+The stale-report exit is a human decision point, not an automatic recovery. The fix/apply step appends a blocker to `open-questions.md` recording the stamped draft, the current `<latest-draft>`, and which intervening step advanced the prose. The human then decides between regenerating the report against the current draft, rolling the draft back to the stamped version, or accepting a stale apply with an explicit override. The fix/apply step does not silently apply old annotations to a newer draft.
+
 ## What the orchestrator does not do
 
 - It does not validate that human review has occurred.

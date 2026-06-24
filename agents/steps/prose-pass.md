@@ -45,7 +45,7 @@ This step produces a report only. The `KEEP / TIGHTEN / FLATTEN / REWRITE` recom
 
 Write a report in markdown to `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md`.
 
-Begin the report with a `Reviewed-draft: draft-vNN.md` header line naming the resolved `<latest-draft>` this pass reviewed. The future M5 `prose_fix` step will consume this stamp to detect stale recommendations against a newer draft; record it here for consistency with the other report-emitting steps even though no automated consumer reads it this Sprint.
+Begin the report with a `Reviewed-draft: draft-vNN.md` header line naming the resolved `<latest-draft>` this pass reviewed. The future M5 `prose_fix` step will consume this stamp to detect stale recommendations against a newer draft; record it here for consistency with the report→fix adjacency invariant in `agents/orchestrator.md`, even though no automated consumer reads it this Sprint.
 
 For each issue:
 - quote the line or short passage
