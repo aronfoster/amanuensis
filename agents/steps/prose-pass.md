@@ -45,7 +45,7 @@ This step produces a report only — it does **not** write to the prose. The `KE
 
 Write a report in markdown to `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md`.
 
-The file begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the resolved `<latest-draft>` this pass reviewed. If the file exists and its stamp does not equal `<latest-draft>`, overwrite the file with a fresh stamp; the prior pass's recommendations against the superseded draft are discarded. The future M5 `prose_fix` step will consume this stamp to detect stale recommendations against a newer draft; record it here for consistency with the report→fix adjacency invariant in `agents/orchestrator.md`, even though no automated consumer reads it this Sprint.
+The file begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the resolved `<latest-draft>` this pass reviewed. If the file exists and its stamp does not equal `<latest-draft>`, overwrite the file with a fresh stamp; the prior pass's recommendations against the superseded draft are discarded. `prose_fix` consumes this stamp to detect stale recommendations against a newer draft, per the report→fix adjacency invariant in `agents/orchestrator.md`; the stamp is load-bearing for that check.
 
 For each issue:
 - quote the line or short passage

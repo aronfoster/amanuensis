@@ -55,7 +55,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ## Tasks
 
-### Task 1 — Add per-entry annotation grammar to `prose_pass`
+### Task 1 — Add per-entry annotation grammar to `prose_pass` [x]
 
 **Goal.** Give the human a machine-readable way to mark each `prose_pass` finding as `FIX` / `FIX: <instruction>` / `SKIP` / `ESCALATE`, so that `prose_fix` has an unambiguous input. Closes **M5.1**.
 
@@ -74,7 +74,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 2 — Write `agents/steps/prose-fix.md`
+### Task 2 — Write `agents/steps/prose-fix.md` [x]
 
 **Goal.** Ship the new step file. Closes the core of **M5.2** and **M5.3**.
 
@@ -130,7 +130,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 3 — Insert `prose_fix` into the canonical step list
+### Task 3 — Insert `prose_fix` into the canonical step list [x]
 
 **Goal.** Land the new step in the pipeline order and keep the pipeline-state check green. Closes **M5.4**.
 
@@ -145,7 +145,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 4 — Retire the manual prose-edit handoff and update the invariant
+### Task 4 — Retire the manual prose-edit handoff and update the invariant [x]
 
 **Goal.** Remove the pre-M5 workaround wording from the docs now that the pipeline has an automatic consumer, and add `prose_pass → prose_fix` to the report→fix adjacency invariant. This closes the doc-sweep half of **M5.3**.
 
@@ -165,7 +165,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 5 — Verification sweep, ROADMAP / SPRINT check-off
+### Task 5 — Verification sweep, ROADMAP / SPRINT check-off [x]
 
 **Goal.** Close the Sprint with a documented verification and mark the milestone complete. Closes the residual of **M5** and this Sprint.
 
