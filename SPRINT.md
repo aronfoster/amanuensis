@@ -55,7 +55,9 @@ Locked at the start so individual tasks don't rediscover them.
 
 ## Tasks
 
-### Task 1 — Add per-entry annotation grammar to `prose_pass` [x]
+### Task 1 — Add per-entry annotation grammar to `prose_pass`
+
+- [x] Done
 
 **Goal.** Give the human a machine-readable way to mark each `prose_pass` finding as `FIX` / `FIX: <instruction>` / `SKIP` / `ESCALATE`, so that `prose_fix` has an unambiguous input. Closes **M5.1**.
 
@@ -74,7 +76,9 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 2 — Write `agents/steps/prose-fix.md` [x]
+### Task 2 — Write `agents/steps/prose-fix.md`
+
+- [x] Done
 
 **Goal.** Ship the new step file. Closes the core of **M5.2** and **M5.3**.
 
@@ -130,7 +134,9 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 3 — Insert `prose_fix` into the canonical step list [x]
+### Task 3 — Insert `prose_fix` into the canonical step list
+
+- [x] Done
 
 **Goal.** Land the new step in the pipeline order and keep the pipeline-state check green. Closes **M5.4**.
 
@@ -145,7 +151,9 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 4 — Retire the manual prose-edit handoff and update the invariant [x]
+### Task 4 — Retire the manual prose-edit handoff and update the invariant
+
+- [x] Done
 
 **Goal.** Remove the pre-M5 workaround wording from the docs now that the pipeline has an automatic consumer, and add `prose_pass → prose_fix` to the report→fix adjacency invariant. This closes the doc-sweep half of **M5.3**.
 
@@ -165,7 +173,9 @@ Locked at the start so individual tasks don't rediscover them.
 
 ---
 
-### Task 5 — Verification sweep, ROADMAP / SPRINT check-off [x]
+### Task 5 — Verification sweep, ROADMAP / SPRINT check-off
+
+- [x] Done
 
 **Goal.** Close the Sprint with a documented verification and mark the milestone complete. Closes the residual of **M5** and this Sprint.
 
@@ -180,7 +190,7 @@ Locked at the start so individual tasks don't rediscover them.
 - Confirm `metaphor_identify` and all downstream steps are unedited (`git diff --stat` for `agents/steps/` should show only `prose-pass.md` and the new `prose-fix.md`).
 - Run `scripts/check-pipeline-state.sh` in both modes against `templates/pipeline-state.md` and `agents/steps/`; capture the exit status.
 - Update `ROADMAP.md` M5.1-M5.4 to `[x]` only after Tasks 1-4 pass verification. Update the M5 notes section if any decision changed from what this SPRINT.md locks (it should not).
-- Mark this SPRINT.md's Tasks 1-5 `[x]` only after their acceptance conditions hold.
+- Check this SPRINT.md's per-task `- [ ]` boxes (Tasks 1-5) only after their acceptance conditions hold.
 
 **Done when.** The verification greps return the expected patterns, `check-pipeline-state.sh` passes, ROADMAP M5 checkboxes are ticked, and SPRINT.md task checkboxes reflect completed work.
 
