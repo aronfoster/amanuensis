@@ -97,16 +97,23 @@ fan-out.
      every current-behavior hit — don't pre-enumerate files; you'll miss
      some.
    - Launch independent agents in a single message so they run concurrently.
+   - A trivial mechanical edit you must re-verify yourself anyway (e.g. a
+     one-line insertion gated by a check script) may be done inline instead of
+     delegated — delegating it only adds a summary-trust hop for no benefit.
 2. **Wait for every agent in the wave to ack.** Some agents run async and
    return via a later `<task-notification>` — the wave isn't done until all
-   have notified. An environmental stop-hook nudging about uncommitted state
-   mid-wave is advisory; tell the user you're waiting and don't commit a
-   partial wave to silence it.
+   have notified. An environmental stop-hook may nudge about uncommitted state
+   once per agent that returns; it is advisory — keep waiting until every agent
+   has notified, tell the user you're waiting, and don't commit a partial wave
+   to silence it.
 3. **Verify yourself after agents return.** Do not trust summaries blindly:
    `git status`, `git diff` on shared files, spot-read new files, and run any
    acceptance check the sprint defines (e.g. a grep that must return nothing,
    a numbering invariant, a "no flat prohibition remains" sweep). A subagent
-   reporting success is a claim, not evidence.
+   reporting success is a claim, not evidence. The sprint's defined checks are
+   necessary but not sufficient: a stale line can pass every grep the sprint
+   names yet still contradict what the sprint changed, so read the diffs and
+   grep output for meaning — not only for the patterns enumerated.
 4. **Handle failures before moving on.** Fix or re-dispatch what's broken, but
    bound it: if a task still fails its check after one re-dispatch, stop and
    surface it to the human with the evidence rather than looping. Prefer
