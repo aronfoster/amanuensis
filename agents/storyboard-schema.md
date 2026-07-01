@@ -98,6 +98,15 @@ Field content is a list of forbidden namings, not a discussion of why.
 - **Specification:** "Do not name: the hairpin sensation as magical, pre-manifestation, or power-related. Do not name: Louise's full name, title, country."
 - **Prose (do not use):** "The reader should feel, without understanding, that something vast and other has begun to stir in the body of a girl whose name the narrative has chosen to withhold."
 
+## Reader takeaway
+
+List what the reader must understand, feel, or infer by the beat's end — the beat's comprehension target. This is the positive counterpart to `concealment_from_reader`: that field lists what the reader must *not* understand yet; this one lists what they must. It is also not `knowledge_delta` — that field tracks what a *character* learns. Reader comprehension and character knowledge are different axes: a reader can grasp what no character knows, and a character can learn what the reader must not yet understand. Default to filling it. An empty field is a defect to justify, not a default — if the beat genuinely asks nothing of the reader's understanding, say why the beat earns its place.
+
+Field content is a comprehension target, not a passage that produces the comprehension.
+
+- **Specification:** "Reader must register: the hairpin sensation is abnormal and unexplained, and Louise's instinct is to hide it, not report it. Reader must not yet be able to classify the sensation."
+- **Prose (do not use):** "By the beat's end the reader should sense, in the held breath of the dressing room, that something has gone quietly wrong inside Louise — and that her first, unthinking answer to wrongness is silence."
+
 ## Canon active
 
 List the specific canon mechanics operating in this beat. Extract the rule or constraint — not a file path, not a summary of a source document. Where the beat involves vision or supernatural content, include one compliant example and one non-compliant example.
@@ -159,6 +168,9 @@ All anti-patterns below are specific instances of the governing discipline above
 - **Craft signal as prose sample.** Craft signal is a note to the drafter, not a demonstration of the register the drafter should use.
 - **File paths in Canon active.** Extract the content. The drafter has no access to those files.
 - **Empty Concealment from reader.** Re-read the scene list's canon guardrails before leaving this blank. Default to filling it.
+- **Empty Reader takeaway.** Default to filling it. Leave it blank only after confirming the beat genuinely asks nothing of the reader's understanding.
+- **Reader takeaway as prose sample.** It is a specification of what the reader should grasp, not a sample of the sentences that will make them grasp it.
+- **Reader takeaway that duplicates Knowledge Delta.** Reader comprehension and character knowledge are different axes. Keep them separate.
 - **Character state that names only an emotion.** Name emotion, knowledge, and objective.
 - **Character state out identical to state in.** The beat is not earning its place.
 - **Concealment fields that duplicate each other.** Characters hiding from each other and the narrative hiding from the reader are different axes. Keep them separate.

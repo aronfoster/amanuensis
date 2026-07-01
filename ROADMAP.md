@@ -202,13 +202,13 @@ Done when: the schema has a reader-takeaway field; `storyboarding` populates it;
 `storyboard_review` flags beats whose takeaway is unsupported or whose reveals lack prior
 setup; it sits between storyboarding and drafting.
 
-- [ ] M6.1 Add a reader-takeaway field to `storyboard-schema.md` (distinct from
+- [x] M6.1 Add a reader-takeaway field to `storyboard-schema.md` (distinct from
   `concealment_from_reader` and `must_preserve`), held to the spec-not-prose discipline.
-- [ ] M6.2 Update `storyboarding.md` to populate it; make an empty field a default-to-fill
+- [x] M6.2 Update `storyboarding.md` to populate it; make an empty field a default-to-fill
   anti-pattern.
-- [ ] M6.3 Write `agents/steps/storyboard-review.md` (advisory, report-only): check each
+- [x] M6.3 Write `agents/steps/storyboard-review.md` (advisory, report-only): check each
   beat's takeaway is carried and that dependent beats have prior setup.
-- [ ] M6.4 Insert `storyboard_review` between `storyboarding` and `drafting` in the
+- [x] M6.4 Insert `storyboard_review` between `storyboarding` and `drafting` in the
   canonical list.
 
 Notes: a `storyboard_review_fix` apply step and the cross-chapter reveals ledger are

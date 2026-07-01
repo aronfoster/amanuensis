@@ -16,6 +16,7 @@ To redo a step, move the `[>]` marker up to that step and change downstream `[x]
 - [>] character_extraction
 - [ ] scene_generation
 - [ ] storyboarding
+- [ ] storyboard_review
 - [ ] drafting
 - [ ] compliance_report
 - [ ] compliance_fix
