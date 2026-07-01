@@ -54,20 +54,9 @@ Actual prose.
 
 Use these files for story text only. Planning notes should not live here.
 
-Each attempt's prose is recorded as a sequence of versioned drafts under `drafts/attemptNN/` inside the chapter folder. Drafting produces `draft-v01.md`; each subsequent prose-advancing step (compliance fix, metaphor apply, line pass, anti-AI fix) reads `<latest-draft>` and writes the next `draft-vNN.md`. Report-only and setup steps (compliance report, metaphor identify, metaphor fix, prose pass, anti-AI report) read `<latest-draft>` without minting a new version. The attempt's `draft-manifest.md` records, per draft version, which step produced it and which side artifacts it consulted; that manifest is the provenance source, not in-file YAML. Side artifacts (`notes.md`, `reviewer-actions.md`, `metaphors.md`, `prose-pass.md`, `anti-ai.md`) keep their step-named, unversioned filenames and live alongside the drafts under the same `drafts/attemptNN/` directory.
+Each attempt's prose is recorded as a sequence of versioned drafts under `drafts/attemptNN/` inside the chapter folder. Drafting produces `draft-v01.md`; each subsequent prose-advancing step (compliance fix, prose fix, metaphor apply, line pass, anti-AI fix) reads `<latest-draft>` and writes the next `draft-vNN.md`. Report-only and setup steps (compliance report, metaphor identify, metaphor fix, prose pass, anti-AI report) read `<latest-draft>` without minting a new version. The attempt's `draft-manifest.md` records, per draft version, which step produced it and which side artifacts it consulted; that manifest is the provenance source, not in-file YAML. Side artifacts (`notes.md`, `reviewer-actions.md`, `metaphors.md`, `prose-pass.md`, `anti-ai.md`) keep their step-named, unversioned filenames and live alongside the drafts under the same `drafts/attemptNN/` directory.
 
 Some of these per-attempt files are **durable audit records**, kept for human review and downstream steps: `notes.md` (the run record), plus the later-stage review/report files `reviewer-actions.md`, `metaphors.md`, and `anti-ai.md`, alongside the prose `draft-vNN.md` series and the `draft-manifest.md`. The per-scene `sceneNN.md` / `sceneNN-notes.md` fragments are **transient**: their entire content is folded into `draft-v01.md` and `notes.md` during the drafting step, and they are deleted after assembly. The general rule: a working file is deletable once its content is captured in a durable combined artifact.
-
-#### Manual prose-edit handoff
-
-Until M5 lands `prose_fix`, the human applies `prose_pass` recommendations to the prose by hand. Those edits must produce a new `draft-vNN.md`, not in-place changes to `<latest-draft>` — otherwise the versioned-draft model loses provenance and downstream steps cannot tell which prose they are reading. The handoff procedure:
-
-1. Copy `<latest-draft>` to the next-numbered `draft-vNN.md` in the same attempt directory.
-2. Apply the human edits to the new file. Leave `<latest-draft>` untouched.
-3. Append an entry to `draft-manifest.md` for the new version with `produced_by: human_prose_edit`, `read_from: [<previous-draft>]`, `side_artifacts: [prose-pass.md]`, and a short note referencing `prose-pass.md` as the apply source.
-4. Then dispatch `metaphor_identify`. It will resolve `<latest-draft>` to the new file via the standard step-start resolution; no other rewiring is needed.
-
-If the human does not apply any prose edits and accepts `prose_pass`'s output as advisory only, no new draft version is needed — `metaphor_identify` runs against the existing `<latest-draft>`.
 
 ### `aftermath.md`
 Post-chapter delta record.

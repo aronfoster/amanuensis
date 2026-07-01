@@ -53,7 +53,8 @@ This is the catalog of step files this repo *provides to* consuming projects, no
 - `agents/steps/drafting.md` — chapter coordinator that dispatches per-scene subagents and assembles their output into a single draft.
 - `agents/steps/compliance-report.md` — checks the draft against storyboard Must-Contain / Must-Not-Contain requirements and canon, producing an annotated `reviewer-actions.md` report.
 - `agents/steps/compliance-fix.md` — applies the human-annotated fixes from `reviewer-actions.md` to `<latest-draft>`, producing the next `draft-vNN.md` and appending an entry to the attempt's `draft-manifest.md`.
-- `agents/steps/prose-pass.md` — advisory prose-quality pass that produces a report only; the human applies fixes manually before `metaphor_identify` runs, following the manual prose-edit handoff in `agents/chapters.md` (copy `<latest-draft>` to the next `draft-vNN.md` and record a `human_prose_edit` manifest entry).
+- `agents/steps/prose-pass.md` — advisory prose-quality pass over `<latest-draft>` that produces a report only, writing an annotated `prose-pass.md` whose human annotations are consumed by `prose_fix`.
+- `agents/steps/prose-fix.md` — applies the human-annotated fixes from `prose-pass.md` to `<latest-draft>`, producing the next `draft-vNN.md` and appending an entry to the attempt's `draft-manifest.md`.
 - `agents/steps/metaphor-identify.md` — extracts every live metaphor and simile from the latest prose into `metaphors.md`.
 - `agents/steps/metaphor-fix.md` — coordinator step that dispatches one subagent per annotated entry in parallel (FLATTEN / REPLACE / WORKSHOP) and reassembles their variants into `metaphors.md`.
 - `agents/steps/metaphor-apply.md` — applies the human-selected variant to `<latest-draft>`, producing the next `draft-vNN.md` and appending an entry to the attempt's `draft-manifest.md`.

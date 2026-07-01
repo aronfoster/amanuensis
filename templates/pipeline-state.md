@@ -20,6 +20,7 @@ To redo a step, move the `[>]` marker up to that step and change downstream `[x]
 - [ ] compliance_report
 - [ ] compliance_fix
 - [ ] prose_pass
+- [ ] prose_fix
 - [ ] metaphor_identify
 - [ ] metaphor_fix
 - [ ] metaphor_apply

@@ -160,12 +160,12 @@ Done when: `prose_fix` reads annotated `prose-pass.md` + `<latest-draft>` and wr
 next draft version; `prose_pass` output carries an annotation grammar; the metaphor stage
 consumes the prose-applied draft.
 
-- [ ] M5.1 Add `FIX` / `FIX: <instruction>` / `SKIP` / `ESCALATE` per-entry annotation
+- [x] M5.1 Add `FIX` / `FIX: <instruction>` / `SKIP` / `ESCALATE` per-entry annotation
   grammar to `prose-pass.md`, keyed off the existing KEEP/TIGHTEN/FLATTEN/REWRITE labels;
   `KEEP` needs no annotation and is treated as `SKIP`. No bulk headers (Sprint 10 locked
   decision — `prose_pass` is deliberately selective at 5-10 findings, so bulk-annotation
   surface would go unused).
-- [ ] M5.2 Record the apply strategy in `agents/steps/prose-fix.md`: surgical per-entry
+- [x] M5.2 Record the apply strategy in `agents/steps/prose-fix.md`: surgical per-entry
   (Sprint 10 locked decision). Locate quote → apply local edit → copy rest verbatim,
   matching `compliance_fix` / `anti_ai_fix` / `metaphor_apply`. Bare `FIX` on `REWRITE` is
   generative — the fixer produces a new sentence/paragraph in-voice using `voice.md` as
@@ -173,12 +173,12 @@ consumes the prose-applied draft.
   context. Chunked-like-`line_pass` was considered and rejected: `prose_pass` is
   deliberately selective, so a whole-chapter chunk pass would reprocess mostly untouched
   prose.
-- [ ] M5.3 Write `agents/steps/prose-fix.md` (inputs: annotated `prose-pass.md`,
+- [x] M5.3 Write `agents/steps/prose-fix.md` (inputs: annotated `prose-pass.md`,
   `<latest-draft>`, `voice.md`; outputs: `<next-draft>` + appended `prose-pass.md` apply
   log + appended `draft-manifest.md` entry). `review_required: false`. Follows the
   report→fix adjacency invariant via the `Reviewed-draft:` stamp `prose_pass` already
   writes.
-- [ ] M5.4 Insert `prose_fix` after `prose_pass` in the canonical step list
+- [x] M5.4 Insert `prose_fix` after `prose_pass` in the canonical step list
   (`templates/pipeline-state.md` and `examples/smoke/pipeline-state.md`); the pipeline
   check (`scripts/check-pipeline-state.sh`) must pass.
 
