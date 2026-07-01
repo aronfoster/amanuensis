@@ -226,46 +226,169 @@ dependency field is added.
 
 ---
 
-## M7 — Dispatcher rework: forward / back / redo with archiving
+## M7 — Selective step execution
 
-Replace linear `next-step` with directional control; redo archives prior draft versions
-and surfaces downstream staleness. Design-gated. Builds on M4's version counter.
+Replace the linear `next-step` cursor model with explicit, selective step invocation.
+The default pipeline remains a recommended recipe, but correctness is governed by
+artifact preconditions, not by strict sequence position.
 
-Done when: design note approved; human can advance, step back, and redo a specific step;
-redo archives versions above the redone step and flags them stale; `orchestrator.md`
-documents the model; both hosts at parity; the smoke fixture exercises a redo.
+Done when: a human can invoke a specific step by `step_id`; the dispatcher validates
+that the step's declared inputs exist and are usable; locally ordered pairs such as
+`compliance_report -> compliance_fix` are enforced by artifact freshness rules rather
+than by global pipeline position; `pipeline-state.md` no longer requires a single
+`[>]` cursor to define what may run next; both hosts expose the same model.
 
-- [ ] M7.1 Design note (blocking). Resolve: skill granularity (one parameterized dispatcher
-  vs per-step skills); backward semantics (marker-only vs restore archived versions);
-  archive location vs the `attemptNN` convention (mid-pipeline redo must not re-run
-  drafting); downstream-staleness rule (everything with version > N is stale — reset
-  markers / archive / warn?); review-gate behavior under back and redo.
-- [ ] M7.2 Update `orchestrator.md` to the directional model (absorbs the deferred
-  pass-interaction question).
-- [ ] M7.3 Implement per-step invocation.
-- [ ] M7.4 Implement archive-on-redo over the version counter.
-- [ ] M7.5 Host parity (`.claude` + `.opencode`).
-- [ ] M7.6 Extend the smoke recipe: advance -> redo -> verify archive, on both hosts.
+* [ ] M7.1 Design note: define the selective execution model. Terms to settle:
+  `runnable`, `blocked`, `stale`, `superseded`, `active`, `recommended next`,
+  and `explicit override`.
 
-Notes: —
+* [ ] M7.2 Reframe `pipeline-state.md` from cursor state into recipe/status state.
+  Remove the requirement that exactly one `[>]` marker controls execution. Preserve
+  the default step order as the recommended happy path, not as the only legal path.
+
+* [ ] M7.3 Expand the step workflow contract so each step declares machine-readable
+  preconditions in addition to descriptive `inputs` / `outputs`. At minimum, distinguish:
+  required files, optional files, prose-draft inputs, side-artifact inputs, and
+  human-review-sensitive inputs.
+
+* [ ] M7.4 Implement explicit step invocation in the dispatcher:
+  `run_step <step_id>` or host-equivalent. The dispatcher resolves the requested
+  workflow file, checks preconditions, then follows that step body in the same session.
+
+* [ ] M7.5 Keep a convenience command for the recommended path:
+  `next_recommended_step` or host-equivalent. This reads the recipe/status file and
+  chooses the next incomplete recommended step, but it is layered on top of selective
+  execution rather than being the core control model.
+
+* [ ] M7.6 Generalize local ordering constraints. Report/fix and identify/apply pairs
+  must be enforced by artifact stamps such as `Reviewed-draft:`, not by global adjacency
+  in the step list. A fix/apply step may run only when its paired report artifact was
+  produced against the current usable draft, unless the human explicitly overrides.
+
+* [ ] M7.7 Update `orchestrator.md` to remove forward/back/redo language. The
+  orchestrator should describe Amanuensis as running selected transformations against
+  explicit artifacts, with judgment living in the human and the step bodies.
+
+* [ ] M7.8 Host parity: expose the same selective invocation model in Claude Code and
+  OpenCode. The names do not have to be identical, but the behavior and safety checks
+  must match.
+
+* [ ] M7.9 Smoke coverage: verify that the default recipe still runs in order; verify
+  that a human can rerun a completed report step; verify that a fix step blocks on a
+  stale report; verify that a non-dependent step can run out of recipe order when its
+  inputs are valid.
+
+Notes: This milestone deliberately does not change draft version lineage. For now,
+`<latest-draft>` may remain the highest-numbered `draft-vNN.md` as defined by M4.
+Non-destructive reruns, active draft heads, and superseded draft branches are deferred
+to M8. The purpose of M7 is to decouple dispatcher control from strict linear cursor
+movement without rewriting the draft manifest model in the same sprint.
 
 ---
 
-## M8 — Reverse ingestion: existing prose into Amanuensis
+## M8 — Active draft lineage
+
+Replace highest-numbered draft resolution with an explicit active draft head in
+`draft-manifest.md`, so arbitrary reruns can create new draft versions without deleting
+or archiving prior work.
+
+Done when: `<latest-draft>` resolves to the manifest's active head rather than the
+highest-numbered `draft-vNN.md`; rerunning a prose-advancing step can read an earlier
+draft and produce a new active draft; superseded downstream drafts remain on disk but
+are no longer considered active; stale side artifacts can identify which draft lineage
+they belong to.
+
+* [ ] M8.1 Design note: define active draft lineage. Terms to settle:
+  `active_head`, `reads`, `produced_by`, `supersedes`, `superseded_by`,
+  `lineage`, and `abandoned`.
+
+* [ ] M8.2 Update `draft-manifest.md` schema so each prose-bearing draft version records:
+  producing step, input draft(s), side artifacts consumed, timestamp, review gate if any,
+  and whether it is the active head.
+
+* [ ] M8.3 Change `<latest-draft>` resolution from highest-numbered draft to active
+  manifest head. Keep draft filenames monotonic: reruns create the next `draft-vNN.md`
+  rather than overwriting or reusing old numbers.
+
+* [ ] M8.4 Define non-destructive rerun semantics. If a human reruns a prose-advancing
+  step from an earlier draft, the new output becomes the active head and any previously
+  active downstream drafts are marked superseded in the manifest, not deleted.
+
+* [ ] M8.5 Update all prose-advancing steps to append manifest entries that preserve
+  lineage. Steps must not infer active state from filenames alone.
+
+* [ ] M8.6 Update all prose-reading/report steps to resolve the active head through the
+  manifest before reading `<latest-draft>`.
+
+* [ ] M8.7 Smoke coverage: create a linear draft chain, rerun a prose-advancing step from
+  an earlier draft, verify the new draft becomes active, verify old downstream drafts
+  remain on disk but are superseded, and verify report steps read the new active head.
+
+Notes: This milestone replaces the archive-on-redo idea from the old M7. Amanuensis
+does not move backward. It creates a new version from selected inputs and records which
+draft lineage is now active.
+
+---
+
+## M9 — Stale artifacts and review gates
+
+Make arbitrary step execution safe by tracking whether side artifacts are fresh,
+stale, reviewed, pending review, superseded, or explicitly overridden.
+
+Done when: side artifacts generated from prose identify the draft they reviewed;
+fix/apply steps refuse stale artifacts by default; review-required artifacts carry
+an explicit review status or equivalent human-acknowledgment marker; the dispatcher
+and step bodies consistently block, warn, or proceed according to declared rules.
+
+* [ ] M9.1 Design note: define side-artifact state. Terms to settle:
+  `fresh`, `stale`, `review_pending`, `reviewed`, `override`, `discarded`,
+  and `regenerated`.
+
+* [ ] M9.2 Standardize freshness stamps for prose-derived side artifacts. Existing
+  `Reviewed-draft:` behavior becomes the common pattern for reports, annotations,
+  metaphor findings, anti-AI findings, and similar artifacts.
+
+* [ ] M9.3 Standardize review markers for artifacts produced by `review_required: true`
+  steps. Decide whether review state lives in the artifact itself, in a manifest, or
+  in the recipe/status file.
+
+* [ ] M9.4 Update fix/apply steps to check both freshness and review state before
+  consuming side artifacts. On mismatch, append a clear blocker to `open-questions.md`
+  and exit without modifying prose.
+
+* [ ] M9.5 Define explicit override behavior. Overrides must be human-visible,
+  source-specific, and recorded in the relevant artifact or manifest. No stale apply
+  should happen silently.
+
+* [ ] M9.6 Update the dispatcher to surface stale/review blockers before loading the
+  requested step body when the precondition is machine-checkable.
+
+* [ ] M9.7 Smoke coverage: verify stale report detection, reviewed-artifact detection,
+  pending-review blocking or warning behavior, regeneration of a stale report against
+  the active draft, and explicit override recording.
+
+Notes: M9 generalizes the report→fix adjacency invariant into an artifact-freshness
+model. The old adjacency rule remains valid as a special case, but the framework no
+longer depends on global step order to protect fix/apply steps.
+
+---
+
+## M10 — Reverse ingestion: existing prose into Amanuensis
 
 Ingest a finished work into Amanuensis artifacts (characters, scene-list, storyboards,
 overview), chunked to fit context. Design-gated.
 
-Done when: a single existing chapter or short story ingests into a valid project structure
-that the forward pipeline's downstream steps can consume.
+Done when: a single existing chapter or short story ingests into a valid project
+structure that the forward pipeline's downstream steps can consume.
 
-- [ ] M8.1 Design note (blocking): reverse pipeline steps (candidates: prose_chunking,
-  character_extraction_from_prose, scene_reconstruction, storyboard_reconstruction,
-  overview_synthesis); chunking strategy that preserves cross-chunk continuity;
-  reconciliation against existing canon.
-- [ ] M8.2+ Implementation tasks opened from the approved design note.
+* [ ] M10.1 Design note (blocking): split reverse ingestion into smaller milestones.
+  Candidate areas: prose chunking and source maps; character/entity extraction from
+  prose; scene reconstruction; storyboard reconstruction; overview synthesis; canon
+  reconciliation; reverse-to-forward bridge.
+* [ ] M10.2+ Implementation tasks opened from the approved design note.
 
-Notes: —
+Notes: Formerly M8. This is intentionally tabled until selective execution and artifact
+lineage are stable enough to support reverse-generated artifacts.
 
 ---
 
