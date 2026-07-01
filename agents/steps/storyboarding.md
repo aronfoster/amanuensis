@@ -39,6 +39,8 @@ The YAML frontmatter carries all structured information the LLM needs to make de
 
 For field definitions see `agents/storyboard-schema.md`.
 
+Populate `reader_takeaway` for every block — what the reader must understand, feel, or infer by the beat's end. The field is defined in `agents/storyboard-schema.md`; like `concealment_from_reader`, it defaults to filled.
+
 The beat description should read as a director's note — plain language, present tense, focused on dramatic intent. It must answer what happens, what is felt, and what the prose must accomplish that the YAML fields cannot capture.
 
 ### Independent Draftability
@@ -56,6 +58,8 @@ This is a quality check on the storyboard, not a constraint on the drafter. If a
 **Vague beat descriptions.** "The characters talk" is not a beat description. The paragraph must answer what happens, what is felt, and what the prose must accomplish that the YAML fields cannot capture.
 
 **Empty concealment fields.** `concealment_from_reader` is the most commonly skipped field and the most consequential for series-long reveal integrity. An empty field is only correct after explicitly confirming the beat contains no active canon guardrails. Default to filling it.
+
+**Empty reader_takeaway.** `reader_takeaway` is the positive counterpart to `concealment_from_reader` — the beat's comprehension target. An empty field is only correct after explicitly confirming the beat genuinely asks nothing of the reader's understanding. Default to filling it.
 
 **Word targets instead of pace signals.** The `pace` field — `compressed`, `measured`, or `expansive` — is the correct way to signal how much room the beat earns. Pace is a tempo instruction, not a count. Do not write target word counts into the beat description.
 
