@@ -212,7 +212,17 @@ setup; it sits between storyboarding and drafting.
   canonical list.
 
 Notes: a `storyboard_review_fix` apply step and the cross-chapter reveals ledger are
-deferred.
+deferred. Sprint 11 plans M6 (see SPRINT.md). Locked there: the new field is
+`reader_takeaway`, a default-to-fill markdown section (not frontmatter) that states what
+the *reader* must understand by a beat's end — distinct from `concealment_from_reader` (its
+inverse) and `knowledge_delta` (character knowledge). `storyboard_review` is advisory-only —
+a report with no annotation grammar and no paired fix step (the deferred `storyboard_review_fix`
+would add the grammar later, mirroring how `prose_pass`'s grammar landed with `prose_fix`); it
+runs before drafting so it carries no `Reviewed-draft:` stamp and sits outside the report→fix
+invariant. It runs three checks: takeaway-supported, reveal-has-prior-setup (within-chapter
+only), and a takeaway/concealment contradiction guard. Reveal dependencies are inferred from
+`beat_type`/`reader_takeaway`/`concealment_from_reader` plus `scene-list.md` ordering — no new
+dependency field is added.
 
 ---
 
