@@ -38,7 +38,8 @@ it stops at the recorded plan, it does not implement.
   from the request, the code, or a sensible default.
 - Recommended option first, labeled "(Recommended)". Ground each option in a real
   trade-off. Mark risky options "rejected unless you want it" with the reason.
-- Recommend, don't enumerate. Pick obvious defaults yourself and say so.
+- Recommend, don't enumerate. Lock silently when ≥3 sibling files already do it
+  the same way; ask when repo precedent points two ways or none.
 
 ## 3. Record decisions into the project's planning docs
 
@@ -72,7 +73,8 @@ there isn't one yet:
 - Definition of done: enumerated and checkable.
 - Conventions adopted: decisions locked (each with its one-line why, per §3) so
   tasks don't rediscover them.
-- Tasks: each with Goal / Requirements / Done-when, sized for one owner.
+- Tasks: each with Goal / Requirements / Done-when, sized for one owner and
+  grouped by file-touch so a dependency-ordered wave plan is possible.
 - Out of scope: what this does not touch, and where that work lives instead.
 
 Write for a reader who has only this file. If a fact, a cite, or a decision is

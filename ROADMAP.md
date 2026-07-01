@@ -160,17 +160,36 @@ Done when: `prose_fix` reads annotated `prose-pass.md` + `<latest-draft>` and wr
 next draft version; `prose_pass` output carries an annotation grammar; the metaphor stage
 consumes the prose-applied draft.
 
-- [ ] M5.1 Add `FIX` / `FIX: <instruction>` / `SKIP` / `ESCALATE` annotation grammar (and
-  optional per-category bulk headers) to `prose-pass.md`, keyed off the existing
-  KEEP/TIGHTEN/FLATTEN/REWRITE labels.
-- [ ] M5.2 Decide and record the apply strategy. Default candidate: chunked, like
-  `line_pass` — REWRITE is paragraph-scale, TIGHTEN/FLATTEN local.
+- [ ] M5.1 Add `FIX` / `FIX: <instruction>` / `SKIP` / `ESCALATE` per-entry annotation
+  grammar to `prose-pass.md`, keyed off the existing KEEP/TIGHTEN/FLATTEN/REWRITE labels;
+  `KEEP` needs no annotation and is treated as `SKIP`. No bulk headers (Sprint 10 locked
+  decision — `prose_pass` is deliberately selective at 5-10 findings, so bulk-annotation
+  surface would go unused).
+- [ ] M5.2 Record the apply strategy in `agents/steps/prose-fix.md`: surgical per-entry
+  (Sprint 10 locked decision). Locate quote → apply local edit → copy rest verbatim,
+  matching `compliance_fix` / `anti_ai_fix` / `metaphor_apply`. Bare `FIX` on `REWRITE` is
+  generative — the fixer produces a new sentence/paragraph in-voice using `voice.md` as
+  system message and the target paragraph plus one paragraph either side as read-only
+  context. Chunked-like-`line_pass` was considered and rejected: `prose_pass` is
+  deliberately selective, so a whole-chapter chunk pass would reprocess mostly untouched
+  prose.
 - [ ] M5.3 Write `agents/steps/prose-fix.md` (inputs: annotated `prose-pass.md`,
-  `<latest-draft>`, voice; output: next draft version + apply log). `review_required: false`.
-- [ ] M5.4 Insert `prose_fix` after `prose_pass` in the canonical step list.
+  `<latest-draft>`, `voice.md`; outputs: `<next-draft>` + appended `prose-pass.md` apply
+  log + appended `draft-manifest.md` entry). `review_required: false`. Follows the
+  report→fix adjacency invariant via the `Reviewed-draft:` stamp `prose_pass` already
+  writes.
+- [ ] M5.4 Insert `prose_fix` after `prose_pass` in the canonical step list
+  (`templates/pipeline-state.md` and `examples/smoke/pipeline-state.md`); the pipeline
+  check (`scripts/check-pipeline-state.sh`) must pass.
 
 Notes: with M4 done, the metaphor steps already read `<latest-draft>`, so no input
-rewiring is needed.
+rewiring is needed. Sprint 10 retires the "Manual prose-edit handoff" procedure in
+`agents/chapters.md` and the "advisory only until M5" language in `prose-pass.md` /
+`AGENTS.md`; `prose_pass → prose_fix` joins the report→fix invariant list in
+`agents/orchestrator.md`. Storyboards and canon are deliberately *not* read by `prose_fix`
+(matches `metaphor_apply` / `anti_ai_fix`) — `prose_pass` already reviewed the prose
+against the storyboard and voice, and `prose_fix` applies the reviewed judgments without
+re-evaluating them.
 
 ---
 
