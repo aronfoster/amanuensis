@@ -1,17 +1,15 @@
 ---
 name: pm-plan
 description: >-
-  PM/planning loop: turn a feature idea, milestone, or "how should we approach
-  this" into a grounded, decided, recorded plan. Use whenever the user wants to
-  plan a milestone or feature, refine a roadmap, scope a sprint, or make
-  design/scoping decisions before implementing — including when they don't say
-  the word "plan" (e.g. "what's the right way to break this down", "before we
-  build X…", "how should we structure this"), and especially when the request
-  has open boundaries the user should decide. Records decisions into the project's
-  planning docs — typically a high-level ROADMAP.md and a detailed SPRINT.md — and
-  commits them to the working branch. The deliverable is a SPRINT.md precise enough
-  for a separate implementation agent to execute. Stops at the recorded plan; does
-  not write implementation code.
+  PM/planning loop: turn a feature, milestone, or open-ended "how should we
+  approach this" into a grounded, decided, recorded plan. Use when scoping a
+  sprint, refining a roadmap, or making design/scoping decisions before
+  implementing — even when the user never says "plan", and especially when the
+  request has open boundaries the user should decide. Records decisions into the
+  project's planning docs (typically ROADMAP.md + SPRINT.md) and commits them to
+  the working branch; the deliverable is a SPRINT.md a separate implementation
+  agent can execute. Stops at the recorded plan; writes no implementation code.
+  Arguments refine this planning run — they don't replace it.
 ---
 
 # Planning / PM loop
@@ -44,7 +42,7 @@ it stops at the recorded plan, it does not implement.
 ## 3. Record decisions into the project's planning docs
 
 - This project keeps two planning docs: ROADMAP.md holds the high-level direction,
-  SPRINT.md holds exactly what the next sprint must deliver. Read both, and match
+  SPRINT.md, rewritten each sprint, holds exactly what that sprint must deliver. Read both, and match
   the format and tone already inside them — checklists, headings, status markers.
   You're appending to a living document, not founding a new one; a foreign format
   reads as noise and invites drift. If a project doesn't keep these files yet,
