@@ -62,7 +62,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ### Task 1 — Add the `reader_takeaway` field to `storyboard-schema.md`
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Give the schema a comprehension axis: what the reader must take away from a beat, as the positive counterpart to `concealment_from_reader`. Closes **M6.1**.
 
@@ -86,7 +86,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ### Task 2 — Populate `reader_takeaway` in `storyboarding.md`
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Make the storyboarding step fill the new field for every block and treat an empty one as an anti-pattern. Closes **M6.2**.
 
@@ -103,7 +103,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ### Task 3 — Write `agents/steps/storyboard-review.md`
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Ship the advisory review step that flags reader-reveal coverage gaps in a chapter's storyboards. Closes **M6.3**.
 
@@ -144,7 +144,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ### Task 4 — Insert `storyboard_review` into the canonical step list and catalog
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Land the new step in the pipeline order, keep the pipeline-state check green, and make the step discoverable in the catalog. Closes **M6.4**.
 
@@ -164,7 +164,7 @@ Locked at the start so individual tasks don't rediscover them.
 
 ### Task 5 — Verification sweep, ROADMAP / SPRINT check-off
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Close the Sprint with a documented verification and mark the milestone complete. Closes the residual of **M6** and this Sprint.
 
