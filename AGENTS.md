@@ -1,5 +1,9 @@
 # Amanuensis Agent Guide
 
+## Known issues
+
+- Claude Code for web sessions frequently fail to start when launched against the latest commit on `origin/main`. If a session fails to initialize, retry the session.
+
 ## What this repository is
 
 This repository **is** the Amanuensis tooling. It is consumed as a git submodule by story-writing projects. The actual prose, character files, scene lists, drafts, and canon all live in those *consuming* projects — never here.
