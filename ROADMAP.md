@@ -66,6 +66,17 @@ Non-destructive reruns, active draft heads, and superseded draft branches are de
 to M8. The purpose of M7 is to decouple dispatcher control from strict linear cursor
 movement without rewriting the draft manifest model in the same sprint.
 
+Sprint 12 plans M7 (see SPRINT.md). Locked there: the state grammar becomes `[x]`/`[ ]`
+only, with `[>]` retired but tolerated as a legacy synonym of `[ ]` (no migration, no
+`check-pipeline-state.sh` change); recommended next = first non-`[x]` step. The command
+surface adds `run-step` on both hosts and keeps `next-step` as a convenience layer over
+the same procedure. The M7.1 design note lands inside `agents/orchestrator.md` as an
+Execution model section (single-sourcing; a separate design doc was rejected).
+Preconditions are an additive frontmatter block (`path`/`kind: source|prose_draft|side_artifact`/
+`required`/`review_sensitive`); the dispatcher checks required-file existence only —
+freshness and review checks stay in step bodies until M9.6. The adjacency invariant is
+renamed the report→fix freshness invariant with mechanics unchanged.
+
 ---
 
 ## M8 — Active draft lineage
