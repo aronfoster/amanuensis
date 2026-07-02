@@ -1,195 +1,223 @@
-# Sprint 11 — Milestone 6: Storyboard reader-reveal coverage
+# Sprint 12 — Milestone 7: Selective step execution
 
-This Sprint teaches storyboards to declare what the reader must *understand*, not only what must be *concealed*, and adds an advisory review pass that flags under-communication before drafting begins. Today `storyboard-schema.md` has a strong `concealment_from_reader` field (what the narrative must not name yet) but no positive counterpart — nothing states what the reader is supposed to grasp by a beat's end, so a storyboard can conceal correctly while silently failing to set up a later reveal. After this Sprint: the schema gains a `reader_takeaway` field held to the same specification-not-prose discipline; `storyboarding` populates it and treats an empty one as a default-to-fill anti-pattern; a new `agents/steps/storyboard-review.md` reads the chapter's storyboard blocks and reports beats whose takeaway is unsupported, whose reveals lack prior setup, or whose takeaway contradicts their own concealment; and `storyboard_review` sits between `storyboarding` and `drafting` in the canonical step list.
+This Sprint replaces the linear `next-step` cursor model with explicit, selective step invocation. Today the dispatcher is cursor-driven: exactly one `[>]` line in `pipeline-state.md` decides what runs, the step body's final action moves the cursor forward, and redoing anything means hand-editing markers backward (`agents/orchestrator.md:58-66`, `:91-98`). After this Sprint: `pipeline-state.md` is a recipe/status file — each step is `[x]` (completed at least once) or `[ ]` (not yet), with no cursor; a human invokes any specific step with `/run-step <step_id>` (Claude Code) or the `run-step` agent (OpenCode); the dispatcher validates that the step's machine-readable required preconditions resolve to existing files before following the step body; `/next-step` survives as a convenience layer that resolves the first non-`[x]` step and runs it through the same machinery; and the report→fix pairing is stated as an artifact-freshness rule (the `Reviewed-draft:` stamp), not as a position-in-the-list rule.
 
-This is a documentation/prose-contract milestone, like the sprints before it. The implementation edits are Markdown schema fields, step bodies, the catalog, and the two canonical step-list files; the only script that must keep passing is `scripts/check-pipeline-state.sh` against the updated step list.
+This is a documentation/prose-contract milestone plus two small shell-adjacent edits (`install.sh` gains two copies; `scripts/check-pipeline-state.sh` needs **no** change — its grammar already accepts `[ ]`/`[>]`/`[x]` without requiring a cursor, `scripts/check-pipeline-state.sh:18-22`, `:87`). Draft lineage is deliberately untouched: `<latest-draft>` remains the highest-numbered `draft-vNN.md` per M4; active heads and superseded branches are M8 (`ROADMAP.md:63-67`).
 
 ## Background — what is and isn't wrong today
 
 Established by inspection during planning; tasks should not re-derive this.
 
-- **The schema has a concealment axis but no comprehension axis.** `concealment_from_reader` lists "what the narrative must not name, explain, or clarify yet" and is called out as "the most important field and the most commonly skipped" (`agents/storyboard-schema.md:92-99`). There is no field for the inverse — what the reader *must* understand, feel, or infer by the beat's end. `knowledge_delta` is close but different: it tracks what each *character* learns (`agents/storyboard-schema.md:119-126`), not what the *reader* takes away. A beat can therefore satisfy every existing field and still under-communicate to the reader.
-- **Storyboard fields are markdown sections, not frontmatter.** Frontmatter holds only short structured values — `scene_ref`, `date`, `location`, `beat_index`, `pov`, `beat_type`, `pace` (`agents/storyboard-schema.md:36-45`); "All narrative content belongs in the markdown sections below" (`:61`). `concealment_from_reader`, `knowledge_delta`, and `must_preserve` are all `##` markdown sections referenced in snake_case (`:92`, `:119`, `:128`). `reader_takeaway` follows that pattern: a new `## Reader takeaway` markdown section, not a frontmatter key.
-- **Every field is held to one governing discipline: specification, not prose.** "Storyboarding plans what the beat must contain and what it must do; drafting writes the sentences. If a field could appear unedited in the novel, it is mis-filled" (`agents/storyboard-schema.md:14-30`). Each field carries a Specification vs. Prose (do-not-use) example pair. `reader_takeaway` must ship with the same pair and be bound by the same discipline (`:158`).
-- **The two-axis disambiguation pattern already exists and is enforced by an anti-pattern.** The schema deliberately separates `concealment_from_reader` (narrative hides from reader) from `concealment_from_characters` (character hides from character), and an explicit anti-pattern forbids collapsing them: "Characters hiding from each other and the narrative hiding from the reader are different axes. Keep them separate" (`agents/storyboard-schema.md:164`). `reader_takeaway` vs `knowledge_delta` is the same shape of distinction (reader comprehension vs character knowledge) and gets the same treatment.
-- **`storyboarding` already flags one empty field as an anti-pattern; there is a template to copy.** `storyboarding.md` names "Empty concealment fields" as an anti-pattern and says "Default to filling it" (`agents/steps/storyboarding.md:58`), and the schema echoes it (`agents/storyboard-schema.md:161`). `reader_takeaway`'s default-to-fill anti-pattern mirrors this wording exactly.
-- **`compliance_report` is the template for a read-only, report-only review step.** It reads storyboard blocks plus prose, records one entry per block (`CLEAN` or a list of typed violations), appends a per-run summary, and explicitly "does not propose fixes" (`agents/steps/compliance-report.md:16-17`, `:42-62`, `:88-103`, `:109-117`). It reads only its declared inputs and treats a block field it cannot evaluate as a storyboard defect to note, not a reason to reach for source files (`:24`, `:117`). `storyboard_review` mirrors this posture — but reviews the storyboard itself, before any draft exists.
-- **`storyboard_review` runs before drafting, so the report→fix machinery does not apply.** It "sits between storyboarding and drafting" (`ROADMAP.md:211`), so there is no `<latest-draft>`, no `drafts/<latest-attempt>/` folder yet, and nothing to stamp. The report→fix adjacency invariant (`agents/orchestrator.md:108-123`) governs report/fix pairs over a *draft*; `storyboard_review` has neither a draft nor a paired fix step, so it is outside that invariant entirely — the same way `line_pass` is outside it for the opposite reason (`agents/orchestrator.md:121`).
-- **There is no paired fix step, and there will not be one this Sprint.** `storyboard_review_fix` is explicitly deferred (`ROADMAP.md:214` M6 notes; `ROADMAP.md:264` Deferred list: "storyboard_review_fix apply step (after M6 proves out)"). So `storyboard_review` is the first advisory report step with no automatic consumer. It is purely diagnostic: the human reads it and revises the storyboards (or re-runs `storyboarding`) by hand before drafting.
-- **The reveal-setup check is within-chapter only.** The cross-chapter/story-level reveals ledger is deferred (`ROADMAP.md:214` M6 notes: "the cross-chapter reveals ledger are deferred"; `ROADMAP.md:265` Deferred list). For `short_story` projects there is only one chapter, so the question does not even arise (`agents/orchestrator.md:104`). `storyboard_review` reasons only over the current chapter's ordered storyboard set.
-- **Beat ordering is already available without new schema.** Each block carries `beat_index` and `scene_ref` in frontmatter (`agents/storyboard-schema.md:38-44`) and the filename encodes scene-id and beat-id (`agents/steps/storyboarding.md:32`, `:64`). `scene-list.md` gives canonical scene order and scene-level intent and is already a `storyboarding` input (`agents/steps/storyboarding.md:5`, `:24`). So the "prior setup" check can order beats from the blocks plus `scene-list.md` — no dependency field needs to be added (M6.1 adds exactly one field).
-- **The canonical step list lives in two files that must stay in sync, and the exhaustive check couples the step file to the list.** `templates/pipeline-state.md:16-29` is the default sequence; `examples/smoke/pipeline-state.md:14-27` mirrors it. Both list `storyboarding` immediately followed by `drafting`; `storyboard_review` inserts between them in both. `scripts/check-pipeline-state.sh` resolves every listed step_id to `agents/steps/<step-id-with-dashes>.md` (default/resolvable mode), and in `--exhaustive` mode also requires every step file to appear in the list (`scripts/check-pipeline-state.sh:4-13`, `:120-146`). So the new step file and the two list edits must land together or `--exhaustive` fails.
-- **The step-id → filename rule is fixed.** `step_id: storyboard_review` resolves to `agents/steps/storyboard-review.md` (underscores → dashes) per `agents/orchestrator.md:9`, `:61`.
-- **The `AGENTS.md` catalog lists step files in pipeline order.** The `storyboarding` entry (`AGENTS.md:52`) is immediately followed by the `drafting` entry (`AGENTS.md:53`). A `storyboard-review` entry belongs between them, mirroring the one-line shape of the surrounding entries. `storyboard-schema.md` already has a support-doc catalog entry (`AGENTS.md:75`) that needs no change.
+- **The cursor is the control model.** `pipeline-state.md` requires a single `[>]` line; the dispatcher locates it, resolves the step file, and becomes the step body (`agents/orchestrator.md:58-66`; `templates/dispatcher/.claude/commands/next-step.md:11-17`). A missing `[>]` is a hard failure mode (`agents/orchestrator.md:86`). Redo = move `[>]` up and un-check downstream `[x]` markers (`agents/orchestrator.md:91-98`, `templates/pipeline-state.md:10`).
+- **Marker advancement is the step body's final action.** On success the step flips `[>]`→`[x]`, next `[ ]`→`[>]`, and updates `last_updated` (`agents/orchestrator.md:66`). Every one of the 15 step files carries one "exit without advancing the pipeline marker" line in its open-questions boilerplate; `character-extraction.md:84-86` and `metaphor-fix.md:66` carry additional marker language. There is also a latent inconsistency to fix: `agents/orchestrator.md:48` says `last_updated` is "updated by the dispatcher on every advance" while `:66` correctly assigns it to the step body.
+- **The freshness machinery M7.6 asks for already exists — only the framing is positional.** Each fix/apply step already checks its paired report's `Reviewed-draft:` stamp against `<latest-draft>` at step start and blocks on mismatch (`agents/steps/compliance-fix.md:31`, `agents/steps/prose-fix.md:26`). The orchestrator section that states the rule is titled and framed as *adjacency* — "No prose-advancing step may run between a report and its paired fix" (`agents/orchestrator.md:108-123`). M7.6 is a reframing of that section plus a name-sweep, not new machinery. The name "report→fix adjacency invariant" is referenced in `agents/steps/prose-pass.md:277`, `agents/steps/prose-fix.md:26`, `agents/steps/compliance-fix.md:99`, and several other step files (`git grep -n adjacency agents/`).
+- **Step frontmatter is descriptive, not machine-readable.** `inputs`/`outputs` are explicitly "descriptive; nothing enforces it" (`agents/orchestrator.md:32`). Nothing distinguishes a required file from an optional one, a prose draft from a side artifact, or an input that carries human annotations (`templates/step-workflow.md:9-16`). ROADMAP M7.3 says preconditions are declared "**in addition to** descriptive `inputs` / `outputs`" (`ROADMAP.md:31-34`) — an additive block, not a rewrite of `inputs`.
+- **The check script and CI tolerate the grammar change for free.** `check-pipeline-state.sh` parses list items with marker `[ ]`, `[>]`, or `[x]` and never requires a `[>]` (`scripts/check-pipeline-state.sh:18-22`, `:87`). The repo's own CI runs the exhaustive check on the template, the resolvable check on the smoke fixture, and an ordered-equality diff of the two step lists (`.github/workflows/pipeline-state-check.yml:14-34`); the consumer CI template runs resolvable-only (`templates/dispatcher/.github/workflows/pipeline-state-check.yml`). None of these parse the marker semantics, so retiring `[>]` costs zero script/CI edits — but the two state files must keep identical ordered step lists.
+- **The dispatcher surface is two host files installed by `install.sh`.** `templates/dispatcher/.claude/commands/next-step.md` and `templates/dispatcher/.opencode/agents/next-step.md` are thin adapters over the orchestrator contract, copied (always overwritten) by `install.sh:66-109`. New command files must be added to `install.sh`'s source list, destination copies, and printfs, and to the smoke README's expected-layout listing (`examples/smoke/README.md:40-53`).
+- **`AGENTS.md` describes the cursor model in three places.** The "How Amanuensis works" paragraph says the dispatcher "locates the next step … advances the marker, and exits" (`AGENTS.md:25`); the Core documents list names the two dispatcher files (`AGENTS.md:37-38`); Setup names the two installed copies (`AGENTS.md:44`).
+- **The smoke fixture only exercises the happy path.** `examples/smoke/README.md` runs `/next-step` once against `character_extraction` and resets with `git checkout` + `git clean -fd` (`examples/smoke/README.md:65-98`). M7.9's rerun/stale/out-of-order verifications need hand-authored artifacts (a fake `drafts/attempt-01/` with stamped `reviewer-actions.md`); those land in untracked paths so the existing reset procedure already cleans them.
+- **`review_required` stays a signal, not a gate.** The dispatcher explicitly does not enforce review (`agents/orchestrator.md:30`, `:71`); M7 does not change that. Dispatcher-level stale/review blocking is M9.6 (`ROADMAP.md:145-146`), and override recording is M9.5 (`ROADMAP.md:141-143`) — M7 defines the *terms* and leaves those mechanisms deferred.
 
 ## Definition of done
 
 The Sprint is complete when:
 
-1. ROADMAP.md tasks M6.1-M6.4 are checked.
-2. `agents/storyboard-schema.md` defines a `## Reader takeaway` (`reader_takeaway`) markdown section: what the reader must understand, feel, or infer by the beat's end. It is held to the specification-not-prose discipline with its own Specification vs. Prose example pair, is default-to-fill (not optional), and is explicitly distinguished from `concealment_from_reader` (its inverse) and `knowledge_delta` (character knowledge, not reader comprehension). The Anti-patterns section gains the corresponding entries.
-3. `agents/steps/storyboarding.md` instructs the step to populate `reader_takeaway` for every block and names an empty `reader_takeaway` as a default-to-fill anti-pattern, mirroring the existing empty-`concealment_from_reader` anti-pattern.
-4. `agents/steps/storyboard-review.md` exists with frontmatter declaring `step_id: storyboard_review`, `review_required: true`, inputs `<chapter-folder>/storyboards/*-storyboard.md` + `<chapter-folder>/scene-list.md`, and output `<chapter-folder>/storyboards/storyboard-review.md`. Its body defines the read-only, report-only, advisory posture and the three checks below, and produces a per-block report plus a summary with no fix proposals and no annotation grammar.
-5. The three checks are documented in `storyboard-review.md`:
-   - **Takeaway supported** — each beat's `reader_takeaway` is supported by that beat's own content (`beat` description, `must_preserve`, `canon_active`, character-state fields); an asserted takeaway with no on-page support is flagged.
-   - **Reveal setup** — for each beat whose takeaway depends on the reader already understanding something (including `beat_type: reveal` beats), an earlier beat in the chapter's ordered set establishes it and it is not still under `concealment_from_reader` at that point; missing setup is flagged.
-   - **Takeaway/concealment consistency guard** — a beat's `reader_takeaway` must not require the reader to grasp something the same beat's `concealment_from_reader` forbids naming or clarifying; a contradiction is flagged.
-6. `storyboard_review` is inserted after `storyboarding` (and before `drafting`) in both `templates/pipeline-state.md` and `examples/smoke/pipeline-state.md`, and `scripts/check-pipeline-state.sh` passes in both resolvable (default) and `--exhaustive` modes against `templates/pipeline-state.md` and `agents/steps/`.
-7. `AGENTS.md` gains a catalog entry for `agents/steps/storyboard-review.md` between the `storyboarding` and `drafting` entries, and the `storyboarding` entry notes it now populates `reader_takeaway`.
-8. Verification greps confirm the wiring:
-   - `git grep -n "reader_takeaway\|Reader takeaway" -- '*.md'` shows the field in `storyboard-schema.md`, `storyboarding.md`, and `storyboard-review.md`.
-   - `git grep -nE "storyboard_review|storyboard-review\.md" -- '*.md'` shows the step referenced from the catalog, both canonical step lists, and its own step file.
-9. No prose-advancing or downstream step is edited by this Sprint. `git diff --stat` for `agents/steps/` shows only `storyboarding.md` and the new `storyboard-review.md`; `drafting.md` and everything after it are untouched. The canonical step *order* is unchanged apart from the `storyboard_review` insertion between `storyboarding` and `drafting`.
+1. ROADMAP.md tasks M7.1–M7.9 are checked.
+2. `agents/orchestrator.md` opens its dispatcher story with an **Execution model** section defining, in one place: `runnable`, `blocked`, `stale`, `superseded`, `active`, `recommended next`, and `explicit override` (definitions locked in Conventions below). No section of the file requires a single `[>]` cursor, describes moving a marker forward/backward, or describes redo-by-rewinding; the "Re-running a step" section is replaced by selective-rerun semantics (`run_step` any step whose preconditions hold; completed steps stay `[x]`).
+3. The orchestrator's step workflow contract defines the `preconditions:` frontmatter block (schema locked in Conventions) alongside the still-descriptive `inputs`/`outputs`, and the dispatcher contract specifies: two entry points (`run_step <step_id>` and the recommended-next convenience), required-precondition existence checking before the step body loads, the updated failure-mode list, and the new completion action (step marks its own line `[x]` and updates `last_updated`; blocked exit touches nothing).
+4. The `## Report→fix adjacency invariant` section is renamed to `## Report→fix freshness invariant` with a "(formerly the report→fix adjacency invariant)" note, and its body states the rule in artifact-freshness terms: a fix/apply step may consume its paired report only when the report's `Reviewed-draft:` stamp names the current `<latest-draft>`, unless the human explicitly overrides. Stamp mechanics, the pairs list, and the overwrite-on-regenerate behavior are unchanged.
+5. `templates/pipeline-state.md` and `examples/smoke/pipeline-state.md` are reframed as recipe/status files: header prose describes `[x]`/`[ ]` semantics and selective execution, the redo-by-marker instructions are gone, every step line is `[ ]`, and the two ordered step lists remain identical.
+6. `templates/step-workflow.md` and all 15 `agents/steps/*.md` files declare a `preconditions:` block; no step file says "advancing the pipeline marker" (or any marker-advance variant) — the blocked-exit boilerplate says the step exits without recording completion; no step file references the invariant by its old "adjacency" name.
+7. Four dispatcher files exist under `templates/dispatcher/`: `run-step` and `next-step` for each host, with `run-step` holding the core procedure and `next-step` a thin recommended-next layer over it. `install.sh` copies all four (always overwrite). Behavior and safety checks match across hosts (M7.8).
+8. `AGENTS.md`'s "How Amanuensis works" paragraph, Core documents list, and Setup section reflect the selective model and the four installed files.
+9. `examples/smoke/README.md` documents the M7.9 recipes: (a) default recipe runs in order via `/next-step`; (b) rerun of a completed step via `/run-step`; (c) a fix step blocks on a stale report; (d) a non-dependent step runs out of recipe order when its inputs are valid.
+10. `sh scripts/check-pipeline-state.sh --exhaustive templates/pipeline-state.md agents/steps` and `sh scripts/check-pipeline-state.sh examples/smoke/pipeline-state.md agents/steps` both pass, and the CI ordered-equality diff of the two step lists is empty.
+11. Verification greps confirm the sweep:
+    - `git grep -n "\[>\]" -- templates examples agents` returns hits only where `[>]` is described as a deprecated/legacy marker.
+    - `git grep -nE "advanc(e|es|ing) the (pipeline )?marker" -- agents templates` returns nothing.
+    - `git grep -c "preconditions:" agents/steps/*.md` shows all 15 step files.
+    - `git grep -n "adjacency" -- agents templates` returns only the "(formerly …)" note in `agents/orchestrator.md`.
+    - `git grep -ln "run-step" -- install.sh AGENTS.md templates examples` shows `install.sh`, `AGENTS.md`, both new dispatcher files, both rewritten `next-step` files, and the smoke README.
 
 ## Conventions adopted by this Sprint
 
-Locked at the start so individual tasks don't rediscover them.
+Locked at planning (the three starred items are owner decisions from this Sprint's planning session); tasks don't rediscover them.
 
-- **`reader_takeaway` is a markdown section, not frontmatter.** It carries narrative-as-specification content, and the schema mandates that all such content lives in markdown sections while frontmatter stays short and structured (`agents/storyboard-schema.md:61`). It is placed directly after `## Concealment from reader` so the two reader-facing axes sit together.
-- **`reader_takeaway` is comprehension, not character knowledge and not canon content.** It states what the *reader* must understand/feel/infer by the beat's end — distinct from `knowledge_delta` (what a *character* learns; a different axis, exactly like the `concealment_from_reader` vs `concealment_from_characters` split) and from `must_preserve` (canon-mandated content that must physically appear in the prose). The schema disambiguates all three explicitly and adds a "reader_takeaway duplicating knowledge_delta" anti-pattern mirroring the existing concealment two-axis anti-pattern (`agents/storyboard-schema.md:164`).
-- **`reader_takeaway` is default-to-fill, held to specification-not-prose.** Like `concealment_from_reader`, an empty field is a defect to be justified, not a default (`agents/storyboard-schema.md:94`, `:161`; `agents/steps/storyboarding.md:58`). And like every field, a `reader_takeaway` that reads like prose is rewritten as specification (`agents/storyboard-schema.md:30`, `:158`).
-- **`storyboard_review` is advisory-only: report, no annotation grammar, no fix step.** `storyboard_review_fix` is deferred (`ROADMAP.md:214`, `:264`), so there is no consumer for FIX/SKIP/ESCALATE annotations. Per Sprint 10's locked "no unused annotation surface" rule (do not build annotation grammar until a consumer exists — the reasoning that kept bulk headers out of `prose_pass`), the report is pure findings a human reads and acts on by hand. When `storyboard_review_fix` is planned, that milestone adds the grammar — exactly as `prose_pass`'s annotation grammar landed alongside `prose_fix` in Sprint 10, not before.
-- **`storyboard_review` is outside the report→fix adjacency invariant.** It reviews a pre-draft artifact: no `<latest-draft>`, no `drafts/<latest-attempt>/` folder, nothing to stamp. The invariant governs report/fix pairs over a draft (`agents/orchestrator.md:108-123`); `storyboard_review` has neither a draft nor a paired fix, so it neither writes a `Reviewed-draft:` stamp nor participates in the invariant. No edit to `agents/orchestrator.md` is required.
-- **`storyboard_review` reads only storyboards and the scene list.** It does not read canon source files (each block's fields are self-contained for what it evaluates — a missing field is a storyboard defect to note, mirroring `compliance_report`'s discipline at `agents/steps/compliance-report.md:24`, `:117`) and it does not read any draft (none exists). `scene-list.md` is read only for canonical scene/beat ordering and scene-level reveal intent.
-- **The report lives beside the storyboards it reviews.** Output is `<chapter-folder>/storyboards/storyboard-review.md`. The other report steps write into `drafts/<latest-attempt>/` because they review a draft; `storyboard_review` runs before any draft attempt exists, so its report sits in the `storyboards/` folder it reviews.
-- **`review_required: true`, but the step never blocks drafting.** The report is the human review artifact; the human decides whether to revise storyboards before drafting. As everywhere in the pipeline, nothing is enforced — the orchestrator does not gate on review (`agents/orchestrator.md:30`, `:127`); judgment is the human's.
-- **The reveal-setup check is within-chapter only.** Cross-chapter/story-level reveal tracking is deferred (`ROADMAP.md:214`, `:265`). The check reasons only over the current chapter's ordered storyboard blocks.
-- **Report format mirrors `compliance_report`.** Per-block entries (`CLEAN` on one line, or a list of typed findings), a per-run dated header, and a closing summary that tallies findings and may note a pattern-level observation but proposes no fixes (`agents/steps/compliance-report.md:34-103`).
+- **★ State grammar: `[x]`/`[ ]` only; `[>]` is retired.** A step line is `[x]` (completed at least once) or `[ ]` (never completed). `[>]` in a pre-M7 file is read as a deprecated synonym of `[ ]` — which is exactly what recommended-next resolution yields for it — so existing consuming projects need no migration and `check-pipeline-state.sh` (which already accepts all three markers) needs no change. Richer status tokens (stale/superseded markers) were rejected: they duplicate artifact-derived state into a file where it can drift, and M9 puts freshness in artifact stamps instead. Templates and docs stop emitting `[>]`; parsers keep tolerating it.
+- **Recommended next = the first non-`[x]` step in the recipe list**, resolved at invocation time. No cursor, no stored pointer. The recipe order in `pipeline-state.md` remains the recommended happy path, not the only legal path.
+- **★ Command surface: add `run-step`, keep `next-step`.** `/run-step <step_id>` (Claude Code, argument via the slash-command argument mechanism) and a `run-step` OpenCode agent (step_id taken from the invoking message) are the core mechanism. `/next-step` / the `next-step` agent survive as the convenience layer: resolve the first non-`[x]` step, then proceed exactly as `run-step` would for that step_id — same precondition checks, same failure modes, one step per invocation. This preserves installed muscle memory and matches ROADMAP's two-entry-point wording (`ROADMAP.md:36-43`). A single command with an optional argument was rejected: it buries the model shift and makes OpenCode parity clunkier.
+- **★ The M7.1 design note lands inside `agents/orchestrator.md`** as the new Execution model section, not as a separate design doc. orchestrator.md is already the canonical contract and M7.7 rewrites it anyway; a separate note would become a second source of truth, which M1's single-sourcing rule exists to prevent. (Sets the default for M8.1/M9.1 design notes: design lands in the doc that owns the contract, unless that doc doesn't exist yet.)
+- **Vocabulary (M7.1), locked definitions.**
+  - `runnable` — every `required: true` precondition of the step resolves to at least one existing file.
+  - `blocked` — not runnable; at least one required precondition is missing. The dispatcher reports what's missing and stops without loading the step body.
+  - `stale` — a side artifact whose `Reviewed-draft:` stamp names a draft other than the current `<latest-draft>`. Detected by the consuming step body at step start (as today), not by the dispatcher (that is M9.6).
+  - `superseded` — a draft version other than `<latest-draft>`, and any side artifact stamped against one. (Full lineage semantics — active heads, abandoned branches — are M8.1's to define; M7 uses only this minimal sense.)
+  - `active` — the draft currently resolved by `<latest-draft>` and the side artifacts stamped against it.
+  - `recommended next` — the first non-`[x]` step in the recipe list.
+  - `explicit override` — a deliberate human instruction to proceed despite a stale or blocked condition, always human-visible and never assumed. M7 defines the term; the recording mechanism (where the override is written down) is deferred to M9.5, and until then the existing path stands: the step blocks to `open-questions.md` and the human resolves it there (`agents/orchestrator.md:123`).
+- **`preconditions:` schema (M7.3).** An additive frontmatter block — `inputs`/`outputs` stay descriptive prose-facing lists (ROADMAP: "in addition to", `ROADMAP.md:31-34`). One entry per input, all keys explicit (no defaults — the block exists to be machine-read, so explicitness beats brevity):
+
+  ```yaml
+  preconditions:
+    - path: <chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md
+      kind: side_artifact        # source | prose_draft | side_artifact
+      required: true
+      review_sensitive: true
+  ```
+
+  - `kind: prose_draft` — a versioned draft resolved via `<latest-draft>`; `kind: side_artifact` — a report/annotation artifact produced by another step (carries or inherits a `Reviewed-draft:` stamp); `kind: source` — everything else the step reads (plans, scene lists, storyboards, canon, voice, config).
+  - `required: true` means the step cannot start safely without it; `required: false` marks conditional-use inputs (canonical example: `metaphor_fix` needs `voice.md` only when a `WORKSHOP` entry exists, `agents/steps/metaphor-fix.md:26`).
+  - `review_sensitive: true` marks inputs expected to carry human annotations/review before consumption (the annotated reports consumed by `compliance_fix`, `prose_fix`, `metaphor_fix`, `metaphor_apply`, `anti_ai_fix`).
+  - Existence semantics: a glob pattern resolves if ≥1 file matches; a `<latest-draft>` path resolves if ≥1 `draft-vNN.md` exists in the latest attempt; placeholder resolution follows `agents/project-layouts.md` as today.
+- **The dispatcher checks existence only.** `runnable` is purely "required files exist". Freshness (`Reviewed-draft:` stamps), annotation-completeness, and review state remain step-body checks exactly as today — lifting machine-checkable ones into the dispatcher is M9.6 (`ROADMAP.md:145-146`). This keeps M7's dispatcher change small and honest.
+- **Completion action replaces marker advancement.** On success the step body's final action is to edit `pipeline-state.md`: set its own step line to `[x]` (a no-op if already `[x]` — reruns don't move anything) and update `last_updated`. On a blocked exit it touches `pipeline-state.md` not at all. Rerunning a step never un-checks downstream steps; artifact freshness (stamps now, M9 generally) is what protects downstream consumers, not checkbox state.
+- **`run_step` for a step_id not listed in the recipe is a stop-and-ask failure mode.** The dispatcher does not guess and does not run unlisted steps: the human either mistyped or needs to add the step line to the recipe first. This matches the existing no-guessing posture (`agents/orchestrator.md:80-89`). Likewise, `next-step` with every step `[x]` reports the recipe complete and stops.
+- **The invariant is renamed, not weakened.** "Report→fix freshness invariant (formerly the report→fix adjacency invariant)": a fix/apply step may consume its paired report only when the report was produced against the current `<latest-draft>`, verified via the `Reviewed-draft:` stamp at step start, human override excepted. The pairs list, stamp-overwrite-on-regenerate behavior, and `metaphor_fix`'s stamp-preserving role (`agents/orchestrator.md:119`) carry over verbatim. The full generalization to an artifact-state model is M9 (`ROADMAP.md:152-154`); ROADMAP's historical mentions of "adjacency" in completed milestones are left as history.
+- **Draft lineage is out of scope.** `<latest-draft>` remains the highest-numbered `draft-vNN.md` (M4 rule). No manifest-head resolution, no supersession marking — that is M8 (`ROADMAP.md:63-67`).
+- **Smoke recipes may hand-author untracked fixture artifacts.** The stale/out-of-order recipes fabricate a minimal `drafts/attempt-01/` (drafts plus a stamped, annotated `reviewer-actions.md`) inside `examples/smoke/`; these live in untracked paths so the existing `git checkout` + `git clean -fd` reset (`examples/smoke/README.md:89-98`) already removes them. Nothing new is committed to the fixture.
 
 ---
 
 ## Tasks
 
-### Task 1 — Add the `reader_takeaway` field to `storyboard-schema.md`
+### Task 1 — Rewrite `agents/orchestrator.md` around the selective execution model
 
-- [x] Done
+- [ ] Done
 
-**Goal.** Give the schema a comprehension axis: what the reader must take away from a beat, as the positive counterpart to `concealment_from_reader`. Closes **M6.1**.
+**Goal.** Land the M7.1 design as the orchestrator contract: execution-model vocabulary, recipe/status state semantics, two-entry-point dispatcher behavior with precondition checking, the preconditions schema, and the freshness reframe of the invariant. Closes **M7.1**, **M7.7**, and the contract side of **M7.2/M7.3/M7.6**.
 
 **Requirements.**
 
-- In `agents/storyboard-schema.md`, add a `## Reader takeaway` markdown section (referenced in prose as `reader_takeaway`) directly after `## Concealment from reader` (`agents/storyboard-schema.md:92-99`).
-  - Define it as: what the reader must understand, feel, or infer by the beat's end — the reader's comprehension target for the beat.
-  - Hold it to the governing specification-not-prose discipline and give it a Specification vs. Prose (do-not-use) example pair in the same format as the surrounding fields.
-  - State that it is default-to-fill (an empty field is a defect to justify, not a default), echoing the `concealment_from_reader` language (`:94`).
-  - Explicitly distinguish it from `concealment_from_reader` (its inverse — what the reader must *not* understand yet) and from `knowledge_delta` (what a *character* learns, a different axis).
-- In the Anti-patterns section (`agents/storyboard-schema.md:154-166`), add entries mirroring the existing ones:
-  - **Empty reader_takeaway** — default to filling it; an empty field is only correct after confirming the beat genuinely asks nothing of the reader's understanding (mirror the empty-`concealment_from_reader` anti-pattern at `:161`).
-  - **reader_takeaway as prose** — it is a specification of what the reader should grasp, not a sample of the sentences that will make them grasp it (mirror the field-level prose anti-pattern at `:158`).
-  - **reader_takeaway duplicating knowledge_delta** — reader comprehension and character knowledge are different axes; keep them separate (mirror the concealment two-axis anti-pattern at `:164`).
-- Do **not** add `reader_takeaway` to the YAML frontmatter or add any new frontmatter key; all narrative content stays in markdown sections (`:61`).
-- Do **not** add a cross-beat dependency field, reveal-id, or any second field; M6.1 adds exactly one field. `storyboard_review`'s reveal-setup check infers ordering from `beat_index`/`scene_ref` and `scene-list.md` (see Task 3).
+- Add an **Execution model** section (before the current "Step workflow contract", after "Components") defining the seven locked terms exactly as the Conventions section above states them, and stating the model in one paragraph: correctness is governed by artifact preconditions, not by sequence position; the recipe order is the recommended path, not the only legal one; judgment lives with the human and the step bodies.
+- Rework **State file format** (`agents/orchestrator.md:44-52`): `[x]`/`[ ]` semantics, no cursor, `[>]` documented once as a deprecated legacy marker read as `[ ]`, recommended-next = first non-`[x]`. Fix the `last_updated` attribution inconsistency (`:48` vs `:66`) — the step body updates it.
+- Rework **Dispatcher behavior** (`:54-89`) around `run_step <step_id>` as the core operation: resolve the step workflow file (same underscore→dash rule, `:9`), parse its `preconditions:` block, verify every `required: true` entry resolves to at least one existing file, then follow the step body in the same session (still one step per invocation, still no review enforcement, still no multi-step runs). Define `next_recommended_step` as the layer that resolves the first non-`[x]` step_id and proceeds identically. Update the **Failure modes** list: drop the "no `[>]` marker" mode; add — requested step_id not listed in the recipe; a required precondition missing (dispatcher names the missing file(s) and stops); recipe complete (next-step with all `[x]`). Keep missing/malformed state file and missing step file modes.
+- Replace marker advancement with the **completion action** (Conventions above) and replace the **Re-running a step** section (`:91-98`): rerun = invoke `run_step` for that step; completed steps stay `[x]`; downstream checkboxes are never rewound; freshness stamps protect downstream consumers.
+- Extend the **Step workflow contract** section (`:13-42`) with the `preconditions:` schema exactly as locked in Conventions (keys, kind values, required/optional meaning, review_sensitive meaning, existence semantics), keeping `inputs`/`outputs` descriptive.
+- Rename and reword the invariant section (`:108-123`) per Conventions ("Report→fix freshness invariant (formerly the report→fix adjacency invariant)"). Keep the pairs list, the stamp-overwrite rules, and the stale-exit-is-a-human-decision paragraph; strip the position-based framing ("No prose-advancing step may run between…" becomes a freshness statement).
+- Update **What the orchestrator does not do** (`:125-133`): it now *does* check required-input existence at dispatch, but still does not enforce review, does not detect staleness at the dispatcher level (M9.6), does not enforce the recipe as the only order, and does not coordinate concurrent work.
+- Remove all forward/back/redo movement language file-wide (M7.7).
 
-**Done when.** `agents/storyboard-schema.md` defines `reader_takeaway` as a default-to-fill markdown section with a Specification/Prose example pair, cleanly distinguished from `concealment_from_reader` and `knowledge_delta`, and the Anti-patterns section carries the three new entries. No frontmatter change and no second field.
+**Done when.** `agents/orchestrator.md` reads as a selective-execution contract: the seven terms are defined once, no text requires or moves a cursor, the dispatcher contract covers both entry points with existence-checking and the updated failure modes, the preconditions schema is normative, and `git grep -n "adjacency" agents/orchestrator.md` returns only the "(formerly …)" note.
 
 ---
 
-### Task 2 — Populate `reader_takeaway` in `storyboarding.md`
+### Task 2 — Reframe both `pipeline-state.md` files as recipe/status files
 
-- [x] Done
+- [ ] Done
 
-**Goal.** Make the storyboarding step fill the new field for every block and treat an empty one as an anti-pattern. Closes **M6.2**.
+**Goal.** Make the canonical state template and the smoke fixture match the new model. Closes the file side of **M7.2**.
 
 **Requirements.**
 
-- In `agents/steps/storyboarding.md`, update the Behavior/What-a-Storyboard-Block-Is discussion (`agents/steps/storyboarding.md:34-48`) so the step is instructed to populate `reader_takeaway` for every block, pointing at `agents/storyboard-schema.md` for the field definition (the step body defers field definitions to the schema — `:40` — so do not restate the full definition here).
-- In the Anti-Patterns section (`agents/steps/storyboarding.md:52-60`), add an **Empty reader_takeaway** anti-pattern that mirrors the existing **Empty concealment fields** entry (`:58`): default to filling it; leaving it blank is only correct after confirming the beat asks nothing of the reader's understanding.
-- Keep the step's Independent-Draftability framing intact (`:44-48`) — `reader_takeaway` is one more field the block must carry, not a new input dependency.
-- Do not change the step's frontmatter inputs/outputs; the field lives inside the storyboard block files the step already writes.
+- `templates/pipeline-state.md`: rewrite the header prose (`:8-10`) — the file is the project's recipe (recommended order) and status record (`[x]` completed at least once, `[ ]` not yet); steps are invoked selectively with `run-step`, or in recommended order with `next-step`; remove the redo-by-marker instructions entirely. Change `- [>] character_extraction` (`:16`) to `- [ ] character_extraction`. Keep the canonical-step-set comment (`:14`) and the frontmatter unchanged.
+- `examples/smoke/pipeline-state.md`: identical reframing (`:8-14`); the fixture's list already mirrors the template — keep the ordered lists identical (the CI ordered-equality check, `.github/workflows/pipeline-state-check.yml:25-34`, must stay green).
+- Do not rename, add, or reorder any step line in either file.
 
-**Done when.** `agents/steps/storyboarding.md` tells the step to populate `reader_takeaway` for every block and flags an empty `reader_takeaway` as a default-to-fill anti-pattern, consistent with the schema's Task 1 wording.
+**Done when.** Neither file contains `[>]` or redo instructions; both describe recipe/status semantics; `sh scripts/check-pipeline-state.sh --exhaustive templates/pipeline-state.md agents/steps` and `sh scripts/check-pipeline-state.sh examples/smoke/pipeline-state.md agents/steps` pass; the two ordered step lists are identical.
 
 ---
 
-### Task 3 — Write `agents/steps/storyboard-review.md`
+### Task 3 — Preconditions block + completion-language sweep across the step contract files
 
-- [x] Done
+- [ ] Done
 
-**Goal.** Ship the advisory review step that flags reader-reveal coverage gaps in a chapter's storyboards. Closes **M6.3**.
+**Goal.** Give every step machine-readable preconditions and retire marker-advance language from the step bodies. Closes **M7.3** and the step-file side of **M7.6**.
 
 **Requirements.**
 
-- Create `agents/steps/storyboard-review.md` with frontmatter:
+- `templates/step-workflow.md`: add a commented `preconditions:` block to the frontmatter template (mirroring the existing commented style, `:1-17`) documenting the schema keys; update the Open questions boilerplate (`:39-41`) to the new blocked-exit wording (exit without recording completion in `pipeline-state.md`).
+- For each of the 15 files in `agents/steps/`: derive the `preconditions:` block from the existing frontmatter `inputs` list and the body's Inputs section, classifying each entry per the locked schema. Worked example for `compliance-fix.md` (from `agents/steps/compliance-fix.md:4-7`, `:24-35`):
+
   ```yaml
-  ---
-  step_id: storyboard_review
-  review_required: true
-  inputs:
-    - <chapter-folder>/storyboards/*-storyboard.md
-    - <chapter-folder>/scene-list.md
-  outputs:
-    - <chapter-folder>/storyboards/storyboard-review.md
-  ---
+  preconditions:
+    - path: <chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md
+      kind: side_artifact
+      required: true
+      review_sensitive: true
+    - path: <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
+      kind: prose_draft
+      required: true
+      review_sensitive: false
+    - path: <chapter-folder>/storyboards/*-storyboard.md
+      kind: source
+      required: false
+      review_sensitive: false
   ```
-- Include a `See agents/orchestrator.md for the step workflow contract.` reference line at the top of the body, mirroring the other step files (`agents/steps/compliance-report.md:11`).
-- **Purpose.** State that `storyboard_review` is a read-only, report-only, advisory pass over a chapter's storyboard blocks that flags where the reader is under-served: takeaways the storyboard does not support, reveals with no prior setup, and takeaways that contradict their own concealment. It runs after `storyboarding` and before `drafting`. It is purely diagnostic — it proposes no fixes and there is no paired fix step (a `storyboard_review_fix` is a future milestone); the human reads the report and revises the storyboards by hand.
-- **Inputs.** Explain each input. Read all storyboard blocks for the chapter and `scene-list.md` for canonical scene/beat ordering and scene-level reveal intent. State explicitly that it does **not** read any draft (none exists at this stage) and does **not** read canon source files — each block's fields are self-contained for what this step evaluates; a field that is missing or unparseable is a storyboard defect to note, not a reason to reach for source files (mirror `agents/steps/compliance-report.md:24`, `:117`).
-- **Behavior — the three checks.** Document each, block by block:
-  - **Check 1: Takeaway supported.** For each block, confirm the beat's own content — the `beat` description, `must_preserve`, `canon_active`, and character-state fields — gives the drafter the material to land the block's `reader_takeaway`. If the takeaway asserts an understanding the beat provides no on-page support for, record a finding.
-  - **Check 2: Reveal setup.** Order the chapter's blocks (by `scene-list.md` scene order, then `beat_index`). For each block whose `reader_takeaway` depends on the reader already understanding something — including every `beat_type: reveal` block — confirm an earlier block establishes that understanding (via its `reader_takeaway` or content) and that the depended-on fact is not still listed under `concealment_from_reader` at the earlier point. If no prior setup exists, record a finding. This check is within-chapter only.
-  - **Check 3: Takeaway/concealment consistency guard.** For each block, confirm its `reader_takeaway` does not require the reader to grasp something the same block's `concealment_from_reader` forbids naming or clarifying. If they conflict, record a finding.
-- **Output file format.** Mirror `compliance_report` (`agents/steps/compliance-report.md:30-103`): a per-run dated header (`## Storyboard Review — [chapter/scene id], [date]`); one entry per block that is either a single `### Block NNN — CLEAN` line or a list of typed findings; and a closing `### Summary` tallying findings by check and noting any pattern-level observation. Findings only — never record passing checks alongside findings. Use finding labels such as:
-  - `UNSUPPORTED (reader_takeaway): [beat] — [takeaway] has no on-page support in the beat's content`
-  - `UNSETUP (reveal): [beat] — depends on [understanding] with no prior setup in the chapter`
-  - `CONTRADICTION (reader_takeaway vs concealment_from_reader): [beat] — takeaway "[…]" requires naming what concealment forbids "[…]"`
-  Do **not** include a `Reviewed-draft:` stamp (there is no draft) and do **not** add any FIX/SKIP/ESCALATE annotation grammar (advisory-only; no consumer exists).
-- **Constraints.** Read-only over the storyboards — never rewrite a storyboard block. Propose no fixes; the summary is a diagnostic, not a recommendation (mirror `agents/steps/compliance-report.md:103`). Do not reason across chapters. Do not read the draft or canon source files.
-- **Outputs.** `<chapter-folder>/storyboards/storyboard-review.md` — the advisory report, written beside the storyboards it reviews (there is no `drafts/<latest-attempt>/` folder yet). Describe the file the way `compliance_report`'s Outputs section describes `reviewer-actions.md` (`agents/steps/compliance-report.md:105-107`), minus the stamp and the annotation contract.
-- **Open questions handling.** Standard blocker path (mirror `agents/steps/compliance-report.md:119-121`): if the step cannot complete — no storyboard blocks, a block whose fields cannot be parsed, or no `scene-list.md` — append the blocker to the project-root `open-questions.md` and exit without advancing the marker. Do not fabricate inputs and do not write a partial report.
-- **Anti-patterns.** Include at least: proposing fixes or rewriting storyboards (this step is advisory and read-only); recording passing checks alongside findings (a block entry is either `CLEAN` or findings-only); reaching for canon source files when a block field is thin (that is a storyboard defect to note); reasoning across chapters (within-chapter only); adding a `Reviewed-draft:` stamp or annotation grammar (neither applies to a pre-draft advisory report).
 
-**Done when.** A single `agents/steps/storyboard-review.md` implements the read-only advisory pass with the three checks, mirrors `compliance_report`'s report shape (dated header, per-block `CLEAN`/findings, summary, no fixes), writes its report beside the storyboards, carries no draft stamp or annotation grammar, and honors the standard open-questions blocker path.
+  Classification anchors: annotated reports consumed by fix/apply steps (`reviewer-actions.md`, `prose-pass.md`, `metaphors.md`, `anti-ai.md`) are `side_artifact` + `review_sensitive: true`; `<latest-draft>` inputs are `prose_draft`; plans, scene lists, storyboards, canon, character files, `voice.md`, and config are `source`; conditional-use inputs are `required: false` (locked example: `metaphor_fix`'s `voice.md`, `agents/steps/metaphor-fix.md:26`; use body language like `compliance_fix`'s "read only the blocks referenced by FIX entries", `:33`, to judge others). Do not change any `inputs`/`outputs` list — the new block is additive.
+- Sweep completion language in the same files: every "exit without advancing the pipeline marker" (one per step file; see also `character-extraction.md:84-86`, `scene-generation.md:97-102`, `metaphor-fix.md:66`) becomes the new wording — on a blocker the step exits without recording completion in `pipeline-state.md`; on success its final action marks its own step line `[x]` and updates `last_updated`. Keep the surrounding boilerplate shape (open-questions append, no fabricated inputs, re-run after the human resolves).
+- Sweep invariant-name references in step files (`prose-pass.md:277`, `prose-fix.md:26`, `compliance-fix.md:99`, and the other hits of `git grep -n adjacency agents/steps`) to "report→fix freshness invariant", keeping each cross-reference pointed at `agents/orchestrator.md` as the canonical statement.
+- No other body changes: step behavior, inputs read, outputs written, and stamp checks are all unchanged this Sprint.
+
+**Done when.** All 15 step files and the template carry a schema-conformant `preconditions:` block; `git grep -nE "advanc(e|es|ing) the (pipeline )?marker" -- agents templates` returns nothing; `git grep -n adjacency agents/steps` returns nothing; both check-pipeline-state.sh modes still pass.
 
 ---
 
-### Task 4 — Insert `storyboard_review` into the canonical step list and catalog
+### Task 4 — `run-step` dispatchers, `next-step` as convenience layer, `install.sh`, `AGENTS.md`
 
-- [x] Done
+- [ ] Done
 
-**Goal.** Land the new step in the pipeline order, keep the pipeline-state check green, and make the step discoverable in the catalog. Closes **M6.4**.
+**Goal.** Ship the host command surface: explicit invocation on both hosts, the recommended-path convenience on both hosts, installed by `install.sh` and cataloged in `AGENTS.md`. Closes **M7.4**, **M7.5**, **M7.8**.
 
 **Requirements.**
 
-- Update `templates/pipeline-state.md`: insert `- [ ] storyboard_review` between `storyboarding` and `drafting` (`templates/pipeline-state.md:18-19`). Do not reorder any other step.
-- Update `examples/smoke/pipeline-state.md`: same insertion (`examples/smoke/pipeline-state.md:16-17`).
-- Update `AGENTS.md`:
-  - Add a catalog entry for `agents/steps/storyboard-review.md` between the `storyboarding` entry (`AGENTS.md:52`) and the `drafting` entry (`AGENTS.md:53`), in the one-line shape of the surrounding entries — describe it as an advisory, report-only pass that checks each beat's `reader_takeaway` is supported and its reveals have prior setup, producing `storyboards/storyboard-review.md`.
-  - Amend the `storyboarding` entry (`AGENTS.md:52`) to note it now also populates `reader_takeaway`.
-- Run `scripts/check-pipeline-state.sh templates/pipeline-state.md agents/steps` (resolvable/default mode) and confirm it exits `OK [resolvable]`. Then run `scripts/check-pipeline-state.sh --exhaustive templates/pipeline-state.md agents/steps` and confirm it exits `OK [exhaustive]` — the new step file must now be present in the step set with no missing-from-list error.
-- Do not edit `agents/orchestrator.md`: it points at `templates/pipeline-state.md` as the canonical list (`agents/orchestrator.md:46`), and `storyboard_review` is outside the report→fix invariant, so nothing in the orchestrator contract changes.
+- Create `templates/dispatcher/.claude/commands/run-step.md`: a thin adapter in the exact style of the current `next-step.md` (`templates/dispatcher/.claude/commands/next-step.md:5-7` — defer to `agents/orchestrator.md`, do not re-derive). It takes the step_id as the slash-command argument; procedure: read `pipeline-state.md`, confirm the step_id appears in the recipe list, resolve the workflow file (underscore→dash), parse `preconditions:`, verify `required: true` entries exist, then become the step body. Failure modes restated from the updated orchestrator contract (missing/malformed state file, step_id not in recipe, missing step file, missing required precondition — name the missing files and stop). Restate the completion action so a human reading the prompt knows what to expect (mirroring current `:17`).
+- Create `templates/dispatcher/.opencode/agents/run-step.md`: same contract at parity, with the OpenCode frontmatter copied from the existing agent (`templates/dispatcher/.opencode/agents/next-step.md:1-12`); the step_id arrives in the invoking message.
+- Rewrite both `next-step` files as the convenience layer: resolve the first non-`[x]` step in the recipe (treating a legacy `[>]` as `[ ]`), report which step was selected, then proceed identically to `run-step` for that step_id. If every step is `[x]`, report the recipe complete and stop. Keep the thin-adapter posture and the "canonical contract lives in orchestrator.md" framing.
+- `install.sh`: add the two new files as always-overwrite dispatcher sources/destinations alongside the existing pair (`install.sh:66-109` — source vars, existence loop, `cp`s, printfs).
+- `AGENTS.md`: update the "How Amanuensis works" paragraph (`:25`) to the selective model (dispatcher validates preconditions and runs the selected or recommended step; no marker advancement); add the two new dispatcher files to Core documents (`:37-38`); update Setup (`:44`) to name all four installed files.
+- Host parity is a requirement, not an aspiration: the two `run-step` files must express the same checks and failure modes, as the two `next-step` files do today (M7.8).
 
-**Done when.** Both `templates/pipeline-state.md` and `examples/smoke/pipeline-state.md` list `storyboard_review` between `storyboarding` and `drafting`; `AGENTS.md` has the new catalog entry and the amended `storyboarding` entry; `check-pipeline-state.sh` passes in both resolvable and `--exhaustive` modes.
+**Done when.** All four dispatcher files exist under `templates/dispatcher/`; `sh install.sh <tmpdir>` copies all four (verify against a scratch directory); `AGENTS.md` reflects the new surface; the Claude and OpenCode variants of each command match in behavior and safety checks.
 
 ---
 
-### Task 5 — Verification sweep, ROADMAP / SPRINT check-off
+### Task 5 — Smoke coverage for selective execution
 
-- [x] Done
+- [ ] Done
 
-**Goal.** Close the Sprint with a documented verification and mark the milestone complete. Closes the residual of **M6** and this Sprint.
+**Goal.** Document runnable verification recipes for the four M7.9 behaviors in the smoke fixture. Closes **M7.9**.
 
 **Requirements.**
 
-- Run the following verification greps and review each hit:
-  - `git grep -n "reader_takeaway\|Reader takeaway" -- '*.md'` — must show hits in `agents/storyboard-schema.md`, `agents/steps/storyboarding.md`, and `agents/steps/storyboard-review.md`.
-  - `git grep -nE "storyboard_review|storyboard-review\.md" -- '*.md'` — must show hits in `agents/steps/storyboard-review.md`, `templates/pipeline-state.md`, `examples/smoke/pipeline-state.md`, `AGENTS.md`, and `ROADMAP.md`.
-  - `git grep -nE "Reviewed-draft" -- 'agents/steps/storyboard-review.md'` — must return nothing (the advisory report carries no stamp).
-- Confirm `agents/steps/storyboard-review.md` reads cleanly against the shape of `agents/steps/compliance-report.md`: frontmatter, `See agents/orchestrator.md` reference line, Purpose, Inputs, Behavior (three checks), Output file format, Constraints, Outputs, Open questions handling, Anti-patterns.
-- Confirm no downstream step was edited: `git diff --stat` for `agents/steps/` shows only `storyboarding.md` and the new `storyboard-review.md`; `drafting.md` and every later step are untouched.
-- Run `scripts/check-pipeline-state.sh` in both resolvable and `--exhaustive` modes against `templates/pipeline-state.md` and `agents/steps/`; capture the exit status (`OK [resolvable]` and `OK [exhaustive]`).
-- Update `ROADMAP.md` M6.1-M6.4 to `[x]` only after Tasks 1-4 pass verification. Update the M6 notes section if any decision changed from what this SPRINT.md locks (it should not).
-- Check this SPRINT.md's per-task `- [ ]` boxes (Tasks 1-5) only after their acceptance conditions hold.
+- Update `examples/smoke/README.md` throughout for the new command surface: the expected post-install layout (`:40-53`) gains `.claude/commands/run-step.md` and `.opencode/agents/run-step.md`; the existing run instructions (`:65-88`) describe `/next-step` as the recommended-path convenience; the fixture's `pipeline-state.md` description (`:14`) drops cursor language.
+- Add four recipes (each with expected observable outcomes, in the style of the existing Run section):
+  1. **Default recipe in order.** `/next-step` on the fresh fixture selects `character_extraction` (first non-`[x]`), runs it, and marks it `[x]`. Identical in intent to today's smoke run.
+  2. **Rerun a completed step.** After recipe 1, `/run-step character_extraction` runs the step again; the line stays `[x]`; no downstream checkbox changes. (The mechanism under test is rerun-of-a-completed-step; using the fixture's only cheaply runnable step is deliberate.)
+  3. **Fix step blocks on a stale report.** Hand-author, untracked inside the fixture: `plot/drafts/attempt-01/draft-v01.md`, `draft-v02.md` (a line or two of filler prose each), and a `reviewer-actions.md` stamped `Reviewed-draft: draft-v01.md` containing one `FIX`-annotated violation entry (shape per `agents/steps/compliance-fix.md:24-31`). `/run-step compliance_fix` must detect the stale stamp, append the stale-report blocker to `open-questions.md`, write no `draft-v03.md`, and record no completion. (Follow `agents/project-layouts.md` for the short_story chapter-folder path; adjust the path above if it differs.)
+  4. **Non-dependent step runs out of recipe order.** Same fixture as recipe 3 but with the stamp reading `Reviewed-draft: draft-v02.md`: `/run-step compliance_fix` — with every upstream step still `[ ]` — passes the existence checks and the freshness check, applies the annotated fix, writes `draft-v03.md`, appends the manifest entry, and marks `compliance_fix` `[x]` out of order.
+- State that recipes 3–4 rely only on untracked files, so the existing reset (`git checkout` + `git clean -fd`, `:89-98`) restores the baseline; commit nothing new under `examples/smoke/` except the README (and the `pipeline-state.md` change owned by Task 2).
+- OpenCode section: state the same four recipes hold with the `run-step`/`next-step` agents at parity.
 
-**Done when.** The verification greps return the expected patterns, `check-pipeline-state.sh` passes in both modes, ROADMAP M6 checkboxes are ticked, and SPRINT.md task checkboxes reflect completed work.
+**Done when.** `examples/smoke/README.md` documents all four recipes with expected outcomes and the reset procedure covers them; no new tracked fixture files beyond the README edit.
+
+---
+
+### Task 6 — Verification sweep, ROADMAP / SPRINT check-off
+
+- [ ] Done
+
+**Goal.** Close the Sprint with documented verification and mark the milestone complete. Closes the residual of **M7**.
+
+**Requirements.**
+
+- Run and review every check in Definition of done items 10–11 (both check-pipeline-state.sh modes, the ordered-equality diff, and the five greps).
+- Run `sh install.sh` against a scratch directory and confirm all four dispatcher files land.
+- Confirm cross-file consistency by reading: the four dispatcher files against the updated `agents/orchestrator.md` contract (no drift, no re-derived rules); the `preconditions:` blocks of the five fix/apply steps against the Conventions classification anchors; `AGENTS.md` against the actual installed surface.
+- Confirm the untouched-surface claims: `git diff --stat` shows no changes to `scripts/check-pipeline-state.sh`, either `.github` workflow yml, `agents/project-layouts.md`, or any draft-lineage language (M8's territory).
+- Update `ROADMAP.md`: check M7.1–M7.9 only after Tasks 1–5 pass verification; amend the M7 notes if any decision drifted from what this SPRINT.md locks (it should not).
+- Check this SPRINT.md's per-task boxes (Tasks 1–6) only after their acceptance conditions hold.
+
+**Done when.** All greps and script runs return the expected results, ROADMAP M7 checkboxes are ticked, and SPRINT.md task boxes reflect completed work.
 
 ---
 
 ## Out of scope for this Sprint
 
-- **`storyboard_review_fix` apply step.** Deferred until M6 proves out (`ROADMAP.md:264`). This Sprint ships the advisory report only; there is no automatic consumer and no FIX/SKIP/ESCALATE annotation grammar. Adding that grammar is that future milestone's job.
-- **Cross-chapter / story-level reveal tracking.** The reveals ledger with buildup is deferred (`ROADMAP.md:265`). `storyboard_review` reasons within a single chapter only.
-- **Any new schema field beyond `reader_takeaway`.** No reveal-id, `depends_on`, or `sets_up` field. Reveal dependencies are inferred from `beat_type`, `reader_takeaway`, `concealment_from_reader`, and `scene-list.md` ordering.
-- **Any change to `concealment_from_reader`, `knowledge_delta`, `must_preserve`, or the rest of the schema.** M6 only adds `reader_takeaway` and disambiguates it from the neighbours.
-- **Any change to `drafting` or later steps, or to the report→fix adjacency invariant.** `storyboard_review` runs before drafting and is outside that invariant; drafting reads storyboards exactly as before. Verification confirms no downstream edits.
-- **Reordering the canonical step list beyond inserting `storyboard_review`.** No other step is renamed, reordered, or split.
-- **A `storyboard_review` counterpart in `opencode/`.** M6's tasks do not call for OpenCode host parity; if a consuming OpenCode project needs it, that is follow-up work, tracked separately.
+- **Draft lineage changes.** `<latest-draft>` stays highest-numbered `draft-vNN.md`; active heads, `supersedes`/`superseded_by`, and non-destructive rerun lineage are **M8** (`ROADMAP.md:71-111`).
+- **Dispatcher-level staleness/review blocking and override recording.** The dispatcher checks required-file existence only; stamp checks stay in step bodies. Surfacing machine-checkable stale/review blockers at dispatch is **M9.6**; override recording is **M9.5** (`ROADMAP.md:141-146`).
+- **New freshness stamps or artifact-state markers.** Only the existing `Reviewed-draft:` stamps participate; the standardized artifact-state model (fresh/stale/review_pending/…) is **M9**.
+- **Changes to `scripts/check-pipeline-state.sh` or either CI workflow.** The grammar already tolerates the new state files; the marker semantics are not parsed there.
+- **Step behavior changes.** No step reads or writes anything new besides its frontmatter block and the reworded boilerplate; prose handling, stamps, and outputs are byte-for-byte in spirit.
+- **Renaming `next-step`.** It survives as the convenience command; only its internals become a layer over the `run-step` procedure.
+- **Reverse ingestion, pre-writing, multi-work concurrency** — later milestones (`ROADMAP.md:158-173`, Deferred list).

@@ -78,16 +78,6 @@ This is the catalog of support files this repo *provides to* consuming projects;
 - `agents/meta.md` — meta notes about the agent guide.
 - `agents/metaphor/` — subagent prompt contracts (`metaphor-flatten.md`, `metaphor-replace.md`, `metaphor-workshop.md`) and `README.md` describing the consolidated pipeline. These are dispatched by `agents/steps/metaphor-fix.md`, not by the orchestrator.
 
-## Next Task Queueing
-
-The prompts below are for maintaining *this* tooling repository — sprint planning, sprint execution, and milestone closeout. They are not invoked inside consuming story projects. After completing a task in this repo, provide the next step text to the user so he can copy-paste it. When starting a new Sprint, use **PM New Sprint**. When uncompleted tasks remain in SPRINT.md, use **Sprint Orchestrator**. After all tasks are complete in SPRINT.md, provide **PM New Sprint**.
-
-### PM New Sprint
-You are an expert PM. See AGENTS.md and ROADMAP.md. We're going to work together to turn [next milestone number and title from ROADMAP.md] into a series of Tasks within SPRINT.md. We will focus on requirements, not implementation. However, we will provide specifics if it will answer necessary design decisions for the developer. The goal is that our developers can grab a task and complete it in the way they want, with minimal intervention, and they'll produce a result that meets the project's needs. This is the stage to ask questions.
-
-### Sprint Orchestrator
-You are managing an entire Sprint by spawning subagents per task and merging their work. Follow this protocol exactly.
-
 **Orientation (read first, in order):**
 1. `AGENTS.md` — repo conventions and the "Next Task Queueing" workflow.
 2. `ROADMAP.md` — milestone context for the Sprint.
