@@ -84,27 +84,4 @@ This is the catalog of support files this repo *provides to* consuming projects;
 - `agents/meta.md` — meta notes about the agent guide.
 - `agents/metaphor/` — subagent prompt contracts (`metaphor-flatten.md`, `metaphor-replace.md`, `metaphor-workshop.md`) and `README.md` describing the consolidated pipeline. These are dispatched by `agents/steps/metaphor-fix.md`, not by the orchestrator.
 
-**Orientation (read first, in order):**
-1. `AGENTS.md` — repo conventions and the "Next Task Queueing" workflow.
-2. `ROADMAP.md` — milestone context for the Sprint.
-3. `SPRINT.md` — the authoritative task list. Note which tasks are already checked.
-4. Any task-specific source docs the Sprint references (e.g. `agents/orchestrator.md`).
-
-**Plan before acting.** Produce a short dependency analysis covering, for each unchecked task: which files it creates, which files it modifies, and which other tasks it reads from or conflicts with. Group tasks into **waves**:
-- Tasks that touch the same file run sequentially (one agent, or back-to-back).
-- Tasks that touch disjoint files run in parallel within a wave.
-- A task that consumes another task's output runs in a later wave.
-
-Present the plan and wait for human approval before spawning anything.
-
-**Per wave:**
-1. Spawn one subagent per task (or one agent for a sequential bundle). Brief each agent self-containedly: cite the SPRINT.md task block as authoritative, point at the specific source files to read, list verification commands, and instruct the agent to **edit files but not commit** — you commit between waves.
-2. After agents return, run verification yourself: `git status`, `git diff` on shared files, spot-read new files, run any acceptance grep the Sprint defines (e.g. `git grep "TBD"` returns nothing).
-3. Commit the wave with a descriptive message. One commit per wave is fine; per-task commits are also fine.
-4. Update a TodoWrite list as waves complete.
-
-**Branch and push.** Confirm the development branch from the task instructions or create it if missing. Push only after all waves are complete and verified, using `git push -u origin <branch>`. Never force-push.
-
-**Closeout.** Personally verify that all sprint objectives have been completed. Check Sprint boxes and mark milestones complete. Do not erase or overwrite SPRINT.md, just mark items completed.
-
-**Output discipline.** Brief status updates between waves: what shipped, what's next. Don't narrate subagent internals — summarize their results in one or two sentences each.
+**Working on this repo.** Small, self-contained changes — fixing a step body, updating a doc, tweaking a template — can be made directly by an agent: read the relevant Core/Support document above plus the file(s) being changed. Structured work — turning a `ROADMAP.md` milestone into tasks, or executing a full sprint against `SPRINT.md` — is done with the `pm-plan` and `sprint-orchestrator` Claude Code skills; those skills are the canonical protocol for that work, not this file.
