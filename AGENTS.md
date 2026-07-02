@@ -22,7 +22,7 @@ Consuming story repositories keep a small local `AGENTS.md` adapter that points 
 
 ## How Amanuensis works
 
-Amanuensis is an orchestrator-driven pipeline for long-form writing. Each project advances one step at a time: a host-specific dispatcher reads `pipeline-state.md` at the project root, locates the next step, runs that step's workflow file as a fresh agent invocation, advances the marker, and exits. State lives entirely in files — there is no in-memory context carried between steps. Humans review artifacts between steps; the dispatcher does not enforce review. Step workflow files declare their inputs, outputs, and review expectations in frontmatter and describe their behavior in the body. Folder layout, including how path placeholders resolve, depends on the project's declared `project_type`.
+Amanuensis is an orchestrator-driven pipeline for long-form writing. Each project advances one step at a time: a human invokes a specific step with `run-step` (or the recommended next step — the first non-`[x]` entry in the recipe in `pipeline-state.md` — with `next-step`); the host-specific dispatcher validates that the step's machine-readable `required` preconditions resolve to existing files, follows the step body in a fresh agent invocation, and exits. The step body records its own completion in `pipeline-state.md` as its final action. State lives entirely in files — there is no in-memory context carried between steps. Humans review artifacts between steps; the dispatcher does not enforce review. Step workflow files declare their inputs, outputs, and review expectations in frontmatter and describe their behavior in the body. Folder layout, including how path placeholders resolve, depends on the project's declared `project_type`.
 
 ## Core documents
 
@@ -34,14 +34,16 @@ Amanuensis is an orchestrator-driven pipeline for long-form writing. Each projec
 - `templates/project-AGENTS.md` — adapter template for consuming repositories.
 - `templates/voice.md` — starter voice profile that a consuming project copies to its project-root `voice.md`. The voice-consuming steps read the project-root `voice.md`, not this template; this repo holds only the starter.
 - `install.sh` — copies the dispatcher files into a consuming project's `.claude/commands/` and `.opencode/agents/` folders, and installs the pipeline-state check workflow into `.github/workflows/`.
-- `templates/dispatcher/.claude/commands/next-step.md` — Claude Code slash command implementing the dispatcher.
-- `templates/dispatcher/.opencode/agents/next-step.md` — OpenCode agent implementing the dispatcher at parity with the Claude Code version.
+- `templates/dispatcher/.claude/commands/run-step.md` — Claude Code slash command implementing the core dispatcher operation: run a specific step by step_id.
+- `templates/dispatcher/.claude/commands/next-step.md` — Claude Code slash command implementing the recommended-next convenience layer: resolve the first non-`[x]` step in the recipe and run it through the same machinery as `run-step`.
+- `templates/dispatcher/.opencode/agents/run-step.md` — OpenCode agent implementing `run-step` at parity with the Claude Code version.
+- `templates/dispatcher/.opencode/agents/next-step.md` — OpenCode agent implementing the recommended-next convenience layer at parity with the Claude Code version.
 - `scripts/check-pipeline-state.sh` — consistency check between a `pipeline-state.md` and an `agents/steps/` directory, in resolvable (default) or exhaustive mode.
 - `templates/dispatcher/.github/workflows/pipeline-state-check.yml` — consumer-side CI workflow installed by `install.sh`; validates the consumer's `pipeline-state.md` against the installed Amanuensis step files.
 
 ## Setup
 
-From the consuming project's root, run `./amanuensis/install.sh` to copy the dispatcher into `.claude/commands/next-step.md` and `.opencode/agents/next-step.md`. `install.sh` also installs the pipeline-state check workflow into `.github/workflows/pipeline-state-check.yml`, creating that directory if missing. Prerequisite: Amanuensis must be present at `<project>/amanuensis/` (typically as a git submodule). See `templates/dispatcher/` and `agents/orchestrator.md` for the source-of-truth dispatcher contract.
+From the consuming project's root, run `./amanuensis/install.sh` to copy the dispatcher into `.claude/commands/run-step.md`, `.claude/commands/next-step.md`, `.opencode/agents/run-step.md`, and `.opencode/agents/next-step.md`. `install.sh` also installs the pipeline-state check workflow into `.github/workflows/pipeline-state-check.yml`, creating that directory if missing. Prerequisite: Amanuensis must be present at `<project>/amanuensis/` (typically as a git submodule). See `templates/dispatcher/` and `agents/orchestrator.md` for the source-of-truth dispatcher contract.
 
 ## Step workflows
 
