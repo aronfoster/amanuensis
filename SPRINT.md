@@ -82,7 +82,7 @@ Locked at planning (the three starred items are owner decisions from this Sprint
 
 ### Task 1 — Rewrite `agents/orchestrator.md` around the selective execution model
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Land the M7.1 design as the orchestrator contract: execution-model vocabulary, recipe/status state semantics, two-entry-point dispatcher behavior with precondition checking, the preconditions schema, and the freshness reframe of the invariant. Closes **M7.1**, **M7.7**, and the contract side of **M7.2/M7.3/M7.6**.
 
@@ -103,7 +103,7 @@ Locked at planning (the three starred items are owner decisions from this Sprint
 
 ### Task 2 — Reframe both `pipeline-state.md` files as recipe/status files
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Make the canonical state template and the smoke fixture match the new model. Closes the file side of **M7.2**.
 
@@ -119,7 +119,7 @@ Locked at planning (the three starred items are owner decisions from this Sprint
 
 ### Task 3 — Preconditions block + completion-language sweep across the step contract files
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Give every step machine-readable preconditions and retire marker-advance language from the step bodies. Closes **M7.3** and the step-file side of **M7.6**.
 
@@ -155,7 +155,7 @@ Locked at planning (the three starred items are owner decisions from this Sprint
 
 ### Task 4 — `run-step` dispatchers, `next-step` as convenience layer, `install.sh`, `AGENTS.md`
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Ship the host command surface: explicit invocation on both hosts, the recommended-path convenience on both hosts, installed by `install.sh` and cataloged in `AGENTS.md`. Closes **M7.4**, **M7.5**, **M7.8**.
 
@@ -174,7 +174,7 @@ Locked at planning (the three starred items are owner decisions from this Sprint
 
 ### Task 5 — Smoke coverage for selective execution
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Document runnable verification recipes for the four M7.9 behaviors in the smoke fixture. Closes **M7.9**.
 
@@ -195,7 +195,7 @@ Locked at planning (the three starred items are owner decisions from this Sprint
 
 ### Task 6 — Verification sweep, ROADMAP / SPRINT check-off
 
-- [ ] Done
+- [x] Done
 
 **Goal.** Close the Sprint with documented verification and mark the milestone complete. Closes the residual of **M7**.
 
