@@ -1,14 +1,28 @@
 # Orchestrator
 
-The orchestrator is how a project advances through the Amanuensis pipeline one step at a time. It is not an agent. It is a workflow definition plus a dispatcher convention. Any LLM agent host (Claude Code, OpenCode, etc.) can run it.
+The orchestrator is how a project runs Amanuensis pipeline steps, one step per invocation. It is not an agent. It is a workflow definition plus a dispatcher convention. Any LLM agent host (Claude Code, OpenCode, etc.) can run it.
 
 ## Components
 
 The orchestrator has three pieces:
 
 1. **Step workflow files** — one markdown file per step, defining what that step does, what files it reads, what files it writes, and whether it requires human review. These live under `amanuensis/agents/steps/`, with one file per step. The file path for a step is derived from its `step_id` by replacing underscores with dashes: `step_id: metaphor_identify` resolves to `amanuensis/agents/steps/metaphor-identify.md`.
-2. **State file** — `pipeline-state.md` at the project root. Tracks which step runs next and which steps are complete. Format defined below.
-3. **Dispatcher** — a host-specific entry point (a Claude Code slash command, an OpenCode agent, or equivalent) that reads the state file, identifies the next step, and follows that step workflow's body in the same session. The step body advances the marker as its final action; the dispatcher then exits.
+2. **State file** — `pipeline-state.md` at the project root. The project's recipe (the recommended step order) and status record (which steps have completed at least once). Format defined below.
+3. **Dispatcher** — a host-specific entry point (a Claude Code slash command, an OpenCode agent, or equivalent) that resolves the requested step — or the recommended next step — verifies its required preconditions resolve to existing files, and follows that step workflow's body in the same session. The step body records its own completion as its final action; the dispatcher then exits.
+
+## Execution model
+
+Correctness is governed by artifact preconditions, not by sequence position. The recipe order in `pipeline-state.md` is the recommended path, not the only legal one: any listed step whose required preconditions resolve to existing files may be invoked. The dispatcher checks existence only; judgment lives with the human and with the step bodies.
+
+The terms this contract uses:
+
+- **runnable** — every `required: true` precondition of the step resolves to at least one existing file.
+- **blocked** — not runnable; at least one required precondition is missing. The dispatcher reports what's missing and stops without loading the step body.
+- **stale** — a side artifact whose `Reviewed-draft:` stamp names a draft other than the current `<latest-draft>`. Detected by the consuming step body at step start, not by the dispatcher (dispatcher-level staleness detection is M9.6).
+- **superseded** — a draft version other than `<latest-draft>`, and any side artifact stamped against one. (Full lineage semantics — active heads, abandoned branches — are M8's to define; this contract uses only this minimal sense.)
+- **active** — the draft currently resolved by `<latest-draft>` and the side artifacts stamped against it.
+- **recommended next** — the first non-`[x]` step in the recipe list.
+- **explicit override** — a deliberate human instruction to proceed despite a stale or blocked condition, always human-visible and never assumed. The recording mechanism is deferred to M9.5; until then the existing path stands: the step blocks to `open-questions.md` and the human resolves it there.
 
 ## Step workflow contract
 
@@ -27,11 +41,26 @@ outputs:
 
 **`step_id`** is the canonical name of the step. Must match the corresponding entry in `pipeline-state.md` exactly. snake_case.
 
-**`review_required`** indicates whether the human is expected to review the step's output before the next step runs. Nothing enforces this — on successful completion the step body advances the marker regardless. `review_required: true` is a signal to the human reading the state file that the next dispatcher invocation will assume the artifact has been reviewed. If the human invokes the dispatcher without reviewing, the next step runs against unreviewed output and the consequences are the human's problem.
+**`review_required`** indicates whether the human is expected to review the step's output before a consuming step runs. Nothing enforces this — on successful completion the step body records its own completion regardless. `review_required: true` is a signal to the human reading the state file that a later dispatcher invocation consuming this output will assume the artifact has been reviewed. If the human invokes the dispatcher without reviewing, the consuming step runs against unreviewed output and the consequences are the human's problem.
 
 **`inputs`** lists the files the step reads. Path conventions use `<chapter-folder>` and `<latest-attempt>` placeholders that the step body resolves based on project_type and current state. The list is descriptive; nothing enforces it. Its purpose is documentation and review.
 
 **`outputs`** lists the files the step writes. Same conventions as inputs.
+
+**`preconditions`** is the machine-readable block the dispatcher parses before loading the step body. It is additive: `inputs`/`outputs` remain descriptive lists. One entry per input, all keys explicit (no defaults — the block exists to be machine-read, so explicitness beats brevity):
+
+```yaml
+preconditions:
+  - path: <chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md
+    kind: side_artifact        # source | prose_draft | side_artifact
+    required: true
+    review_sensitive: true
+```
+
+- `kind: prose_draft` — a versioned draft resolved via `<latest-draft>`. `kind: side_artifact` — a report/annotation artifact produced by another step (carries or inherits a `Reviewed-draft:` stamp). `kind: source` — everything else the step reads (plans, scene lists, storyboards, canon, voice, config).
+- `required: true` means the step cannot start safely without it. `required: false` marks conditional-use inputs (canonical example: `metaphor_fix` needs `voice.md` only when a `WORKSHOP` entry exists).
+- `review_sensitive: true` marks inputs expected to carry human annotations/review before consumption.
+- Existence semantics: a glob pattern resolves if at least one file matches; a `<latest-draft>` path resolves if at least one `draft-vNN.md` exists in the latest attempt. Placeholder resolution follows `agents/project-layouts.md` as today.
 
 The body of a step workflow file describes what the step does. Existing step workflows in `agents/steps/` (storyboarding, drafting, compliance-report, etc.) are the model. Step bodies should:
 
@@ -39,63 +68,63 @@ The body of a step workflow file describes what the step does. Existing step wor
 - write only to the declared outputs
 - treat the file system as the only state
 - produce no notes or logs about what was done — the artifacts themselves are the record
-- if blocked, write to the project's `open-questions.md` and exit. A missing detail is not automatically a block: under Rule 1 (`agents/update-rules.md`) a drafter may invent the permitted case — a non-load-bearing, non-conflicting, register-appropriate detail — rather than halting. Only when the missing fact is load-bearing for reveal timing or character knowledge, or would conflict with existing canon, does the step record an open question and exit instead of inventing.
+- if blocked, write to the project's `open-questions.md` and exit without recording completion in `pipeline-state.md`. A missing detail is not automatically a block: under Rule 1 (`agents/update-rules.md`) a drafter may invent the permitted case — a non-load-bearing, non-conflicting, register-appropriate detail — rather than halting. Only when the missing fact is load-bearing for reveal timing or character knowledge, or would conflict with existing canon, does the step record an open question and exit instead of inventing.
 
 ## State file format
 
-`pipeline-state.md` lives at the project root. The canonical example of both the file format and the default step sequence is `templates/pipeline-state.md` — see that file for a full, working specimen.
+`pipeline-state.md` lives at the project root. The canonical example of both the file format and the default step recipe is `templates/pipeline-state.md` — see that file for a full, working specimen.
 
-The frontmatter carries `project_type` (read by step workflows that need to resolve folder layout) and `last_updated` (updated by the dispatcher on every advance). No other fields are required at MVP. `project_type` is set in `amanuensis-project.yaml` at the project root; the template lives at `templates/amanuensis-project.yaml`.
+The frontmatter carries `project_type` (read by step workflows that need to resolve folder layout) and `last_updated` (updated by the step body as part of its completion action). No other fields are required at MVP. `project_type` is set in `amanuensis-project.yaml` at the project root; the template lives at `templates/amanuensis-project.yaml`.
 
-The body contains a `## Steps` section listing each step on its own line with a marker: `[>]` is the next step the dispatcher will run, `[x]` is complete, and `[ ]` is pending. To redo a step, move the `[>]` marker up to that step and change downstream `[x]` markers back to `[ ]`.
+The body contains a `## Steps` section listing each step on its own line with a checkbox: `[x]` means the step has completed at least once, `[ ]` means it has not. There is no cursor and no stored pointer. A `[>]` marker encountered in a pre-M7 state file is a deprecated legacy marker and is read as `[ ]`. The recommended next step is the first non-`[x]` step in the list, resolved at invocation time.
 
-The step list is the project's plan. It may differ between project types, or be customized per project. The dispatcher does not assume a fixed sequence — it reads whatever list is in the file.
+The step list is the project's recipe. It may differ between project types, or be customized per project. The dispatcher does not assume a fixed sequence — it reads whatever list is in the file.
 
 ## Dispatcher behavior
 
-The dispatcher runs in the same host session as the step body. It is not a supervisor that spawns a subagent and then advances state on the subagent's behalf; it is a thin prompt that locates the right step workflow file and then becomes that step body for the rest of the session.
+The dispatcher runs in the same host session as the step body. It is not a supervisor that spawns a subagent and then records state on the subagent's behalf; it is a thin prompt that locates the right step workflow file and then becomes that step body for the rest of the session.
 
-On invocation, the dispatcher:
+The core operation is `run_step <step_id>`. On invocation, the dispatcher:
 
-1. Reads `pipeline-state.md`. Locates the `[>]` line.
+1. Reads `pipeline-state.md`. Confirms the requested `step_id` appears in the recipe list.
 2. Resolves the step workflow file path from `step_id` by replacing underscores with dashes: `amanuensis/agents/steps/<step-id-with-dashes>.md`. Example: `metaphor_identify` → `amanuensis/agents/steps/metaphor-identify.md`.
-3. Loads the step workflow file. Treats its body as the agent's instructions for the remainder of the session.
-4. Follows the step body in the same session. The step body reads `pipeline-state.md` frontmatter for `project_type` if it needs path resolution. Otherwise the step ignores the state file.
-5. Exits when the step body exits.
+3. Parses the step file's `preconditions:` frontmatter block and verifies that every `required: true` entry resolves to at least one existing file. If any is missing, the dispatcher names the missing file(s) and stops without loading the step body.
+4. Loads the step workflow file. Treats its body as the agent's instructions for the remainder of the session.
+5. Follows the step body in the same session. The step body reads `pipeline-state.md` frontmatter for `project_type` if it needs path resolution. Otherwise the step ignores the state file until its completion action.
+6. Exits when the step body exits.
 
-Marker advancement is the step body's responsibility, not the dispatcher's. On successful completion, the step body's final action is to edit `pipeline-state.md`: flip the current `[>]` to `[x]`, flip the next `[ ]` to `[>]`, and update `last_updated` to the current ISO 8601 datetime with timezone offset. If the step body exits early — blocked, error, or otherwise incomplete — the marker stays on the current step and the next dispatcher invocation re-runs it.
+`next_recommended_step` is a convenience layer over the same machinery: it resolves the first non-`[x]` step in the recipe list, reports which step it selected, and then proceeds identically to `run_step` for that step_id — same precondition checks, same failure modes, one step per invocation.
+
+Recording completion is the step body's responsibility, not the dispatcher's. On successful completion, the step body's final action is to edit `pipeline-state.md`: set its own step line to `[x]` — a no-op if the line is already `[x]`; reruns don't move anything — and update `last_updated` to the current ISO 8601 datetime with timezone offset. On a blocked exit — blocked, error, or otherwise incomplete — the step body touches `pipeline-state.md` not at all.
 
 The dispatcher does not:
 
 - run multiple steps per invocation
 - enforce `review_required` (the human's responsibility)
 - track per-step notes or logs
-- advance the marker on the step body's behalf
+- record completion on the step body's behalf
 - handle errors beyond surfacing them and exiting cleanly
 
-The fresh-invocation guarantee is honored by the human invoking the dispatcher in a fresh host session, not by host-side context isolation. A single `/next-step` invocation corresponds to a single step body run.
+The fresh-invocation guarantee is honored by the human invoking the dispatcher in a fresh host session, not by host-side context isolation. A single dispatcher invocation — `run-step` or `next-step` — corresponds to a single step body run.
 
-A blocked step writes its question to the project-root `open-questions.md` and exits without advancing the marker. The next dispatcher invocation re-runs the same step. The human resolves the blocker by editing files (including `open-questions.md`) before invoking the dispatcher again.
+A blocked step writes its question to the project-root `open-questions.md` and exits without recording completion. A later invocation of `run_step` for that step_id re-runs it. The human resolves the blocker by editing files (including `open-questions.md`) before invoking the dispatcher again.
 
 ### Failure modes
 
-The dispatcher stops and asks the human, in plain text, when any of the following hold. It does not guess, does not invent state, does not advance any marker, and does not attempt automatic recovery.
+The dispatcher stops and asks the human, in plain text, when any of the following hold. It does not guess, does not invent state, does not touch `pipeline-state.md`, and does not attempt automatic recovery.
 
 - `pipeline-state.md` is missing at the project root.
-- `pipeline-state.md` is malformed: unparseable frontmatter, no step list, or a step list the dispatcher cannot read as a sequence of `[ ]`/`[>]`/`[x]` entries.
-- No `[>]` marker is present (e.g., every step is `[x]`, or every step is `[ ]`, or the marker has been removed).
+- `pipeline-state.md` is malformed: unparseable frontmatter, no step list, or a step list the dispatcher cannot read as a sequence of checkbox entries per the state file format above.
+- The requested `step_id` does not appear in the recipe list. The dispatcher does not guess and does not run unlisted steps: the human either mistyped or needs to add the step line to the recipe first.
 - The resolved step workflow file does not exist on disk at `amanuensis/agents/steps/<step-id-with-dashes>.md`.
+- A `required: true` precondition does not resolve to any existing file. The dispatcher names the missing file(s) and stops without loading the step body.
+- The recipe is complete: `next_recommended_step` finds every step `[x]`. The dispatcher reports the recipe complete and stops.
 
-In each case the dispatcher describes the problem to the human and exits. Recovery is the human's job: edit `pipeline-state.md`, restore the missing step file, or otherwise repair the state, then re-invoke the dispatcher.
+In each case the dispatcher describes the problem to the human and exits. Recovery is the human's job: edit `pipeline-state.md`, restore the missing step file, produce the missing input (typically by running the step that emits it), or otherwise repair the state, then re-invoke the dispatcher.
 
 ## Re-running a step
 
-The human edits `pipeline-state.md` directly:
-
-- Move the `[>]` marker up to the step to redo.
-- Change all downstream `[x]` markers back to `[ ]`.
-
-The next dispatcher invocation runs from the new position. Any existing output files from the current step are overwritten.
+To rerun any step — completed or not — invoke `run_step` with its step_id. Completed steps stay `[x]`: the completion action is a no-op on an already-checked line, and downstream checkboxes are never rewound. Checkbox state records history (completed at least once), not validity; artifact freshness stamps (`Reviewed-draft:`, per the invariant below) are what protect downstream consumers from consuming superseded output. Any existing output files from the rerun step are overwritten.
 
 ## Path resolution by project type
 
@@ -105,9 +134,11 @@ How a step knows which chapter is "the current chapter" for book and series proj
 
 TODO: this doesn't feel ideal but I should see it in practice before proposing a new solution
 
-## Report→fix adjacency invariant
+## Report→fix freshness invariant
 
-No prose-advancing step may run between a report and its paired fix/apply unless that report is regenerated against the new `<latest-draft>`. Each prose-advancing fix/apply step verifies this at step start by comparing the paired side artifact's `Reviewed-draft:` header against the current `<latest-draft>`. On mismatch the fix/apply step appends a stale-report blocker to the project-root `open-questions.md` and exits without advancing the marker.
+(Formerly the report→fix adjacency invariant.)
+
+A fix/apply step may consume its paired report only when that report was produced against the current `<latest-draft>`, human override excepted. Each prose-advancing fix/apply step verifies this at step start by comparing the paired side artifact's `Reviewed-draft:` stamp against the current `<latest-draft>`. On mismatch the fix/apply step appends a stale-report blocker to the project-root `open-questions.md` and exits without recording completion in `pipeline-state.md`.
 
 The pairs governed by this invariant in the current pipeline:
 
@@ -120,13 +151,14 @@ The stamp is written by the report-emitting step the first time it creates its s
 
 `prose_pass` records a `Reviewed-draft:` stamp in `prose-pass.md`, and `prose_fix` is its paired prose-advancing consumer, so the stamp is load-bearing (`prose_fix` checks it at step start to detect stale annotations). `line_pass` is a prose-advancing step with no upstream report, so the invariant does not apply to it.
 
-The stale-report exit is a human decision point, not an automatic recovery. The fix/apply step appends a blocker to `open-questions.md` recording the stamped draft, the current `<latest-draft>`, and which intervening step advanced the prose. The human then decides between rerunning the report-emitting step (which overwrites the side artifact as described above), rolling the draft back to the stamped version, or accepting a stale apply with an explicit override. The fix/apply step does not silently apply old annotations to a newer draft.
+The stale-report exit is a human decision point, not an automatic recovery. The fix/apply step appends a blocker to `open-questions.md` recording the stamped draft, the current `<latest-draft>`, and which step produced the newer draft. The human then decides between rerunning the report-emitting step (which overwrites the side artifact as described above), rolling the draft back to the stamped version, or accepting a stale apply with an explicit override. The fix/apply step does not silently apply old annotations to a newer draft.
 
 ## What the orchestrator does not do
 
+- It does check that every `required: true` precondition of the selected step resolves to an existing file at dispatch — that is the extent of its validation.
 - It does not validate that human review has occurred.
-- It does not detect upstream changes that should invalidate downstream artifacts.
-- It does not enforce the step list — if the human deletes a step from `pipeline-state.md`, the dispatcher skips it.
+- It does not detect staleness at the dispatcher level. Upstream changes that should invalidate downstream artifacts are detected by the consuming step bodies via `Reviewed-draft:` stamps; lifting machine-checkable staleness into the dispatcher is M9.6.
+- It does not enforce the recipe as the only order — the recipe is the recommended path, and any listed step whose required preconditions exist may be invoked.
 - It does not coordinate concurrent work across multiple chapters or works.
 - It does not produce reports or summaries of what it did.
 

@@ -8,6 +8,23 @@ inputs:
   - voice.md
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/metaphors.md
+preconditions:
+  - path: <chapter-folder>/drafts/<latest-attempt>/metaphors.md
+    kind: side_artifact
+    required: true
+    review_sensitive: true
+  - path: <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
+    kind: prose_draft
+    required: true
+    review_sensitive: false
+  - path: <chapter-folder>/storyboards/*-storyboard.md
+    kind: source
+    required: false
+    review_sensitive: false
+  - path: voice.md
+    kind: source
+    required: false
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -63,8 +80,8 @@ The coordinator waits for all subagents to finish appending their variants and t
 
 ## Open questions handling
 
-If `metaphors.md` is missing, append a blocker to the project-root `open-questions.md` and exit without advancing the pipeline marker. If `metaphors.md` exists but contains no annotated entries (every entry was either accepted as-is or deleted), append a blocker to `open-questions.md` noting that `metaphor_fix` was invoked with nothing to do — either the human intended to advance directly to `metaphor_apply` (move the marker) or annotation is incomplete — and exit without advancing.
+If `metaphors.md` is missing, append a blocker to the project-root `open-questions.md` and exit without recording completion in `pipeline-state.md`. If `metaphors.md` exists but contains no annotated entries (every entry was either accepted as-is or deleted), append a blocker to `open-questions.md` noting that `metaphor_fix` was invoked with nothing to do — either the human intended to proceed directly to `metaphor_apply` (invoke that step instead) or annotation is incomplete — and exit without recording completion.
 
 If the resolved `<latest-draft>` does not match the `Reviewed-draft:` stamp at the top of `metaphors.md`, the annotations are stale: a newer draft has been minted since `metaphor_identify` ran. Append a blocker to `open-questions.md` describing the mismatch (annotated draft vs. current `<latest-draft>`) and exit without dispatching subagents. The human either re-runs `metaphor_identify` against the new draft or rolls the draft back to the stamped version.
 
-For other ambiguous or missing inputs (the draft is missing, a workshop entry's storyboard cannot be located, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) is needed by a `WORKSHOP` entry but does not exist, etc.), append the blocker to `open-questions.md` and exit without advancing. Do not fabricate inputs and do not write partial variants. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+For other ambiguous or missing inputs (the draft is missing, a workshop entry's storyboard cannot be located, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) is needed by a `WORKSHOP` entry but does not exist, etc.), append the blocker to `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial variants. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

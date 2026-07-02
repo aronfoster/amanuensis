@@ -14,6 +14,23 @@ inputs:
 # outputs: files this step writes. Same placeholder conventions as inputs.
 outputs:
   - <chapter-folder>/<latest-attempt>/<output-file>.md
+
+# preconditions: machine-readable declaration of this step's inputs, one entry per input, checked
+# by the dispatcher before the step body runs (every required: true entry must resolve to at least
+# one existing file). Additive: the inputs/outputs lists above stay descriptive. All keys are
+# explicit on every entry; there are no defaults.
+#   kind: one of source | prose_draft | side_artifact.
+#     prose_draft — a versioned draft resolved via <latest-draft>.
+#     side_artifact — a report/annotation artifact produced by another step.
+#     source — everything else the step reads (plans, scene lists, storyboards, canon, voice, config).
+#   required: true — the step cannot start safely without it; false — a conditional-use input.
+#   review_sensitive: true — the input is expected to carry human annotations/review before this
+#     step consumes it; false — otherwise.
+preconditions:
+  - path: <chapter-folder>/<input-file>.md
+    kind: <source|prose_draft|side_artifact>
+    required: <true|false>
+    review_sensitive: <true|false>
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -38,4 +55,4 @@ See `agents/orchestrator.md` for the step workflow contract.
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

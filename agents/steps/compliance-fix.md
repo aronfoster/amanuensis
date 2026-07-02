@@ -9,6 +9,19 @@ outputs:
   - <chapter-folder>/drafts/<latest-attempt>/<next-draft>
   - <chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md
   - <chapter-folder>/drafts/<latest-attempt>/draft-manifest.md
+preconditions:
+  - path: <chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md
+    kind: side_artifact
+    required: true
+    review_sensitive: true
+  - path: <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
+    kind: prose_draft
+    required: true
+    review_sensitive: false
+  - path: <chapter-folder>/storyboards/*-storyboard.md
+    kind: source
+    required: false
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -96,9 +109,9 @@ Open-questions handling fires only when the input itself is unusable. Named bloc
 
 - **Unannotated report.** `reviewer-actions.md` exists but contains no annotations at all (every violation is bare, with no `FIX`/`SKIP`/`ESCALATE`).
 - **Missing inputs.** `reviewer-actions.md` is missing, or `<latest-draft>` cannot be resolved (no `draft-vNN.md` in the attempt directory).
-- **Stale report.** The `Reviewed-draft:` header at the top of `reviewer-actions.md` names a draft other than `<latest-draft>`. The report was generated against a different draft than the current one, which means a prose-advancing step has slipped in between `compliance_report` and `compliance_fix`. Applying the annotations to `<latest-draft>` would be applying notes against the wrong prose. The paired report→fix adjacency invariant must hold; only the human can decide whether to rerun `compliance_report` against the current draft or to roll back. See `agents/orchestrator.md`'s report→fix adjacency invariant for the canonical statement.
+- **Stale report.** The `Reviewed-draft:` header at the top of `reviewer-actions.md` names a draft other than `<latest-draft>`. The report was generated against a different draft than the current one, which means a prose-advancing step has slipped in between `compliance_report` and `compliance_fix`. Applying the annotations to `<latest-draft>` would be applying notes against the wrong prose. The paired report→fix freshness invariant must hold; only the human can decide whether to rerun `compliance_report` against the current draft or to roll back. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
 
-In any of these, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate annotations and do not write a partial `<next-draft>`. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+In any of these, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate annotations and do not write a partial `<next-draft>`. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
 
 ## Anti-Patterns
 

@@ -6,6 +6,15 @@ inputs:
   - <chapter-folder>/scene-list.md
 outputs:
   - <chapter-folder>/storyboards/storyboard-review.md
+preconditions:
+  - path: <chapter-folder>/storyboards/*-storyboard.md
+    kind: source
+    required: true
+    review_sensitive: false
+  - path: <chapter-folder>/scene-list.md
+    kind: source
+    required: true
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -109,4 +118,4 @@ Do not propose fixes. The summary observation is a diagnostic, not a recommendat
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs (e.g., no storyboard blocks, a storyboard block whose fields cannot be parsed, or no `scene-list.md`), append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write a partial report. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+If the step cannot complete because of missing or ambiguous inputs (e.g., no storyboard blocks, a storyboard block whose fields cannot be parsed, or no `scene-list.md`), append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write a partial report. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

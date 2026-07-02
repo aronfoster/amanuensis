@@ -9,6 +9,27 @@ inputs:
   - canon/**/*.md
 outputs:
   - <chapter-folder>/storyboards/<scene-id>-<beat-id>-storyboard.md
+preconditions:
+  - path: <chapter-folder>/scene-list.md
+    kind: source
+    required: true
+    review_sensitive: false
+  - path: <chapter-folder>/summary.md
+    kind: source
+    required: true
+    review_sensitive: false
+  - path: <chapter-folder>/storyboards-planning.md
+    kind: source
+    required: false
+    review_sensitive: false
+  - path: characters/<character-id>/knowledge/*.md
+    kind: source
+    required: true
+    review_sensitive: false
+  - path: canon/**/*.md
+    kind: source
+    required: false
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -69,4 +90,4 @@ This is a quality check on the storyboard, not a constraint on the drafter. If a
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

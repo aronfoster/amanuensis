@@ -9,6 +9,23 @@ inputs:
 outputs:
   - <chapter-folder>/scene-list.md
   - open-questions.md
+preconditions:
+  - path: <story-plan>
+    kind: source
+    required: true
+    review_sensitive: false
+  - path: characters/<character-id>/profile.md
+    kind: source
+    required: true
+    review_sensitive: false
+  - path: characters/<character-id>/knowledge/baseline.md
+    kind: source
+    required: true
+    review_sensitive: false
+  - path: canon/**/*.md
+    kind: source
+    required: false
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -94,12 +111,12 @@ The step overwrites `<chapter-folder>/scene-list.md` if it already exists. Human
 
 ## Open questions handling
 
-Normal ambiguities are logged in `open-questions.md` and the step completes. Exit-without-advancing is reserved for the cases where the step genuinely cannot produce a scene list:
+Normal ambiguities are logged in `open-questions.md` and the step completes. A blocked exit — exiting without recording completion in `pipeline-state.md` — is reserved for the cases where the step genuinely cannot produce a scene list:
 
 - the resolved `<story-plan>` file is missing or unreadable, or
 - the `characters/` tree is missing or empty (i.e., `character_extraction` has not run, or its output was deleted).
 
-In those cases, append a `critical` entry to `open-questions.md` describing the missing input and exit without advancing the pipeline marker. Do not fabricate a plan and do not write a partial `scene-list.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+In those cases, append a `critical` entry to `open-questions.md` describing the missing input and exit without recording completion in `pipeline-state.md`. Do not fabricate a plan and do not write a partial `scene-list.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
 
 ## See also
 
