@@ -307,6 +307,8 @@ Expected observable outcome — a clean blocked exit, not a dispatcher error:
 - No `plot/drafts/attempt01/draft-v03.md` is written, and no `draft-manifest.md` is created.
 - No completion is recorded: the `anti_ai_fix` line stays `[ ]` and `pipeline-state.md` is untouched (`last_updated` unchanged).
 
+A `review_pending` block is **not** liftable by an override — an override authorizes consuming an artifact despite a *state* problem (staleness), but an unannotated report has no editorial intent to apply. The human resolves this by annotating the report (or adding a valid bulk header), after which it is no longer `review_pending`; Recipe 8's override path is available only for the `stale` case.
+
 ### Recipe 7 — regenerate a stale report against the active head, then fix clean
 
 Reset the fixture and repeat Setup. Hand-author the same `draft-v01.md` and `draft-v02.md` as Recipe 6, and the same `anti-ai.md` with two differences: stamp it against the **superseded** `draft-v01.md`, and annotate its `### Em Dashes` entry so the earlier review evidence is present. The first line reads:

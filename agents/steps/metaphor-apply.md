@@ -124,7 +124,7 @@ The log records every entry and every judgment call. It is the audit trail for t
 
 ## Overrides
 
-The freshness check above blocks by default: a `stale` `metaphors.md` is sent to "Open questions handling" and no prose is written. A human may authorize proceeding against a `stale` input by recording an override, per `agents/orchestrator.md`'s **Artifact state** section. This is the only path by which this step applies against a `stale` input, and it never happens silently. `metaphor_apply` has no annotation-grammar report, so on the review axis its evidence is the human's selection in `metaphors.md`; a `metaphors.md` with no surviving variant is its `review_pending` analog, handled as a missing/ambiguous input above rather than as a manufactured annotation gate.
+The freshness check above blocks by default: a `stale` `metaphors.md` is sent to "Open questions handling" and no prose is written. A human may authorize proceeding against a `stale` input by recording an override, per `agents/orchestrator.md`'s **Artifact state** section. An override authorizes consuming an artifact despite a known *state* problem (staleness); it does **not** supply missing editorial intent. This is the only path by which this step applies against a `stale` input, and it never happens silently. `metaphor_apply` has no annotation-grammar report, so on the review axis its evidence is the human's selection in `metaphors.md`; a `metaphors.md` with no surviving variant is its `review_pending` analog — there is nothing to substitute, so an override does not apply to it either. It is handled as a missing/ambiguous input above, resolved by the human selecting a variant rather than by an override.
 
 **Where the human records it.** A human-authored `Override:` block placed in `metaphors.md` — the side artifact this step already reads at step start — naming the specific artifact and the condition overridden. It is not a new frontmatter or manifest field. Shape, for a stale input:
 
@@ -132,15 +132,11 @@ The freshness check above blocks by default: a `stale` `metaphors.md` is sent to
 Override: proceed despite stale — metaphors.md stamped draft-vNN.md, current <latest-draft> is draft-vMM.md. Authorized by human.
 ```
 
-or, for a review-pending input:
+The override must name the specific artifact and the draft mismatch.
 
-```markdown
-Override: proceed despite review_pending — metaphors.md carries no review annotations. Authorized by human.
-```
+**Recognition at step start.** After computing freshness, if `metaphors.md` is `stale`, look for a matching `Override:` block naming `metaphors.md` and the draft mismatch. If a matching block is present, proceed with the substitution; if none is present, block to `open-questions.md` exactly as today. A `metaphors.md` with no surviving variant is unaffected by overrides — the human resolves it by selecting a variant.
 
-The override must name the specific artifact and the draft mismatch (for stale) or the review-pending condition.
-
-**Recognition at step start.** After computing freshness, if `metaphors.md` is `stale` (or `review_pending` on the selection axis), look for a matching `Override:` block that names `metaphors.md` and the same condition. If a matching block is present, proceed with the substitution. If none is present, block to `open-questions.md` exactly as today — the stale path is unchanged in the no-override case.
+**Overriding staleness is still anchor-gated.** The override waives the freshness *block*, not the requirement that each variant land on a real target. The variants were selected against an older draft, so an entry's `Quote` anchor may no longer match `<latest-draft>`; the step still locates each target under its normal guidance, and an entry whose target cannot be identified is noted in the apply log and skipped, not guessed.
 
 **Recording.** On proceeding under an override, record it in this step's apply log — which for `metaphor_apply` is the block comment appended at the end of `<next-draft>` (not `metaphors.md`, which this step never writes) — folding the record into that apply-log block comment, echoing the artifact and the exact condition overridden:
 
@@ -148,7 +144,7 @@ The override must name the specific artifact and the draft mismatch (for stale) 
 - Override applied: metaphors.md — condition overridden: stale — report stamped draft-vNN.md, applied against draft-vMM.md; authorized by human-recorded Override block
 ```
 
-For a review-pending override, the condition reads `review_pending — no review annotations`. The step applies against a `stale` (or unselected) `metaphors.md` only via a recorded override, and always leaves this override record in the apply-log block comment.
+The step applies against a `stale` `metaphors.md` only via a recorded override, and always leaves this override record in the apply-log block comment.
 
 ## Open questions handling
 

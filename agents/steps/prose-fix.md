@@ -120,7 +120,9 @@ For each `SKIP` (whether annotated directly or resolved from an unannotated `KEE
 
 ## Overrides
 
-The freshness check and the review-evidence check above both block by default: a `stale` report, or a `review_pending` (unannotated) report, is sent to "Open questions handling" and no prose is written. A human may authorize proceeding against such an input by recording an override, per `agents/orchestrator.md`'s **Artifact state** section. This is the only path by which this step consumes a `stale` or `review_pending` input, and it never happens silently.
+The freshness check above blocks by default: a `stale` report is sent to "Open questions handling" and no prose is written. A human may authorize proceeding against a `stale` input by recording an override, per `agents/orchestrator.md`'s **Artifact state** section. An override authorizes consuming an artifact despite a known *state* problem (staleness); it does **not** supply missing editorial intent. This is the only path by which this step consumes a `stale` input, and it never happens silently.
+
+**Override does not apply to `review_pending`.** An unannotated `prose-pass.md` (a non-`KEEP` finding with no `Annotation:` line) carries no decision for this step to apply; an override would waive the gate but leave nothing to act on, and this step must not guess. A `review_pending` input is resolved by the human **adding review evidence** (annotating the findings), not by an override, after which it is no longer `review_pending`.
 
 **Where the human records it.** A human-authored `Override:` block placed in `prose-pass.md` — the side artifact this step already reads at step start — naming the specific artifact and the condition overridden. It is not a new frontmatter or manifest field. Shape, for a stale input:
 
@@ -128,15 +130,11 @@ The freshness check and the review-evidence check above both block by default: a
 Override: proceed despite stale — prose-pass.md stamped draft-vNN.md, current <latest-draft> is draft-vMM.md. Authorized by human.
 ```
 
-or, for a review-pending input:
+The override must name the specific artifact and the draft mismatch.
 
-```markdown
-Override: proceed despite review_pending — prose-pass.md carries no review annotations. Authorized by human.
-```
+**Recognition at step start.** After computing freshness, if `prose-pass.md` is `stale`, look for a matching `Override:` block naming `prose-pass.md` and the draft mismatch. If a matching block is present, proceed with the apply; if none is present, block to `open-questions.md` exactly as today. The `review_pending` (unannotated) path is unaffected by overrides and blocks until the human supplies review evidence.
 
-The override must name the specific artifact and the draft mismatch (for stale) or the review-pending condition.
-
-**Recognition at step start.** After computing freshness and the review-evidence check, if `prose-pass.md` is `stale` or `review_pending`, look for a matching `Override:` block that names `prose-pass.md` and the same condition. If a matching block is present, proceed with the apply. If none is present, block to `open-questions.md` exactly as today — the stale and unannotated paths are unchanged in the no-override case.
+**Overriding staleness is still anchor-gated.** The override waives the freshness *block*, not the requirement that each edit land on a real anchor. The report was written against an older draft, so a quoted anchor may no longer match `<latest-draft>`; the step still locates each annotated finding's anchor under its normal grammar, and a finding whose anchor cannot be found safely is recorded and skipped, not guessed.
 
 **Recording.** On proceeding under an override, record it in this step's apply log — the same place the `Applied:` blocks go, appended to `prose-pass.md` — echoing the artifact and the exact condition overridden:
 
@@ -146,7 +144,7 @@ The override must name the specific artifact and the draft mismatch (for stale) 
 - Authorized by: human-recorded Override block
 ```
 
-For a review-pending override, the `Condition overridden:` line reads `review_pending — no review annotations`. The step proceeds against a `stale` or `review_pending` input only via a recorded override, and always leaves this override record in the apply log.
+The step proceeds against a `stale` input only via a recorded override, and always leaves this override record in the apply log.
 
 ## Open questions handling
 
@@ -154,7 +152,7 @@ For a review-pending override, the `Condition overridden:` line reads `review_pe
 
 Open-questions handling fires only when the input itself is unusable. Named blocker conditions:
 
-- **Unannotated report (`review_pending`).** `prose-pass.md` contains findings with non-`KEEP` `Action:` values and no `Annotation:` line. With no review evidence the input is `review_pending`; this is the review-evidence gate (review is surfaced, not enforced — `agents/orchestrator.md`'s **Artifact state** section), and `compliance_fix` is the model the fix/apply steps follow. The step requires human annotation to know which recommendations to apply and how; it must not guess. Absent a recorded override (see "Overrides"), the step blocks.
+- **Unannotated report (`review_pending`).** `prose-pass.md` contains findings with non-`KEEP` `Action:` values and no `Annotation:` line. With no review evidence the input is `review_pending`; this is the review-evidence gate (review is surfaced, not enforced — `agents/orchestrator.md`'s **Artifact state** section), and `compliance_fix` is the model the fix/apply steps follow. The step requires human annotation to know which recommendations to apply and how; it must not guess. An override does not lift this — it supplies no editorial intent — so the human resolves it by annotating the findings, after which it is no longer `review_pending`.
 - **Missing inputs.** `prose-pass.md` is missing, `<latest-draft>` cannot be resolved (no `draft-vNN.md` in the attempt directory), or `voice.md` cannot be found (neither the project-root `voice.md` nor the override named in the project's `AGENTS.md`).
 - **Stale report (`stale`).** The `Reviewed-draft:` header at the top of `prose-pass.md` names a draft other than `<latest-draft>`. The report was generated against a different draft than the current one, which means a prose-advancing step has slipped in between `prose_pass` and `prose_fix`. Applying the annotations to `<latest-draft>` would be applying notes against the wrong prose. The general freshness contract must hold; only the human can decide whether to rerun `prose_pass` against the current draft or to roll back. See `agents/orchestrator.md`'s **Artifact state** section for the general freshness contract (the report→fix freshness invariant is its named worked instance). Absent a recorded override (see "Overrides"), the step blocks.
 

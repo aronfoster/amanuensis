@@ -158,7 +158,9 @@ The detailed per-entry `Applied:` and `Escalated:` blocks live in `anti-ai.md`, 
 
 ## Overrides
 
-The freshness check and the review-evidence check above both block by default: a `stale` report, or a `review_pending` report (unannotated with no bulk headers), is sent to "Open questions handling" and no prose is written. A human may authorize proceeding against such an input by recording an override, per `agents/orchestrator.md`'s **Artifact state** section. This is the only path by which this step consumes a `stale` or `review_pending` input, and it never happens silently.
+The freshness check above blocks by default: a `stale` report is sent to "Open questions handling" and no prose is written. A human may authorize proceeding against a `stale` input by recording an override, per `agents/orchestrator.md`'s **Artifact state** section. An override authorizes consuming an artifact despite a known *state* problem (staleness); it does **not** supply missing editorial intent. This is the only path by which this step consumes a `stale` input, and it never happens silently.
+
+**Override does not apply to `review_pending`.** A report that is unannotated with no bulk headers carries no `FIX`/`SKIP`/`ESCALATE` decision for this step to apply; an override would waive the gate but leave nothing to act on, and this step must not guess. A `review_pending` input is resolved by the human **adding review evidence** (per-entry annotations or a valid bulk header), not by an override, after which it is no longer `review_pending`.
 
 **Where the human records it.** A human-authored `Override:` block placed in `anti-ai.md` — the side artifact this step already reads at step start — naming the specific artifact and the condition overridden. It is not a new frontmatter or manifest field. Shape, for a stale input:
 
@@ -166,15 +168,11 @@ The freshness check and the review-evidence check above both block by default: a
 Override: proceed despite stale — anti-ai.md stamped draft-vNN.md, current <latest-draft> is draft-vMM.md. Authorized by human.
 ```
 
-or, for a review-pending input:
+The override must name the specific artifact and the draft mismatch.
 
-```markdown
-Override: proceed despite review_pending — anti-ai.md carries no review annotations. Authorized by human.
-```
+**Recognition at step start.** After computing freshness, if `anti-ai.md` is `stale`, look for a matching `Override:` block naming `anti-ai.md` and the draft mismatch. If a matching block is present, proceed with the apply; if none is present, block to `open-questions.md` exactly as today. The `review_pending` (unannotated, no bulk header) path is unaffected by overrides and blocks until the human supplies review evidence.
 
-The override must name the specific artifact and the draft mismatch (for stale) or the review-pending condition.
-
-**Recognition at step start.** After computing freshness and the review-evidence check, if `anti-ai.md` is `stale` or `review_pending`, look for a matching `Override:` block that names `anti-ai.md` and the same condition. If a matching block is present, proceed with the apply. If none is present, block to `open-questions.md` exactly as today — the stale and unannotated paths are unchanged in the no-override case.
+**Overriding staleness is still anchor-gated.** The override waives the freshness *block*, not the requirement that each edit land on a real anchor. The report was written against an older draft, so a quoted anchor may no longer match `<latest-draft>`; the step still locates each flagged entry's anchor under its normal grammar, and an entry whose anchor cannot be found safely is recorded and skipped, not guessed.
 
 **Recording.** On proceeding under an override, record it in this step's apply log — the same place the per-entry `Applied:` blocks go, appended to `anti-ai.md` — echoing the artifact and the exact condition overridden:
 
@@ -184,7 +182,7 @@ The override must name the specific artifact and the draft mismatch (for stale) 
 - Authorized by: human-recorded Override block
 ```
 
-For a review-pending override, the `Condition overridden:` line reads `review_pending — no review annotations`. The step proceeds against a `stale` or `review_pending` input only via a recorded override, and always leaves this override record in the apply log — in `anti-ai.md`, alongside the `Applied:` blocks, not the end-of-draft tally block comment.
+The step proceeds against a `stale` input only via a recorded override, and always leaves this override record in the apply log — in `anti-ai.md`, alongside the `Applied:` blocks, not the end-of-draft tally block comment.
 
 ## Open questions handling
 
@@ -192,7 +190,7 @@ For a review-pending override, the `Condition overridden:` line reads `review_pe
 
 Open-questions handling fires only when the input itself is unusable. Named blocker conditions:
 
-- **Unannotated report with no bulk headers (`review_pending`).** `anti-ai.md` exists but contains no annotations *and* no bulk headers (every flag is bare). With no review evidence the input is `review_pending`; this is the review-evidence gate (review is surfaced, not enforced — `agents/orchestrator.md`'s **Artifact state** section), and `compliance_fix` is the model the fix/apply steps follow. Absent a recorded override (see "Overrides"), the step blocks.
+- **Unannotated report with no bulk headers (`review_pending`).** `anti-ai.md` exists but contains no annotations *and* no bulk headers (every flag is bare). With no review evidence the input is `review_pending`; this is the review-evidence gate (review is surfaced, not enforced — `agents/orchestrator.md`'s **Artifact state** section), and `compliance_fix` is the model the fix/apply steps follow. An override does not lift this — it supplies no editorial intent — so the human resolves it by annotating the report (per-entry or a valid bulk header), after which it is no longer `review_pending`.
 - **Missing inputs.** `anti-ai.md` is missing, or `<latest-draft>` cannot be resolved (no `draft-vNN.md` in the attempt directory).
 - **Stale report (`stale`).** The `Reviewed-draft:` header at the top of `anti-ai.md` names a draft other than `<latest-draft>`. The report was generated against a different draft than the current one, which means a prose-advancing step has slipped in between `anti_ai_report` and `anti_ai_fix`. Applying the annotations to `<latest-draft>` would be applying notes against the wrong prose. The general freshness contract must hold; only the human can decide whether to rerun `anti_ai_report` against the current draft or to roll back. See `agents/orchestrator.md`'s **Artifact state** section for the general freshness contract (the report→fix freshness invariant is its named worked instance). Absent a recorded override (see "Overrides"), the step blocks.
 
