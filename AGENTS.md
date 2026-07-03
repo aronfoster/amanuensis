@@ -3,6 +3,7 @@
 ## Known issues
 
 - Claude Code for web sessions frequently fail to start when launched against the latest commit on `origin/main`. If a session fails to initialize, retry the session.
+- In Claude Code for web sessions, `origin/main` is frequently **stale** — it can lag the true default branch by one or more already-merged PRs, so `origin/main` (and any `git merge-base HEAD origin/main` against it) is an unreliable baseline for "what changed on this branch." A `git fetch origin main` may not refresh it; rather than troubleshoot, anchor diffs and untouched-surface checks at the branch's actual start commit — capture `git rev-parse HEAD` before your first commit and diff against that SHA. This affects subagents given a baseline to diff against, too: pass them the captured start SHA, never `origin/main`. (Not applicable outside Claude Code for web — other hosts fetch `origin/main` normally.)
 
 ## What this repository is
 
