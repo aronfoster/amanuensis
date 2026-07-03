@@ -18,14 +18,19 @@ The terms this contract uses:
 
 - **runnable** — every `required: true` precondition of the step resolves to at least one existing file.
 - **blocked** — not runnable; at least one required precondition is missing. The dispatcher reports what's missing and stops without loading the step body.
-- **stale** — a side artifact whose `Reviewed-draft:` stamp names a draft other than the current `<latest-draft>` (which resolves via the active head, so a stamp naming an abandoned draft is stale). Detected by the consuming step body at step start, not by the dispatcher (dispatcher-level staleness detection is M9.6).
+- **stale** — a side artifact whose `Reviewed-draft:` stamp names a draft other than the current `<latest-draft>` (which resolves via the active head, so a stamp naming an abandoned draft is stale); the derived complement of `fresh`. Detected by the consuming step body at step start, not by the dispatcher (dispatcher-level staleness detection is a deferred follow-on).
+- **fresh** — a side artifact whose `Reviewed-draft:` stamp equals the current `<latest-draft>` (the active head); the derived complement of `stale`.
 - **superseded** — a draft carrying a `superseded_by:` stamp in the manifest, and any side artifact stamped against one.
 - **active** — the draft named by the attempt manifest's `Active-head:` pointer — what `<latest-draft>` resolves to — and the side artifacts stamped against it.
 - **active_head** — the manifest's top-of-file `Active-head: draft-vNN.md` pointer, the single source of "which draft is active"; full definition in `agents/project-layouts.md`.
 - **lineage** — the `read_from` chain from a draft back to `draft-v01.md`; full definition in `agents/project-layouts.md`.
 - **abandoned** — a draft that carries a `superseded_by` stamp and is not the active head, a derived predicate; full definition in `agents/project-layouts.md`.
+- **review_pending** — a review-sensitive artifact with no review evidence (an unannotated report, or any review-required output the human has not confirmed); surfaced as a notice, blocking only on the unannotated-report path.
+- **reviewed** — a review-sensitive artifact carrying evidence (annotations, for the four reports), asserted by the human; **not** a stored positive stamp.
+- **discarded** — the prior run's findings against a superseded draft, dropped when a report-emitting step overwrites its artifact on regeneration (because their prose anchors no longer apply). Names existing behavior, not new.
+- **regenerated** — a report re-emitted against the current active head (the stale-blocker recovery path), overwriting the stale artifact with a fresh stamp. Names existing behavior, not new.
 - **recommended next** — the first non-`[x]` step in the recipe list.
-- **explicit override** — a deliberate human instruction to proceed despite a stale or blocked condition, always human-visible and never assumed. The recording mechanism is deferred to M9.5; until then the existing path stands: the step blocks to `open-questions.md` and the human resolves it there.
+- **override** — a recorded, source-specific, human-visible decision to proceed against a stale or review-pending artifact, delivered by this milestone; it names the specific artifact and the draft mismatch and is written into the consuming step's apply log. Absent a recorded override, the step blocks to `open-questions.md` and the human resolves it there. Dispatcher-level override lifting remains a deferred follow-on.
 
 ## Step workflow contract
 
@@ -142,7 +147,19 @@ How a step knows which chapter is "the current chapter" for book and series proj
 
 TODO: this doesn't feel ideal but I should see it in practice before proposing a new solution
 
-## Report→fix freshness invariant
+## Artifact state
+
+Amanuensis models the state of a prose-derived side artifact — a report or annotation one step emits and another consumes — with three properties, none of them stored fields: freshness (derived), review (a surfaced signal), and override (a recorded human decision). The report→fix freshness invariant below is the canonical worked instance of this general contract.
+
+**Freshness is a derived predicate.** A prose-derived side artifact carries a top-of-file `Reviewed-draft: draft-vNN.md` stamp; it is `fresh` iff that stamp equals the current `<latest-draft>` (the manifest's active head, per `agents/project-layouts.md`), and `stale` otherwise. This is computed by the consuming step at step start, over two facts already on disk (the stamp and the manifest's `Active-head:`); it is never stored as a field and no step ever walks other artifacts to maintain it. The rationale: a derived predicate keeps an update O(1) in artifacts instead of forcing an O(artifacts)-per-update sweep, and removes the drift class entirely.
+
+**Review is surfaced, not enforced.** The expectation is declared by `review_sensitive` (a frontmatter precondition key) and `review_gate` (a manifest field); evidence, where it exists, is the human's annotation on the four reports; a consuming step surfaces a non-blocking notice for a review-sensitive input and hard-blocks only via the pre-existing unannotated-report path. No positive "reviewed" field is added.
+
+**Override.** A human may authorize consuming a stale or review-pending artifact by recording an override; the override names the specific artifact and the draft mismatch and is written into the consuming step's apply log (the same place fix steps already record `Applied:` blocks). No stale or unreviewed apply happens silently; absent a recorded override, the step blocks as today.
+
+### Report→fix freshness invariant
+
+The report→fix freshness invariant is the canonical worked instance of the general freshness contract above.
 
 (Formerly the report→fix adjacency invariant.)
 
@@ -167,7 +184,7 @@ The stale-report exit is a human decision point, not an automatic recovery. The 
 
 - It does check that every `required: true` precondition of the selected step resolves to an existing file at dispatch — and, when a read-from draft is given, that the named draft exists in the latest attempt and the step declares a `prose_draft` precondition. That is the extent of its validation.
 - It does not validate that human review has occurred.
-- It does not detect staleness at the dispatcher level, and it does not record overrides. Upstream changes that should invalidate downstream artifacts are detected by the consuming step bodies via `Reviewed-draft:` stamps; lifting machine-checkable staleness and override recording into the dispatcher is M9.5/M9.6.
+- It does not detect staleness at the dispatcher level, and the dispatcher records no overrides. Upstream changes that should invalidate downstream artifacts are detected by the consuming step bodies via `Reviewed-draft:` stamps; override definition and recording in the step bodies and their apply logs is delivered by this milestone, while lifting machine-checkable staleness detection and override handling into the dispatcher is a deferred follow-on.
 - It does not enforce the recipe as the only order — the recipe is the recommended path, and any listed step whose required preconditions exist may be invoked.
 - It does not coordinate concurrent work across multiple chapters or works.
 - It does not produce reports or summaries of what it did.
