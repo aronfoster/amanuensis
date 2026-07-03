@@ -35,7 +35,7 @@ This pass runs after the metaphor pipeline and before any final proofread. It do
 
 ## Inputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the prose this step starts from (typically the output of the prior prose-advancing step); the source for unedited chunks and following-context windows. Resolved at step start. Line-pass is paired with no upstream report step, so there is no `Reviewed-draft` stamp to consult; the step reads `<latest-draft>` directly.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the prose this step starts from (typically the output of the prior prose-advancing step); the source for unedited chunks and following-context windows. Resolved at step start via the manifest's `Active-head:` pointer (the active head), or via the read-from override the dispatcher passed, per `agents/project-layouts.md` — not by highest-numbered draft. Line-pass is paired with no upstream report step, so there is no `Reviewed-draft` stamp to consult; the step reads `<latest-draft>` directly.
 - `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — the in-progress output; the source for preceding-context windows once any chunk has been written. This placeholder appears in both `inputs` and `outputs` because the step writes chunk-by-chunk and reads previously-finalized chunks back as preceding-context. The frontmatter records both roles explicitly; behavior is unchanged from the legacy doc, which used the step-named filename `draft-line.md` for the same dual role.
 - `voice.md` — the project-root voice file (a sibling of `pipeline-state.md`, not the copy inside the `amanuensis/` submodule; overridable by the path named in the consuming project's top-level `AGENTS.md`), passed in full as the system message; calibration anchor for the whole pass. If no voice file can be found, see Open questions handling.
 
@@ -189,13 +189,15 @@ The log records every chunk and every judgment call. Volume of edits is too high
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — identical to `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` except for the sentence-level edits this pass produces, with a block-comment apply log appended at the end. Written as the next versioned draft file (e.g., if `<latest-draft>` is `draft-v04.md`, this writes `draft-v05.md`). Do not modify `<latest-draft>`. The file is written chunk-by-chunk; previously-finalized chunks are read back as preceding-context for later chunks (see Context windows).
-- `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` — append a per-version entry for `<next-draft>` after the final chunk is written, following the schema in `agents/project-layouts.md`. Line-pass has no side-artifact apply log; the apply log lives in the block comment at the end of the produced prose file. Example:
+- `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — identical to `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` except for the sentence-level edits this pass produces, with a block-comment apply log appended at the end. Written as the next versioned draft file: `<next-draft>` is the highest existing draft number + 1 (monotonic; per `agents/project-layouts.md`), not one greater than the draft read, so a branch rerun never collides with an existing file. Do not modify `<latest-draft>`. The file is written chunk-by-chunk; previously-finalized chunks are read back as preceding-context for later chunks (see Context windows).
+- `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` — append a per-version entry for `<next-draft>` after the final chunk is written, following the schema in `agents/project-layouts.md`. `read_from` names the draft this step actually read (the active head, or the read-from override); `timestamp` is the write time (ISO 8601 with timezone offset); `review_gate` is this step's `review_required` value (`true`). Line-pass has no side-artifact apply log; the apply log lives in the block comment at the end of the produced prose file. Example:
 
   ```markdown
   ## draft-v05.md
   - produced_by: line_pass
   - read_from: [draft-v04.md]
+  - timestamp: 2026-05-19T09:27:52-06:00
+  - review_gate: true
   - side_artifacts: []
   - apply_log: apply log at end of `draft-v05.md`
   ```
@@ -209,4 +211,4 @@ Named blocker conditions:
 - **Missing inputs.** `<latest-draft>` cannot be resolved (no `draft-vNN.md` in the attempt directory).
 - **Missing voice file.** Project-root `voice.md` (or the override named in the project's `AGENTS.md`) is missing.
 
-In either case, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
+In either case, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to repoint the manifest's `Active-head:` to the `<next-draft>` it just wrote — and, on a branch (the draft read was not the old active head), stamp each displaced draft `superseded_by: draft-vNN.md` naming `<next-draft>`, per the algorithm in `agents/project-layouts.md` — then mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

@@ -28,7 +28,7 @@ Report compliance violations between a chapter's storyboard blocks and its draft
 ## Inputs
 
 - `<chapter-folder>/storyboards/*-storyboard.md` — all storyboard blocks for the chapter. The block fields drive the three checks below: `must_preserve` and `character_state_out` for Must-Contain; `concealment_from_reader` and `concealment_from_characters` for Must-Not-Contain; `canon_active` for Canon.
-- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the drafted prose to evaluate against the storyboard blocks. Resolved at step start; this step does not mint a new draft version.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the drafted prose to evaluate against the storyboard blocks. Resolved at step start via the manifest's active head — or via the read-from override the dispatcher passed — per `agents/project-layouts.md`, not by highest-numbered draft; this step does not mint a new draft version.
 
 Do not read any other files. In particular, do not consult source canon files: each block's `canon_active` field is supposed to contain everything needed to evaluate a canon check.
 
@@ -38,7 +38,7 @@ Read all storyboard blocks for the scene in order. For each block, run the three
 
 ### Output file format
 
-The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` filename (e.g. `draft-v03.md`); the stamp lets `compliance_fix` detect stale annotations when a newer draft has been minted since this report was written. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, append this run's per-scene sections beneath the existing content. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
+The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` filename (e.g. `draft-v03.md`) — the draft this run actually read, so when a read-from override is in effect the stamp names that draft; the stamp lets `compliance_fix` detect stale annotations when a newer draft has been minted since this report was written. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, append this run's per-scene sections beneath the existing content. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
 
 Below the top-of-file stamp, begin each scene's section with a dated header:
 
@@ -113,7 +113,7 @@ Do not propose fixes. The summary observation is a diagnostic, not a recommendat
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md` — the compliance report. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers; subsequent runs against the same draft append below, runs against a newer draft (recovery path) overwrite the file with a fresh stamp. Then one `## Compliance Report — Scene [scene-id], [date]` header per scene-run, one `### Block NNN` entry per storyboard block (either a single `CLEAN` line or a list of violations), and a `### Summary` block per run tallying violations by check type and noting any pattern-level observation. The `Reviewed-draft` stamp is required so `compliance_fix` can detect stale annotations against a newer draft. The file is the human review artifact that the human annotates with `FIX` / `FIX: [instruction]` / `SKIP` / `ESCALATE` before `compliance_fix` runs.
+- `<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md` — the compliance report. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers — the draft this run actually read; subsequent runs against the same draft append below, runs against a newer draft (recovery path) overwrite the file with a fresh stamp. Then one `## Compliance Report — Scene [scene-id], [date]` header per scene-run, one `### Block NNN` entry per storyboard block (either a single `CLEAN` line or a list of violations), and a `### Summary` block per run tallying violations by check type and noting any pattern-level observation. The `Reviewed-draft` stamp is required so `compliance_fix` can detect stale annotations against a newer draft. The file is the human review artifact that the human annotates with `FIX` / `FIX: [instruction]` / `SKIP` / `ESCALATE` before `compliance_fix` runs.
 
 ## Anti-Patterns
 

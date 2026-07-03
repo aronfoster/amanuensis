@@ -32,7 +32,7 @@ Substitutes the surviving variants from the working metaphors file into the draf
 - `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — the working file after human selection. Each surviving entry carries the variant the human kept. Variants may be FLATTEN paragraphs, REPLACE paragraphs, or WORKSHOP sentences. Note: since `metaphor_fix`'s workshop subagent no longer runs an integration phase (the integration phase was removed; integration now happens here), surviving WORKSHOP entries arrive as bare individual sentences rather than fully-integrated paragraphs. Step 3 of Behavior already handles this through its "sentence variant" branch — no behavior change is required, but you should not be surprised to see workshop variants as one-line candidates.
 
   At step start, before substituting any variant, read the `Reviewed-draft: draft-vNN.md` header at the top of `metaphors.md` and confirm it equals `<latest-draft>`. If it does not, see "Open questions handling" below — this is a stale-report blocker.
-- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the current prose (the latest prose-revising step's output before this one). Resolved at step start.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the current prose (the latest prose-revising step's output before this one). Resolved at step start via the manifest's `Active-head:` pointer (the active head), or via the read-from override the dispatcher passed, per `agents/project-layouts.md` — not by highest-numbered draft.
 
 Do not read the storyboard, canon files, or the selected voice file or profile. The variants have already been generated and chosen under those constraints. Apply locates each change in the draft and integrates it; it does not re-evaluate the rewrite.
 
@@ -107,14 +107,16 @@ The log records every entry and every judgment call. It is the audit trail for t
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — identical to `<latest-draft>` except for the substitutions described above, with the apply-log block comment appended at the end. Written as the next versioned draft file (e.g., if `<latest-draft>` is `draft-v03.md`, this writes `draft-v04.md`). Do not modify `<latest-draft>` or `metaphors.md`.
+- `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — identical to `<latest-draft>` except for the substitutions described above, with the apply-log block comment appended at the end. Written as the next versioned draft file: `<next-draft>` is the highest existing draft number + 1 (monotonic; per `agents/project-layouts.md`), not one greater than the draft read, so a branch rerun never collides with an existing file. Do not modify `<latest-draft>` or `metaphors.md`.
 - `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — unchanged in content by this step; listed as an output only because the manifest entry records it as the side artifact consulted. The apply log for this run lives in the block comment at the end of `<next-draft>`, not here.
-- `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` — append a per-version entry for `<next-draft>` after a successful prose write, following the schema in `agents/project-layouts.md`. Example:
+- `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` — append a per-version entry for `<next-draft>` after a successful prose write, following the schema in `agents/project-layouts.md`. `read_from` names the draft this step actually read (the active head, or the read-from override); `timestamp` is the write time (ISO 8601 with timezone offset); `review_gate` is this step's `review_required` value (`false`). Example:
 
   ```markdown
   ## draft-v04.md
   - produced_by: metaphor_apply
   - read_from: [draft-v03.md]
+  - timestamp: 2026-05-18T16:41:09-06:00
+  - review_gate: false
   - side_artifacts: [metaphors.md]
   - apply_log: apply log at end of `draft-v04.md`
   ```
@@ -126,4 +128,4 @@ Named blocker conditions:
 - **Missing or ambiguous inputs.** `metaphors.md` is missing, contains no surviving variants, or `<latest-draft>` cannot be resolved.
 - **Stale report.** The `Reviewed-draft:` header at the top of `metaphors.md` names a draft other than `<latest-draft>`. The paired report→fix freshness invariant requires that the metaphor pipeline (`metaphor_identify` + `metaphor_fix`) ran against the same draft this step is applying to; if a prose-advancing step slipped in between, the recorded variants target the wrong sentences. Only the human can decide whether to rerun the metaphor pipeline against the current draft or to roll back. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
 
-In any of these, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
+In any of these, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to repoint the manifest's `Active-head:` to the `<next-draft>` it just wrote — and, on a branch (the draft read was not the old active head), stamp each displaced draft `superseded_by: draft-vNN.md` naming `<next-draft>`, per the algorithm in `agents/project-layouts.md` — then mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

@@ -46,15 +46,19 @@ Use this step only after the chapter's storyboard files are complete. This step 
 6. Wait for all subagents to write their scene file (`sceneNN.md`) and scene notes file (`sceneNN-notes.md`) into `<chapter-folder>/drafts/<latest-attempt>/`.
 7. Assemble the scene files in scene order into `<chapter-folder>/drafts/<latest-attempt>/draft-v01.md` (see Assembly rules).
 8. Assemble the scene notes files into `<chapter-folder>/drafts/<latest-attempt>/notes.md`, broken out by scene (see Notes assembly).
-9. Write `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` with a per-version entry for `draft-v01.md`, using the manifest format defined in `agents/project-layouts.md` (see "Attempt-level provenance: draft-manifest.md"). The entry records `produced_by: drafting`, `read_from: []` (drafting is the first prose-producing step in the attempt, so it consumes no prior versioned prose), the storyboard files the coordinator consulted as the assembly source, and a pointer to `notes.md` for run details. Gate this exactly like the capture dispatch and fragment deletion below: write the manifest **only on a completed assembly**. On any failure or abandon path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft-v01.md` written — do **not** write the manifest; record the blocker in `notes.md`.
+9. Write `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` with a per-version entry for `draft-v01.md`, using the manifest format defined in `agents/project-layouts.md` (see "Attempt-level provenance: draft-manifest.md"). Initialize the top-of-file pointer to `Active-head: draft-v01.md`, written above the entry. The entry records `produced_by: drafting`, `read_from: []` (drafting is the first prose-producing step in the attempt, so it consumes no prior versioned prose), `timestamp` (the write time, ISO 8601 with timezone offset), `review_gate: true` (this step's `review_required` value), the storyboard files the coordinator consulted as the assembly source, and a pointer to `notes.md` for run details. Gate this exactly like the capture dispatch and fragment deletion below: write the manifest **only on a completed assembly**. On any failure or abandon path — a subagent reports a blocker, a scene file is missing, assembly is not completed or is abandoned, or the step takes the Open-questions exit with no `draft-v01.md` written — do **not** write the manifest; record the blocker in `notes.md`.
 
-   An example of the entry drafting writes:
+   An example of the manifest drafting writes:
 
    ```md
+   Active-head: draft-v01.md
+
    ## draft-v01.md
 
    - produced_by: drafting
    - read_from: []
+   - timestamp: 2026-05-18T09:04:11-06:00
+   - review_gate: true
    - consulted:
      - <chapter-folder>/storyboards/beat01-storyboard.md
      - <chapter-folder>/storyboards/beat02-storyboard.md
@@ -204,7 +208,7 @@ The durable outputs of a completed run are `draft-v01.md`, `notes.md`, and `draf
 
 - **`<chapter-folder>/drafts/<latest-attempt>/draft-v01.md`** — the assembled chapter draft. Contains story text only, with scenes separated by `---`. Beats within a scene retain their `<!-- scene X, beat Y -->` / `<!-- end scene X, beat Y -->` markers.
 - **`<chapter-folder>/drafts/<latest-attempt>/notes.md`** — the combined run notes. Run metadata (attempt name, chapter path, model) plus the per-scene notes broken out by scene heading. Also captures any beat-index/filename mismatches, assembly notes, and blockers raised by subagents.
-- **`<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md`** — the attempt's provenance index. Holds the per-version entry for `draft-v01.md` (and, in later steps, for any subsequent `draft-vNN.md`) as defined in `agents/project-layouts.md`.
+- **`<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md`** — the attempt's provenance index. Opens with the `Active-head: draft-v01.md` pointer this step initializes (later prose-advancing steps repoint it) and holds the per-version entry for `draft-v01.md` (and, in later steps, for any subsequent `draft-vNN.md`) as defined in `agents/project-layouts.md`.
 
 The per-scene `sceneNN.md` and `sceneNN-notes.md` files are transient working files written by subagents during the run. Their content is folded into `draft-v01.md` and `notes.md` during assembly, and the coordinator deletes them afterward (see Coordinator responsibilities, step 11), so they are not part of the durable output set. They are preserved only when a run cannot complete assembly.
 
