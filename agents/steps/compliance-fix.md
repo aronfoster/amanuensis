@@ -39,9 +39,9 @@ Apply the human-annotated fixes recorded in `reviewer-actions.md` to the current
   - `FIX: [instruction]` — apply the fix as specified
   - `SKIP` — leave as-is; violation accepted
   - `ESCALATE` — conflict cannot be resolved by local edit; flag for storyboard or canon revision
-  An unannotated report is not a valid input. See "Open questions handling" below.
+  An unannotated report is not a valid input: with no `FIX`/`SKIP`/`ESCALATE` annotation the report carries no review evidence, so it is `review_pending` and this step blocks. This is the review-evidence gate of the general contract — review is surfaced, not enforced (`agents/orchestrator.md`'s **Artifact state** section), and annotation is the review evidence for the four reports; `compliance_fix` is the model the other fix/apply steps follow. See "Open questions handling" below.
 
-  At step start, before acting on any entry, read the `Reviewed-draft: draft-vNN.md` header at the top of `reviewer-actions.md` and confirm it equals `<latest-draft>`. If it does not, see "Open questions handling" below — this is a stale-report blocker.
+  At step start, before acting on any entry, read the `Reviewed-draft: draft-vNN.md` header at the top of `reviewer-actions.md` and confirm it equals `<latest-draft>`. This is the consumption-time check of the general freshness contract stated in `agents/orchestrator.md`'s **Artifact state** section: `reviewer-actions.md` is `fresh` iff its stamp equals the current `<latest-draft>` (the manifest's active head) and `stale` otherwise — a predicate derived here at step start, never stored. If the stamp does not match, the input is `stale`; see "Open questions handling" below for the stale-report blocker (the report→fix freshness invariant is that contract's named worked instance), unless the human recorded an override — see "Overrides" below.
 - `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the current draft this step revises. Resolved at step start via the manifest's `Active-head:` pointer (the active head), or via the read-from override the dispatcher passed, per `agents/project-layouts.md` — not by highest-numbered draft. Read-only at this step's input boundary; revisions are written to `<next-draft>`.
 - `<chapter-folder>/storyboards/*-storyboard.md` — the storyboard blocks for any `FIX` items, used to confirm what the violation should have enacted. Read only the blocks referenced by `FIX` entries.
 
@@ -103,15 +103,45 @@ For entries with no annotation: do not act on them. See Anti-Patterns below.
   - apply_log: apply log appended to `reviewer-actions.md`
   ```
 
+## Overrides
+
+The freshness check and the review-evidence check above both block by default: a `stale` report, or a `review_pending` (unannotated) report, is sent to "Open questions handling" and no prose is written. A human may authorize proceeding against such an input by recording an override, per `agents/orchestrator.md`'s **Artifact state** section. This is the only path by which this step consumes a `stale` or `review_pending` input, and it never happens silently.
+
+**Where the human records it.** A human-authored `Override:` block placed in `reviewer-actions.md` — the side artifact this step already reads at step start — naming the specific artifact and the condition overridden. It is not a new frontmatter or manifest field. Shape, for a stale input:
+
+```markdown
+Override: proceed despite stale — reviewer-actions.md stamped draft-vNN.md, current <latest-draft> is draft-vMM.md. Authorized by human.
+```
+
+or, for a review-pending input:
+
+```markdown
+Override: proceed despite review_pending — reviewer-actions.md carries no review annotations. Authorized by human.
+```
+
+The override must name the specific artifact and the draft mismatch (for stale) or the review-pending condition.
+
+**Recognition at step start.** After computing freshness and the review-evidence check, if `reviewer-actions.md` is `stale` or `review_pending`, look for a matching `Override:` block that names `reviewer-actions.md` and the same condition. If a matching block is present, proceed with the apply. If none is present, block to `open-questions.md` exactly as today — the stale and unannotated paths are unchanged in the no-override case.
+
+**Recording.** On proceeding under an override, record it in this step's apply log — the same place the `Applied:` blocks go, appended to `reviewer-actions.md` — echoing the artifact and the exact condition overridden:
+
+```markdown
+#### Override applied: reviewer-actions.md
+- Condition overridden: stale — report stamped draft-vNN.md, applied against draft-vMM.md
+- Authorized by: human-recorded Override block
+```
+
+For a review-pending override, the `Condition overridden:` line reads `review_pending — no review annotations`. The step proceeds against a `stale` or `review_pending` input only via a recorded override, and always leaves this override record in the apply log.
+
 ## Open questions handling
 
 `ESCALATE`-annotated items are **not** blockers. The step appends an `Escalated:` block for each one and continues. An unresolvable upstream conflict is the expected outcome of an `ESCALATE` annotation, not a reason to halt the pipeline.
 
 Open-questions handling fires only when the input itself is unusable. Named blocker conditions:
 
-- **Unannotated report.** `reviewer-actions.md` exists but contains no annotations at all (every violation is bare, with no `FIX`/`SKIP`/`ESCALATE`).
+- **Unannotated report (`review_pending`).** `reviewer-actions.md` exists but contains no annotations at all (every violation is bare, with no `FIX`/`SKIP`/`ESCALATE`). With no review evidence the input is `review_pending`; this is the review-evidence gate (review is surfaced, not enforced — `agents/orchestrator.md`'s **Artifact state** section), and `compliance_fix` is the model the other fix/apply steps follow. Absent a recorded override (see "Overrides"), the step blocks.
 - **Missing inputs.** `reviewer-actions.md` is missing, or `<latest-draft>` cannot be resolved (no `draft-vNN.md` in the attempt directory).
-- **Stale report.** The `Reviewed-draft:` header at the top of `reviewer-actions.md` names a draft other than `<latest-draft>`. The report was generated against a different draft than the current one, which means a prose-advancing step has slipped in between `compliance_report` and `compliance_fix`. Applying the annotations to `<latest-draft>` would be applying notes against the wrong prose. The paired report→fix freshness invariant must hold; only the human can decide whether to rerun `compliance_report` against the current draft or to roll back. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
+- **Stale report (`stale`).** The `Reviewed-draft:` header at the top of `reviewer-actions.md` names a draft other than `<latest-draft>`. The report was generated against a different draft than the current one, which means a prose-advancing step has slipped in between `compliance_report` and `compliance_fix`. Applying the annotations to `<latest-draft>` would be applying notes against the wrong prose. The general freshness contract must hold; only the human can decide whether to rerun `compliance_report` against the current draft or to roll back. See `agents/orchestrator.md`'s **Artifact state** section for the general freshness contract (the report→fix freshness invariant is its named worked instance). Absent a recorded override (see "Overrides"), the step blocks.
 
 In any of these, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate annotations and do not write a partial `<next-draft>`. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to repoint the manifest's `Active-head:` to the `<next-draft>` it just wrote — and, on a branch (the draft read was not the old active head), stamp each displaced draft `superseded_by: draft-vNN.md` naming `<next-draft>`, per the algorithm in `agents/project-layouts.md` — then mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
 

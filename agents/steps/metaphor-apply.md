@@ -29,9 +29,9 @@ Substitutes the surviving variants from the working metaphors file into the draf
 
 ## Inputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — the working file after human selection. Each surviving entry carries the variant the human kept. Variants may be FLATTEN paragraphs, REPLACE paragraphs, or WORKSHOP sentences. Note: since `metaphor_fix`'s workshop subagent no longer runs an integration phase (the integration phase was removed; integration now happens here), surviving WORKSHOP entries arrive as bare individual sentences rather than fully-integrated paragraphs. Step 3 of Behavior already handles this through its "sentence variant" branch — no behavior change is required, but you should not be surprised to see workshop variants as one-line candidates.
+- `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — the working file after human selection. Each surviving entry carries the variant the human kept. Unlike the annotation-grammar reports, `metaphor_apply` has no `FIX`/`SKIP`/`ESCALATE` gate; under the general contract (`agents/orchestrator.md`'s **Artifact state** section, review surfaced not enforced) its review evidence is the human's selection here — a surviving variant per entry. A `metaphors.md` with no surviving variant carries no such evidence and is handled by the existing missing/ambiguous-input blocker, not a manufactured unannotated-report gate. Variants may be FLATTEN paragraphs, REPLACE paragraphs, or WORKSHOP sentences. Note: since `metaphor_fix`'s workshop subagent no longer runs an integration phase (the integration phase was removed; integration now happens here), surviving WORKSHOP entries arrive as bare individual sentences rather than fully-integrated paragraphs. Step 3 of Behavior already handles this through its "sentence variant" branch — no behavior change is required, but you should not be surprised to see workshop variants as one-line candidates.
 
-  At step start, before substituting any variant, read the `Reviewed-draft: draft-vNN.md` header at the top of `metaphors.md` and confirm it equals `<latest-draft>`. If it does not, see "Open questions handling" below — this is a stale-report blocker.
+  At step start, before substituting any variant, read the `Reviewed-draft: draft-vNN.md` header at the top of `metaphors.md` and confirm it equals `<latest-draft>`. This is the consumption-time check of the general freshness contract stated in `agents/orchestrator.md`'s **Artifact state** section: `metaphors.md` is `fresh` iff its stamp equals the current `<latest-draft>` (the manifest's active head) and `stale` otherwise — a predicate derived here at step start, never stored. If the stamp does not match, the input is `stale`; see "Open questions handling" below for the stale-report blocker (the report→fix freshness invariant is that contract's named worked instance), unless the human recorded an override — see "Overrides" below.
 - `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the current prose (the latest prose-revising step's output before this one). Resolved at step start via the manifest's `Active-head:` pointer (the active head), or via the read-from override the dispatcher passed, per `agents/project-layouts.md` — not by highest-numbered draft.
 
 Do not read the storyboard, canon files, or the selected voice file or profile. The variants have already been generated and chosen under those constraints. Apply locates each change in the draft and integrates it; it does not re-evaluate the rewrite.
@@ -79,6 +79,7 @@ Apply log
 - [entry label]: applied [variant ID]; resolved ambiguity by [reason]
 - [entry label]: skipped — entry deleted / no surviving variant
 - [entry label]: skipped — could not locate target in draft
+- Override applied: metaphors.md — condition overridden: stale — report stamped draft-vNN.md, applied against draft-vMM.md; authorized by human-recorded Override block (emitted only when proceeding under a recorded override; see "Overrides")
 -->
 ```
 
@@ -121,11 +122,39 @@ The log records every entry and every judgment call. It is the audit trail for t
   - apply_log: apply log at end of `draft-v04.md`
   ```
 
+## Overrides
+
+The freshness check above blocks by default: a `stale` `metaphors.md` is sent to "Open questions handling" and no prose is written. A human may authorize proceeding against a `stale` input by recording an override, per `agents/orchestrator.md`'s **Artifact state** section. This is the only path by which this step applies against a `stale` input, and it never happens silently. `metaphor_apply` has no annotation-grammar report, so on the review axis its evidence is the human's selection in `metaphors.md`; a `metaphors.md` with no surviving variant is its `review_pending` analog, handled as a missing/ambiguous input above rather than as a manufactured annotation gate.
+
+**Where the human records it.** A human-authored `Override:` block placed in `metaphors.md` — the side artifact this step already reads at step start — naming the specific artifact and the condition overridden. It is not a new frontmatter or manifest field. Shape, for a stale input:
+
+```markdown
+Override: proceed despite stale — metaphors.md stamped draft-vNN.md, current <latest-draft> is draft-vMM.md. Authorized by human.
+```
+
+or, for a review-pending input:
+
+```markdown
+Override: proceed despite review_pending — metaphors.md carries no review annotations. Authorized by human.
+```
+
+The override must name the specific artifact and the draft mismatch (for stale) or the review-pending condition.
+
+**Recognition at step start.** After computing freshness, if `metaphors.md` is `stale` (or `review_pending` on the selection axis), look for a matching `Override:` block that names `metaphors.md` and the same condition. If a matching block is present, proceed with the substitution. If none is present, block to `open-questions.md` exactly as today — the stale path is unchanged in the no-override case.
+
+**Recording.** On proceeding under an override, record it in this step's apply log — which for `metaphor_apply` is the block comment appended at the end of `<next-draft>` (not `metaphors.md`, which this step never writes) — folding the record into that apply-log block comment, echoing the artifact and the exact condition overridden:
+
+```markdown
+- Override applied: metaphors.md — condition overridden: stale — report stamped draft-vNN.md, applied against draft-vMM.md; authorized by human-recorded Override block
+```
+
+For a review-pending override, the condition reads `review_pending — no review annotations`. The step applies against a `stale` (or unselected) `metaphors.md` only via a recorded override, and always leaves this override record in the apply-log block comment.
+
 ## Open questions handling
 
 Named blocker conditions:
 
-- **Missing or ambiguous inputs.** `metaphors.md` is missing, contains no surviving variants, or `<latest-draft>` cannot be resolved.
-- **Stale report.** The `Reviewed-draft:` header at the top of `metaphors.md` names a draft other than `<latest-draft>`. The paired report→fix freshness invariant requires that the metaphor pipeline (`metaphor_identify` + `metaphor_fix`) ran against the same draft this step is applying to; if a prose-advancing step slipped in between, the recorded variants target the wrong sentences. Only the human can decide whether to rerun the metaphor pipeline against the current draft or to roll back. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
+- **Missing or ambiguous inputs.** `metaphors.md` is missing, contains no surviving variants, or `<latest-draft>` cannot be resolved. A `metaphors.md` with no surviving variant is the review-evidence (`review_pending`) analog for this step, whose review evidence is the human's selection; absent a recorded override (see "Overrides"), it blocks here.
+- **Stale report (`stale`).** The `Reviewed-draft:` header at the top of `metaphors.md` names a draft other than `<latest-draft>`. The general freshness contract requires that the metaphor pipeline (`metaphor_identify` + `metaphor_fix`) ran against the same draft this step is applying to; if a prose-advancing step slipped in between, the recorded variants target the wrong sentences. Only the human can decide whether to rerun the metaphor pipeline against the current draft or to roll back. See `agents/orchestrator.md`'s **Artifact state** section for the general freshness contract (the report→fix freshness invariant is its named worked instance). Absent a recorded override (see "Overrides"), the step blocks.
 
 In any of these, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to repoint the manifest's `Active-head:` to the `<next-draft>` it just wrote — and, on a branch (the draft read was not the old active head), stamp each displaced draft `superseded_by: draft-vNN.md` naming `<next-draft>`, per the algorithm in `agents/project-layouts.md` — then mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
