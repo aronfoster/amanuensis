@@ -121,6 +121,25 @@ Notes: This milestone replaces the archive-on-redo idea from the old M7. Amanuen
 does not move backward. It creates a new version from selected inputs and records which
 draft lineage is now active.
 
+Sprint 13 plans M8 (see SPRINT.md). Locked there: the active head is a top-of-manifest
+`Active-head: draft-vNN.md` pointer (parallel to the `Reviewed-draft:` stamp), and
+`<latest-draft>` resolves to it — falling back to the highest-numbered draft when no
+pointer exists, so existing projects need no migration. `<latest-draft>` (the read
+pointer) and `<next-draft>` (highest existing draft number + 1, kept monotonic) decouple.
+Branch selection is an owner decision: a read-from argument on `run-step`
+(`run-step <step_id> from <draft-vNN>`) that overrides which draft `<latest-draft>`
+resolves to for that one invocation; `next-step` never branches. On a branch (read-from ≠
+active head) the prose-advancing step writes `<next-draft>`, repoints `Active-head`, and
+stamps each displaced active-lineage draft `superseded_by: <next-draft>`; abandonment is
+derived from that stamp, not a separate field, and a linear advance supersedes nothing.
+The M8.1 design note and the lineage/supersession algorithm land in
+`agents/project-layouts.md` (the doc that owns the manifest); `orchestrator.md`'s
+Execution-model terms are updated to match and cross-reference it. The report→fix
+freshness invariant keeps its filename-comparison mechanics unchanged — with active-head
+resolution, a report stamped against an abandoned draft is correctly stale, and stamp
+filename plus the manifest's `read_from` chain identifies which lineage a stale artifact
+belongs to.
+
 ---
 
 ## M9 — Stale artifacts and review gates
