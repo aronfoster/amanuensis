@@ -62,7 +62,7 @@ Wave order: **Task 1** defines the model and must land first (Tasks 2–4 refere
 
 ### Task 1 — Artifact-state model + vocabulary + override behavior in `agents/orchestrator.md`
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Land the M9.1 design note and the M9.2/M9.3/M9.5 model as the single source in the doc that owns the freshness invariant. Everything downstream references this section. Closes **M9.1**, the model side of **M9.2**, **M9.3**, and **M9.5**.
 
@@ -82,7 +82,7 @@ Wave order: **Task 1** defines the model and must land first (Tasks 2–4 refere
 
 ### Task 2 — Freshness-stamp contract adoption in the four report-emitting steps
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Point each report-emitting step at the named general freshness contract and use the named `regenerated`/`discarded` behavior, with no mechanics change. Closes the step side of **M9.2**.
 
@@ -98,7 +98,7 @@ Wave order: **Task 1** defines the model and must land first (Tasks 2–4 refere
 
 ### Task 3 — Dual-check + override branch in the four fix/apply steps (+ `metaphor_fix`)
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Frame the freshness and review-evidence checks the fix/apply steps already perform as instances of the general contract, make the review-evidence gate uniform, and add an explicit recorded-override branch. Closes **M9.4** and the step side of **M9.5**.
 
@@ -117,7 +117,7 @@ Wave order: **Task 1** defines the model and must land first (Tasks 2–4 refere
 
 ### Task 4 — Review-legibility surface: `AGENTS.md`, step-workflow template
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Make the signal-only review model and the derived-freshness model legible in the catalog docs, single-sourced to `agents/orchestrator.md`. Closes the catalog side of **M9.3**.
 
@@ -133,7 +133,7 @@ Wave order: **Task 1** defines the model and must land first (Tasks 2–4 refere
 
 ### Task 5 — Smoke coverage, verification sweep, ROADMAP / SPRINT check-off
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Document runnable verification of the state model and close the milestone. Closes **M9.7** and the residual of **M9**.
 

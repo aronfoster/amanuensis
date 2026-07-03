@@ -6,7 +6,7 @@ This directory is a minimal `short_story` project committed inside the Amanuensi
 
 The goal of running the recipes below is to confirm that the dispatcher itself works: it locates `pipeline-state.md`, confirms the requested (or recommended-next) step_id appears in the recipe list, resolves the workflow file at `amanuensis/agents/steps/<step>.md`, verifies the step's `required: true` preconditions resolve to existing files, and follows the step body in the same session — the step body then either records its own completion or stops with a question. Validating the literary quality of the step bodies' output is **not** a goal here.
 
-Four recipes cover the four selective-execution behaviors: the default recipe run in order (Recipe 1), rerunning a completed step (Recipe 2), a fix step blocking on a stale report (Recipe 3), and a non-dependent step running out of recipe order (Recipe 4). A fifth recipe covers the draft-lineage branch surface: rerunning a fix step from an earlier draft with a read-from argument, which mints a new draft as the active head and stamps the displaced drafts superseded (Recipe 5). See `agents/orchestrator.md` for the canonical contract the dispatcher follows.
+Four recipes cover the four selective-execution behaviors: the default recipe run in order (Recipe 1), rerunning a completed step (Recipe 2), a fix step blocking on a stale report (Recipe 3), and a non-dependent step running out of recipe order (Recipe 4). A fifth recipe covers the draft-lineage branch surface: rerunning a fix step from an earlier draft with a read-from argument, which mints a new draft as the active head and stamps the displaced drafts superseded (Recipe 5). Three further recipes exercise the Artifact-state model (`agents/orchestrator.md`'s **Artifact state** section) on the `anti_ai_report → anti_ai_fix` pair: an unannotated report blocking the fix step as `review_pending` (Recipe 6), regenerating a stale report against the active head so the fix step runs clean (Recipe 7), and a human-recorded override that lets a stale apply proceed (Recipe 8). See `agents/orchestrator.md` for the canonical contract the dispatcher follows.
 
 ## Layout
 
@@ -26,7 +26,7 @@ Committed in this directory:
 - `.opencode/agents/run-step.md` and `.opencode/agents/next-step.md` — copied in by `install.sh`.
 - `amanuensis` — symlink to the Amanuensis repo root (this repo). Lets the dispatcher resolve `amanuensis/agents/steps/<step>.md` exactly as it would under a real submodule install.
 - `characters/` — written by `character_extraction` on a successful run (Recipes 1–2).
-- `plot/drafts/attempt01/` — hand-authored for Recipes 3–5 (filler drafts and a stamped `reviewer-actions.md`; Recipe 5 additionally hand-authors a `draft-manifest.md` carrying an `Active-head: draft-vNN.md` pointer and a three-entry lineage). On Recipe 4's success the fix step also writes `draft-v03.md` and `draft-manifest.md` here; on Recipe 5's success it writes the branch output `draft-v04.md` and updates the hand-authored manifest's pointer and `superseded_by` stamps.
+- `plot/drafts/attempt01/` — hand-authored for Recipes 3–8 (filler drafts and a stamped report: a `reviewer-actions.md` for Recipes 3–5, an `anti-ai.md` for Recipes 6–8; Recipe 5 additionally hand-authors a `draft-manifest.md` carrying an `Active-head: draft-vNN.md` pointer and a three-entry lineage). On Recipe 4's success the fix step also writes `draft-v03.md` and `draft-manifest.md` here; on Recipe 5's success it writes the branch output `draft-v04.md` and updates the hand-authored manifest's pointer and `superseded_by` stamps; on Recipes 7–8's success `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md`, and in Recipe 7 `anti_ai_report` first overwrites `anti-ai.md` in place.
 
 ## Setup
 
@@ -69,7 +69,7 @@ This is a convenience for maintainers, not a required step of the smoke test —
 
 ## Run — Claude Code
 
-All recipes assume Setup is done and each dispatcher invocation happens in a fresh Claude Code session with cwd = `examples/smoke`. Recipe 2 follows directly from Recipe 1; Recipes 3–5 each start from a freshly reset fixture (see **Reset between runs**) plus the hand-authored files described inline.
+All recipes assume Setup is done and each dispatcher invocation happens in a fresh Claude Code session with cwd = `examples/smoke`. Recipe 2 follows directly from Recipe 1; Recipes 3–8 each start from a freshly reset fixture (see **Reset between runs**) plus the hand-authored files described inline.
 
 ### Recipe 1 — default recipe in order
 
@@ -227,9 +227,169 @@ Expected observable outcome:
 
 Follow-on check — reader steps follow the pointer: a subsequent `/run-step compliance_report` (no override) now reads `draft-v04.md` — the active head — not `draft-v03.md`, and stamps its report `Reviewed-draft: draft-v04.md`.
 
-### Recipes 3–5 touch only untracked files
+### M9.7 recipes — artifact state
 
-The hand-authored `plot/drafts/attempt01/` tree, and everything the fix step writes into it, lives entirely in untracked paths. Nothing new is committed under `examples/smoke/`, and the existing reset procedure below restores the committed baseline.
+The final three recipes exercise the general Artifact-state model — freshness, review, and override — from `agents/orchestrator.md`'s **Artifact state** section, using the `anti_ai_report → anti_ai_fix` pair. This pair is chosen because `anti_ai_report`'s only `required: true` precondition is `<latest-draft>`: it needs no storyboards and no voice file, so it runs in the bare smoke fixture, and `anti_ai_fix` reads only `anti-ai.md` plus `<latest-draft>`. As in Recipes 3–5, no `draft-manifest.md` is hand-authored, so `<latest-draft>` falls back to the highest-numbered `draft-vNN.md`; keeping `draft-v01.md` and `draft-v02.md` on disk makes `draft-v02.md` the active head.
+
+**Stale-report detection** is the `stale` case of this contract and is already covered — Recipe 3 shows `compliance_fix` blocking on a report stamped `draft-v01.md` while the active head is `draft-v02.md`. The identical stale block governs the `anti_ai_report → anti_ai_fix` pair; Recipe 8 exercises it directly (and then lifts it with a recorded override), so it is not duplicated here.
+
+### Recipe 6 — unannotated report blocks the fix step (`review_pending`)
+
+Reset the fixture and repeat Setup. Then hand-author the following three untracked files under `plot/drafts/attempt01/`. As in Recipe 3, no `draft-manifest.md` is present, so `<latest-draft>` resolves to `draft-v02.md` — the highest-numbered draft, and thus the active head.
+
+`plot/drafts/attempt01/draft-v01.md`:
+
+```markdown
+The lamp went dark and Rao climbed the stair without a light.
+
+He told no one — not even the keeper who came at dawn.
+```
+
+`plot/drafts/attempt01/draft-v02.md` — the active head; its em-dash paragraph is verbatim identical to `draft-v01.md`'s and the draft differs only by a trailing paragraph, so a report stamped against `draft-v01.md` is stale yet its quoted anchor is still locatable here (used by Recipes 7–8):
+
+```markdown
+The lamp went dark and Rao climbed the stair without a light.
+
+He told no one — not even the keeper who came at dawn.
+
+By morning he had talked himself out of telling anyone at all.
+```
+
+`plot/drafts/attempt01/anti-ai.md` — an anti-AI report stamped against the current active head (`draft-v02.md`, so it is *fresh*), carrying one em-dash flag but **no per-entry annotation and no bulk header** (shape per `agents/steps/anti-ai-report.md`):
+
+```markdown
+Reviewed-draft: draft-v02.md
+
+## Anti-AI Report — Scene 001
+
+BULK eligibility:
+- Em Dashes: BULK permitted (recommended default: FIX: rewrite)
+- Copula Avoidance: BULK permitted (recommended default: FIX)
+- Superficial -ing Analysis: BULK permitted (recommended default: FIX)
+- Transition Openers: BULK permitted (recommended default: FIX)
+- Flagged Words: BULK permitted (recommended default: FIX)
+- Negative Parallelism: BULK not permitted
+- Significance Inflation: BULK not permitted
+- Synonym Cycling: BULK not permitted
+- Cadence tics: BULK not permitted
+- Animacy Projection: BULK not permitted
+
+### Em Dashes
+- "He told no one — not even the keeper who came at dawn."
+
+### Summary — Scene 001
+
+- Em dashes: 1
+- Negative parallelism: 0
+- Significance inflation: 0
+- Copula avoidance: 0
+- Superficial -ing analysis: 0
+- Transition openers: 0
+- Synonym cycling: 0
+- Cadence tics: 0
+- Animacy projection: 0
+- Flagged words: 0
+- Total flags: 1
+```
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step anti_ai_fix
+```
+
+Expected observable outcome — a clean blocked exit, not a dispatcher error:
+
+- The dispatcher's existence checks pass: both `required: true` preconditions resolve — `anti-ai.md` exists and `<latest-draft>` resolves to `draft-v02.md` — so the step body loads.
+- The step-start freshness check passes (the stamp names `draft-v02.md`, the active head), so staleness is not the blocker. The review-evidence gate is what fails: the single flag is bare — no per-entry annotation and no bulk header — so `anti-ai.md` is `review_pending`.
+- The step appends the `review_pending` blocker to `open-questions.md`, naming `anti-ai.md` and its missing review evidence.
+- No `plot/drafts/attempt01/draft-v03.md` is written, and no `draft-manifest.md` is created.
+- No completion is recorded: the `anti_ai_fix` line stays `[ ]` and `pipeline-state.md` is untouched (`last_updated` unchanged).
+
+### Recipe 7 — regenerate a stale report against the active head, then fix clean
+
+Reset the fixture and repeat Setup. Hand-author the same `draft-v01.md` and `draft-v02.md` as Recipe 6, and the same `anti-ai.md` with two differences: stamp it against the **superseded** `draft-v01.md`, and annotate its `### Em Dashes` entry so the earlier review evidence is present. The first line reads:
+
+```markdown
+Reviewed-draft: draft-v01.md
+```
+
+and the em-dash entry carries an annotation:
+
+```markdown
+### Em Dashes
+- "He told no one — not even the keeper who came at dawn." FIX: split
+```
+
+This is a report annotated against `draft-v01.md` before a prose-advancing step produced `draft-v02.md`, which left it stale. The mechanism under test is the `regenerated`/`discarded` recovery path: rerunning the report-emitting step against the newer active head overwrites its side artifact with a fresh stamp and discards the prior findings.
+
+First rerun the report step against the active head:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step anti_ai_report
+```
+
+Expected observable outcome (regeneration):
+
+- The existence check passes (`<latest-draft>` resolves to `draft-v02.md`). The step body reads the existing `anti-ai.md` stamp (`draft-v01.md`), finds it does not equal the active head (`draft-v02.md`), and takes the regeneration path: it **overwrites** the whole file with a fresh top-of-file `Reviewed-draft: draft-v02.md` stamp and a freshly scanned report against `draft-v02.md`. The prior run's `draft-v01.md` findings — including the hand-authored `FIX: split` annotation — are `discarded`.
+- The regenerated report is unannotated (a fresh scan carries no annotations) and flags the same em dash, now anchored in `draft-v02.md`.
+- No new draft is minted (`anti_ai_report` does not advance the draft) and no `draft-manifest.md` is created.
+- The step's final action flips `[ ] anti_ai_report` to `[x] anti_ai_report` and updates `last_updated`; every other line stays `[ ]`.
+
+Then annotate the regenerated report — add `FIX: split` back to its `### Em Dashes` entry, the review a human performs before the fix runs — and run the fix step:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step anti_ai_fix
+```
+
+Expected observable outcome (clean fix):
+
+- The step-start freshness check passes: the regenerated stamp (`draft-v02.md`) equals the active head, so `anti-ai.md` is `fresh`. It now carries review evidence (the `FIX: split` annotation), so it is not `review_pending`. Neither blocker fires.
+- The step locates the flagged sentence in `draft-v02.md`, applies the period split, and writes the full revised prose to `plot/drafts/attempt01/draft-v03.md` (the em-dash line becomes "He told no one. Not even the keeper who came at dawn."; every other paragraph is copied through verbatim).
+- An `#### Applied:` block is appended to `anti-ai.md`, and a `## draft-v03.md` entry is appended to `plot/drafts/attempt01/draft-manifest.md` (created here, since the fixture has none) with `read_from: [draft-v02.md]`, `review_gate: false`, and `side_artifacts: [anti-ai.md]`; the completion action points `Active-head: draft-v03.md` at the draft just written.
+- The step's final action flips `[ ] anti_ai_fix` to `[x] anti_ai_fix` and updates `last_updated`, while every upstream line stays `[ ]`.
+
+### Recipe 8 — recorded override lets a stale apply proceed
+
+Reset the fixture and repeat Setup. Hand-author the same `draft-v01.md` and `draft-v02.md` as Recipe 6, and the same annotated `anti-ai.md` as Recipe 7 (stamped `Reviewed-draft: draft-v01.md`, its `### Em Dashes` entry carrying `FIX: split`) — so that with the report annotated, staleness is the only blocker. Then add a human-recorded `Override:` block immediately below the stamp, so the top of `anti-ai.md` reads:
+
+```markdown
+Reviewed-draft: draft-v01.md
+
+Override: proceed despite stale — anti-ai.md stamped draft-v01.md, current <latest-draft> is draft-v02.md. Authorized by human.
+```
+
+The flagged sentence appears verbatim in the active head `draft-v02.md`, so the fixer can locate the anchor even though the report is stamped against `draft-v01.md`. The mechanism under test is the override surface of the Artifact-state contract: a human-recorded `Override:` block is the only path by which the fix step consumes a `stale` input, and it is never silent — the step echoes the override into its apply log.
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step anti_ai_fix
+```
+
+Expected observable outcome — the fix step proceeds under the override and completes:
+
+- The existence checks pass. At step start the freshness check computes `stale` (the stamp names `draft-v01.md`; the active head is `draft-v02.md`), but the step finds the matching `Override:` block naming `anti-ai.md` and the `draft-v01.md` → `draft-v02.md` mismatch, so instead of blocking it proceeds with the apply.
+- The step applies the annotated `FIX: split` against `draft-v02.md` and writes the full revised prose to `plot/drafts/attempt01/draft-v03.md` (the em-dash line becomes "He told no one. Not even the keeper who came at dawn."; every other paragraph is copied through verbatim).
+- The step records the override in its apply log — appended to `anti-ai.md` alongside the `Applied:` blocks, **not** the end-of-draft tally block comment:
+
+  ```markdown
+  #### Override applied: anti-ai.md
+  - Condition overridden: stale — report stamped draft-v01.md, applied against draft-v02.md
+  - Authorized by: human-recorded Override block
+  ```
+
+  The record names the artifact (`anti-ai.md`) and the draft mismatch (`draft-v01.md` → `draft-v02.md`). An `#### Applied:` block for the em-dash fix is appended as well.
+- A `## draft-v03.md` entry is appended to `plot/drafts/attempt01/draft-manifest.md` (created here, since the fixture has none) with `read_from: [draft-v02.md]`, `review_gate: false`, and `side_artifacts: [anti-ai.md]`; the completion action points `Active-head: draft-v03.md` at the draft just written.
+- The step's final action flips `[ ] anti_ai_fix` to `[x] anti_ai_fix` and updates `last_updated`, while every upstream line stays `[ ]`.
+
+### Recipes 3–8 touch only untracked files
+
+The hand-authored `plot/drafts/attempt01/` tree — the drafts, the stamped report (`reviewer-actions.md` for Recipes 3–5, `anti-ai.md` for Recipes 6–8), and everything the report and fix steps write into it — lives entirely in untracked paths. Nothing new is committed under `examples/smoke/`, and the existing reset procedure below restores the committed baseline.
 
 ## Run — OpenCode
 
@@ -240,7 +400,7 @@ The hand-authored `plot/drafts/attempt01/` tree, and everything the fix step wri
 # primary agent). For run-step, the step_id goes in the invoking message.
 ```
 
-The same five recipes hold, with the `next-step` agent standing in for `/next-step` (Recipe 1) and the `run-step` agent standing in for `/run-step <step_id>` (Recipes 2–5); for Recipe 5, the read-from draft goes in the invoking message alongside the step_id (`compliance_fix from draft-v01`). The expected observable outcomes are identical to the Claude Code lists above. The OpenCode dispatcher sources are held to behavioral parity with the Claude Code ones; only host-specific frontmatter and invocation differ.
+The same eight recipes hold, with the `next-step` agent standing in for `/next-step` (Recipe 1) and the `run-step` agent standing in for `/run-step <step_id>` (Recipes 2–8); for Recipe 5, the read-from draft goes in the invoking message alongside the step_id (`compliance_fix from draft-v01`). The expected observable outcomes are identical to the Claude Code lists above. The OpenCode dispatcher sources are held to behavioral parity with the Claude Code ones; only host-specific frontmatter and invocation differ.
 
 ## Reset between runs
 
@@ -249,7 +409,7 @@ git checkout examples/smoke/
 git clean -fd examples/smoke/
 ```
 
-`git checkout` restores `pipeline-state.md`, `open-questions.md`, and any other tracked file the run modified. `git clean -fd` removes the untracked install artifacts (`.claude/`, `.opencode/`), the `amanuensis` symlink, any `characters/` tree written by Recipes 1–2, and the entire hand-authored `plot/drafts/attempt01/` tree from Recipes 3–5 — including anything the fix step wrote into it (`draft-v03.md` or `draft-v04.md`, `draft-manifest.md`, the appended `reviewer-actions.md`). After both commands the fixture is back to the committed baseline.
+`git checkout` restores `pipeline-state.md`, `open-questions.md`, and any other tracked file the run modified. `git clean -fd` removes the untracked install artifacts (`.claude/`, `.opencode/`), the `amanuensis` symlink, any `characters/` tree written by Recipes 1–2, and the entire hand-authored `plot/drafts/attempt01/` tree from Recipes 3–8 — including anything the report and fix steps wrote into it (`draft-v03.md` or `draft-v04.md`, `draft-manifest.md`, the appended `reviewer-actions.md`, and the regenerated or appended `anti-ai.md`). After both commands the fixture is back to the committed baseline.
 
 To rerun, repeat the **Setup** section.
 
@@ -258,6 +418,6 @@ To rerun, repeat the **Setup** section.
 For each recipe: the dispatcher located `pipeline-state.md`, confirmed the step_id appears in the recipe list (selecting the first non-`[x]` step in `/next-step`'s case), resolved the step workflow file under `amanuensis/agents/steps/`, verified every `required: true` precondition resolves to an existing file, and started executing the step body in the same session. From there one of:
 
 - The step body completed, wrote its declared outputs, and as its final action marked its own step line `[x]` and updated `last_updated`. No other checkbox moved.
-- The step body decided it could not proceed (a `critical` blocker in Recipe 1's stop-and-ask outcome, the stale-report blocker in Recipe 3), appended the blocker to `open-questions.md`, and exited without recording completion — `pipeline-state.md` untouched.
+- The step body decided it could not proceed (a `critical` blocker in Recipe 1's stop-and-ask outcome, the stale-report blocker in Recipe 3, the `review_pending` blocker in Recipe 6), appended the blocker to `open-questions.md`, and exited without recording completion — `pipeline-state.md` untouched.
 
 Failure modes — a missing or malformed `pipeline-state.md`, a requested step_id that does not appear in the recipe list, a missing step workflow file, a `required: true` precondition that resolves to no existing file (the dispatcher names the missing files and stops), or `/next-step` finding every step `[x]` (recipe complete) — should print a clear human-readable message and exit without modifying any project file. Surfacing one of those where a recipe does not expect it would mean the fixture is misconfigured or the dispatcher/orchestrator work has a defect; report it.
