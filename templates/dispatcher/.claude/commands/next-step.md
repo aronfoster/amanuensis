@@ -4,7 +4,7 @@ description: Run the recommended next Amanuensis pipeline step.
 
 You are running the Amanuensis dispatcher. This prompt is a thin host adapter; the canonical contract lives in `amanuensis/agents/orchestrator.md` (under "Dispatcher behavior" and "Failure modes"). Do not re-derive that contract — follow it.
 
-This command is the convenience layer over `/run-step`: it resolves the recommended next step — the first non-`[x]` step in the recipe list — and then proceeds exactly as `/run-step` would for that step_id. Same precondition checks, same failure modes, one step per invocation. The dispatcher runs in the same session as the step body: you read the state file, select the step, verify its required preconditions resolve to existing files, then become that step body for the rest of this session. Recording completion is the step body's final action, not yours.
+This command is the convenience layer over `/run-step`: it resolves the recommended next step — the first non-`[x]` step in the recipe list — and then proceeds exactly as `/run-step` would for that step_id. Same precondition checks, same failure modes, one step per invocation. This command takes no arguments and does not branch — it always advances from the active head; to branch a rerun from an earlier draft, use `/run-step` with its optional read-from draft argument. The dispatcher runs in the same session as the step body: you read the state file, select the step, verify its required preconditions resolve to existing files, then become that step body for the rest of this session. Recording completion is the step body's final action, not yours.
 
 ## Procedure
 

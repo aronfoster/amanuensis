@@ -6,7 +6,7 @@ This directory is a minimal `short_story` project committed inside the Amanuensi
 
 The goal of running the recipes below is to confirm that the dispatcher itself works: it locates `pipeline-state.md`, confirms the requested (or recommended-next) step_id appears in the recipe list, resolves the workflow file at `amanuensis/agents/steps/<step>.md`, verifies the step's `required: true` preconditions resolve to existing files, and follows the step body in the same session — the step body then either records its own completion or stops with a question. Validating the literary quality of the step bodies' output is **not** a goal here.
 
-Four recipes cover the four selective-execution behaviors: the default recipe run in order (Recipe 1), rerunning a completed step (Recipe 2), a fix step blocking on a stale report (Recipe 3), and a non-dependent step running out of recipe order (Recipe 4). See `agents/orchestrator.md` for the canonical contract the dispatcher follows.
+Four recipes cover the four selective-execution behaviors: the default recipe run in order (Recipe 1), rerunning a completed step (Recipe 2), a fix step blocking on a stale report (Recipe 3), and a non-dependent step running out of recipe order (Recipe 4). A fifth recipe covers the draft-lineage branch surface: rerunning a fix step from an earlier draft with a read-from argument, which mints a new draft as the active head and stamps the displaced drafts superseded (Recipe 5). See `agents/orchestrator.md` for the canonical contract the dispatcher follows.
 
 ## Layout
 
@@ -26,7 +26,7 @@ Committed in this directory:
 - `.opencode/agents/run-step.md` and `.opencode/agents/next-step.md` — copied in by `install.sh`.
 - `amanuensis` — symlink to the Amanuensis repo root (this repo). Lets the dispatcher resolve `amanuensis/agents/steps/<step>.md` exactly as it would under a real submodule install.
 - `characters/` — written by `character_extraction` on a successful run (Recipes 1–2).
-- `plot/drafts/attempt01/` — hand-authored for Recipes 3–4 (two filler drafts and a stamped `reviewer-actions.md`); on Recipe 4's success the fix step also writes `draft-v03.md` and `draft-manifest.md` here.
+- `plot/drafts/attempt01/` — hand-authored for Recipes 3–5 (filler drafts and a stamped `reviewer-actions.md`; Recipe 5 additionally hand-authors a `draft-manifest.md` carrying an `Active-head: draft-vNN.md` pointer and a three-entry lineage). On Recipe 4's success the fix step also writes `draft-v03.md` and `draft-manifest.md` here; on Recipe 5's success it writes the branch output `draft-v04.md` and updates the hand-authored manifest's pointer and `superseded_by` stamps.
 
 ## Setup
 
@@ -69,7 +69,7 @@ This is a convenience for maintainers, not a required step of the smoke test —
 
 ## Run — Claude Code
 
-All recipes assume Setup is done and each dispatcher invocation happens in a fresh Claude Code session with cwd = `examples/smoke`. Recipe 2 follows directly from Recipe 1; Recipes 3 and 4 each start from a freshly reset fixture (see **Reset between runs**) plus the hand-authored files described inline.
+All recipes assume Setup is done and each dispatcher invocation happens in a fresh Claude Code session with cwd = `examples/smoke`. Recipe 2 follows directly from Recipe 1; Recipes 3–5 each start from a freshly reset fixture (see **Reset between runs**) plus the hand-authored files described inline.
 
 ### Recipe 1 — default recipe in order
 
@@ -164,10 +164,70 @@ Expected observable outcome:
 
 - The existence checks pass, and the step-start freshness check passes: the stamp names `draft-v02.md`, which is the current `<latest-draft>`.
 - The step applies the single annotated fix and writes the full revised prose to `plot/drafts/attempt01/draft-v03.md` (the first sentence now opens "The lamp guttered out on its own…"; the untouched paragraph is copied through verbatim).
-- An `Applied:` block is appended to `reviewer-actions.md`, and a `## draft-v03.md` entry is appended to `plot/drafts/attempt01/draft-manifest.md` (created here, since the hand-authored fixture has none).
+- An `Applied:` block is appended to `reviewer-actions.md`, and a `## draft-v03.md` entry is appended to `plot/drafts/attempt01/draft-manifest.md` (created here, since the hand-authored fixture has none), with the step's completion action pointing `Active-head: draft-v03.md` at the draft it just wrote.
 - The step's final action flips `[ ] compliance_fix` to `[x] compliance_fix` and updates `last_updated` — out of recipe order, while every upstream line stays `[ ]`.
 
-### Recipes 3–4 touch only untracked files
+### Recipe 5 — branch a rerun from an earlier draft
+
+Reset the fixture and repeat Setup. Then hand-author the following five untracked files under `plot/drafts/attempt01/`: a linear `v01→v02→v03` draft chain, a `draft-manifest.md` recording that chain with its top-of-file `Active-head: draft-vNN.md` pointer set to the tip, and a compliance report stamped against the *earliest* draft. The mechanism under test is M8's branch surface: `run-step`'s read-from argument overrides which draft `<latest-draft>` resolves to for one invocation, and the prose-advancing step repoints the head and supersedes the displaced drafts on completion.
+
+`plot/drafts/attempt01/draft-v01.md` and `plot/drafts/attempt01/draft-v02.md` — identical to Recipe 3's two drafts.
+
+`plot/drafts/attempt01/draft-v03.md`:
+
+```markdown
+The lamp went dark and Rao climbed the stair without a light.
+
+He told no one what he found at the top, and by morning he had talked himself out of telling anyone at all. The replacement keeper arrived at noon and asked no questions.
+```
+
+`plot/drafts/attempt01/draft-manifest.md` — hand-authored per the schema in `agents/project-layouts.md`, with the pointer at the tip of the linear chain:
+
+```markdown
+Active-head: draft-v03.md
+
+## draft-v01.md
+- produced_by: drafting
+- read_from: []
+- timestamp: 2026-07-01T09:00:00-06:00
+- review_gate: true
+
+## draft-v02.md
+- produced_by: compliance_fix
+- read_from: [draft-v01.md]
+- timestamp: 2026-07-01T10:30:00-06:00
+- review_gate: false
+- side_artifacts: [reviewer-actions.md]
+
+## draft-v03.md
+- produced_by: prose_fix
+- read_from: [draft-v02.md]
+- timestamp: 2026-07-01T12:00:00-06:00
+- review_gate: false
+```
+
+`plot/drafts/attempt01/reviewer-actions.md` — Recipe 3's report verbatim, including its stamp: the first line reads `Reviewed-draft: draft-v01.md` and the single violation entry carries the `FIX` annotation anchored in `draft-v01.md`'s prose.
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step compliance_fix from draft-v01
+```
+
+Expected observable outcome:
+
+- The dispatcher parses the read-from argument, confirms `compliance_fix` declares a `prose_draft` precondition and that `draft-v01.md` exists in `plot/drafts/attempt01/`, and substitutes it for `<latest-draft>` for this invocation only.
+- The step-start freshness check passes: the report's `Reviewed-draft: draft-v01.md` stamp equals the draft the step reads — `draft-v01.md`, the override. (Without the read-from argument this run would be Recipe 3's stale-report block, since the stamp names `draft-v01.md` while the active head is `draft-v03.md`; the override is what makes the report fresh.)
+- The step applies the single annotated fix and writes the full revised prose to `plot/drafts/attempt01/draft-v04.md` — highest existing draft number + 1, **not** `draft-v02.md`: `<next-draft>` is monotonic, so a branch output never collides with or renumbers an existing file.
+- A `## draft-v04.md` entry is appended to `draft-manifest.md` with `read_from: [draft-v01.md]`, a write-time `timestamp`, and `review_gate: false`; an `Applied:` block is appended to `reviewer-actions.md`.
+- The manifest's pointer is repointed to `Active-head: draft-v04.md`.
+- `draft-v02.md` and `draft-v03.md` — the displaced branch — are each stamped `superseded_by: draft-v04.md` in their manifest entries. `draft-v01.md` gets no stamp: it is an ancestor of the new head, not a displaced draft. Both superseded files remain on disk, unrenamed and unmodified as prose.
+- The step's final action flips `[ ] compliance_fix` to `[x] compliance_fix` and updates `last_updated`, while every upstream line stays `[ ]`.
+
+Follow-on check — reader steps follow the pointer: a subsequent `/run-step compliance_report` (no override) now reads `draft-v04.md` — the active head — not `draft-v03.md`, and stamps its report `Reviewed-draft: draft-v04.md`.
+
+### Recipes 3–5 touch only untracked files
 
 The hand-authored `plot/drafts/attempt01/` tree, and everything the fix step writes into it, lives entirely in untracked paths. Nothing new is committed under `examples/smoke/`, and the existing reset procedure below restores the committed baseline.
 
@@ -180,7 +240,7 @@ The hand-authored `plot/drafts/attempt01/` tree, and everything the fix step wri
 # primary agent). For run-step, the step_id goes in the invoking message.
 ```
 
-The same four recipes hold, with the `next-step` agent standing in for `/next-step` (Recipe 1) and the `run-step` agent standing in for `/run-step <step_id>` (Recipes 2–4). The expected observable outcomes are identical to the Claude Code lists above. The OpenCode dispatcher sources are held to behavioral parity with the Claude Code ones; only host-specific frontmatter and invocation differ.
+The same five recipes hold, with the `next-step` agent standing in for `/next-step` (Recipe 1) and the `run-step` agent standing in for `/run-step <step_id>` (Recipes 2–5); for Recipe 5, the read-from draft goes in the invoking message alongside the step_id (`compliance_fix from draft-v01`). The expected observable outcomes are identical to the Claude Code lists above. The OpenCode dispatcher sources are held to behavioral parity with the Claude Code ones; only host-specific frontmatter and invocation differ.
 
 ## Reset between runs
 
@@ -189,7 +249,7 @@ git checkout examples/smoke/
 git clean -fd examples/smoke/
 ```
 
-`git checkout` restores `pipeline-state.md`, `open-questions.md`, and any other tracked file the run modified. `git clean -fd` removes the untracked install artifacts (`.claude/`, `.opencode/`), the `amanuensis` symlink, any `characters/` tree written by Recipes 1–2, and the entire hand-authored `plot/drafts/attempt01/` tree from Recipes 3–4 — including anything the fix step wrote into it (`draft-v03.md`, `draft-manifest.md`, the appended `reviewer-actions.md`). After both commands the fixture is back to the committed baseline.
+`git checkout` restores `pipeline-state.md`, `open-questions.md`, and any other tracked file the run modified. `git clean -fd` removes the untracked install artifacts (`.claude/`, `.opencode/`), the `amanuensis` symlink, any `characters/` tree written by Recipes 1–2, and the entire hand-authored `plot/drafts/attempt01/` tree from Recipes 3–5 — including anything the fix step wrote into it (`draft-v03.md` or `draft-v04.md`, `draft-manifest.md`, the appended `reviewer-actions.md`). After both commands the fixture is back to the committed baseline.
 
 To rerun, repeat the **Setup** section.
 
