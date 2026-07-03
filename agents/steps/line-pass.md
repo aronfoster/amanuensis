@@ -8,6 +8,19 @@ inputs:
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/<next-draft>
   - <chapter-folder>/drafts/<latest-attempt>/draft-manifest.md
+preconditions:
+  - path: <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
+    kind: prose_draft
+    required: true
+    review_sensitive: false
+  - path: <chapter-folder>/drafts/<latest-attempt>/<next-draft>
+    kind: prose_draft
+    required: false
+    review_sensitive: false
+  - path: voice.md
+    kind: source
+    required: true
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -196,4 +209,4 @@ Named blocker conditions:
 - **Missing inputs.** `<latest-draft>` cannot be resolved (no `draft-vNN.md` in the attempt directory).
 - **Missing voice file.** Project-root `voice.md` (or the override named in the project's `AGENTS.md`) is missing.
 
-In either case, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+In either case, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

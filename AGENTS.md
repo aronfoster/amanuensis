@@ -1,5 +1,9 @@
 # Amanuensis Agent Guide
 
+## Known issues
+
+- Claude Code for web sessions frequently fail to start when launched against the latest commit on `origin/main`. If a session fails to initialize, retry the session.
+
 ## What this repository is
 
 This repository **is** the Amanuensis tooling. It is consumed as a git submodule by story-writing projects. The actual prose, character files, scene lists, drafts, and canon all live in those *consuming* projects — never here.
@@ -22,7 +26,7 @@ Consuming story repositories keep a small local `AGENTS.md` adapter that points 
 
 ## How Amanuensis works
 
-Amanuensis is an orchestrator-driven pipeline for long-form writing. Each project advances one step at a time: a host-specific dispatcher reads `pipeline-state.md` at the project root, locates the next step, runs that step's workflow file as a fresh agent invocation, advances the marker, and exits. State lives entirely in files — there is no in-memory context carried between steps. Humans review artifacts between steps; the dispatcher does not enforce review. Step workflow files declare their inputs, outputs, and review expectations in frontmatter and describe their behavior in the body. Folder layout, including how path placeholders resolve, depends on the project's declared `project_type`.
+Amanuensis is an orchestrator-driven pipeline for long-form writing. Each project advances one step at a time: a human invokes a specific step with `run-step` (or the recommended next step — the first non-`[x]` entry in the recipe in `pipeline-state.md` — with `next-step`); the host-specific dispatcher validates that the step's machine-readable `required` preconditions resolve to existing files, follows the step body in a fresh agent invocation, and exits. The step body records its own completion in `pipeline-state.md` as its final action. State lives entirely in files — there is no in-memory context carried between steps. Humans review artifacts between steps; the dispatcher does not enforce review. Step workflow files declare their inputs, outputs, and review expectations in frontmatter and describe their behavior in the body. Folder layout, including how path placeholders resolve, depends on the project's declared `project_type`.
 
 ## Core documents
 
@@ -34,14 +38,16 @@ Amanuensis is an orchestrator-driven pipeline for long-form writing. Each projec
 - `templates/project-AGENTS.md` — adapter template for consuming repositories.
 - `templates/voice.md` — starter voice profile that a consuming project copies to its project-root `voice.md`. The voice-consuming steps read the project-root `voice.md`, not this template; this repo holds only the starter.
 - `install.sh` — copies the dispatcher files into a consuming project's `.claude/commands/` and `.opencode/agents/` folders, and installs the pipeline-state check workflow into `.github/workflows/`.
-- `templates/dispatcher/.claude/commands/next-step.md` — Claude Code slash command implementing the dispatcher.
-- `templates/dispatcher/.opencode/agents/next-step.md` — OpenCode agent implementing the dispatcher at parity with the Claude Code version.
+- `templates/dispatcher/.claude/commands/run-step.md` — Claude Code slash command implementing the core dispatcher operation: run a specific step by step_id.
+- `templates/dispatcher/.claude/commands/next-step.md` — Claude Code slash command implementing the recommended-next convenience layer: resolve the first non-`[x]` step in the recipe and run it through the same machinery as `run-step`.
+- `templates/dispatcher/.opencode/agents/run-step.md` — OpenCode agent implementing `run-step` at parity with the Claude Code version.
+- `templates/dispatcher/.opencode/agents/next-step.md` — OpenCode agent implementing the recommended-next convenience layer at parity with the Claude Code version.
 - `scripts/check-pipeline-state.sh` — consistency check between a `pipeline-state.md` and an `agents/steps/` directory, in resolvable (default) or exhaustive mode.
 - `templates/dispatcher/.github/workflows/pipeline-state-check.yml` — consumer-side CI workflow installed by `install.sh`; validates the consumer's `pipeline-state.md` against the installed Amanuensis step files.
 
 ## Setup
 
-From the consuming project's root, run `./amanuensis/install.sh` to copy the dispatcher into `.claude/commands/next-step.md` and `.opencode/agents/next-step.md`. `install.sh` also installs the pipeline-state check workflow into `.github/workflows/pipeline-state-check.yml`, creating that directory if missing. Prerequisite: Amanuensis must be present at `<project>/amanuensis/` (typically as a git submodule). See `templates/dispatcher/` and `agents/orchestrator.md` for the source-of-truth dispatcher contract.
+From the consuming project's root, run `./amanuensis/install.sh` to copy the dispatcher into `.claude/commands/run-step.md`, `.claude/commands/next-step.md`, `.opencode/agents/run-step.md`, and `.opencode/agents/next-step.md`. `install.sh` also installs the pipeline-state check workflow into `.github/workflows/pipeline-state-check.yml`, creating that directory if missing. Prerequisite: Amanuensis must be present at `<project>/amanuensis/` (typically as a git submodule). See `templates/dispatcher/` and `agents/orchestrator.md` for the source-of-truth dispatcher contract.
 
 ## Step workflows
 
@@ -78,27 +84,4 @@ This is the catalog of support files this repo *provides to* consuming projects;
 - `agents/meta.md` — meta notes about the agent guide.
 - `agents/metaphor/` — subagent prompt contracts (`metaphor-flatten.md`, `metaphor-replace.md`, `metaphor-workshop.md`) and `README.md` describing the consolidated pipeline. These are dispatched by `agents/steps/metaphor-fix.md`, not by the orchestrator.
 
-**Orientation (read first, in order):**
-1. `AGENTS.md` — repo conventions and the "Next Task Queueing" workflow.
-2. `ROADMAP.md` — milestone context for the Sprint.
-3. `SPRINT.md` — the authoritative task list. Note which tasks are already checked.
-4. Any task-specific source docs the Sprint references (e.g. `agents/orchestrator.md`).
-
-**Plan before acting.** Produce a short dependency analysis covering, for each unchecked task: which files it creates, which files it modifies, and which other tasks it reads from or conflicts with. Group tasks into **waves**:
-- Tasks that touch the same file run sequentially (one agent, or back-to-back).
-- Tasks that touch disjoint files run in parallel within a wave.
-- A task that consumes another task's output runs in a later wave.
-
-Present the plan and wait for human approval before spawning anything.
-
-**Per wave:**
-1. Spawn one subagent per task (or one agent for a sequential bundle). Brief each agent self-containedly: cite the SPRINT.md task block as authoritative, point at the specific source files to read, list verification commands, and instruct the agent to **edit files but not commit** — you commit between waves.
-2. After agents return, run verification yourself: `git status`, `git diff` on shared files, spot-read new files, run any acceptance grep the Sprint defines (e.g. `git grep "TBD"` returns nothing).
-3. Commit the wave with a descriptive message. One commit per wave is fine; per-task commits are also fine.
-4. Update a TodoWrite list as waves complete.
-
-**Branch and push.** Confirm the development branch from the task instructions or create it if missing. Push only after all waves are complete and verified, using `git push -u origin <branch>`. Never force-push.
-
-**Closeout.** Personally verify that all sprint objectives have been completed. Check Sprint boxes and mark milestones complete. Do not erase or overwrite SPRINT.md, just mark items completed.
-
-**Output discipline.** Brief status updates between waves: what shipped, what's next. Don't narrate subagent internals — summarize their results in one or two sentences each.
+**Working on this repo.** Small, self-contained changes — fixing a step body, updating a doc, tweaking a template — can be made directly by an agent: read the relevant Core/Support document above plus the file(s) being changed. Structured work — turning a `ROADMAP.md` milestone into tasks, or executing a full sprint against `SPRINT.md` — is done with the `pm-plan` and `sprint-orchestrator` Claude Code skills; those skills are the canonical protocol for that work, not this file.

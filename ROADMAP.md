@@ -20,42 +20,42 @@ that the step's declared inputs exist and are usable; locally ordered pairs such
 than by global pipeline position; `pipeline-state.md` no longer requires a single
 `[>]` cursor to define what may run next; both hosts expose the same model.
 
-* [ ] M7.1 Design note: define the selective execution model. Terms to settle:
+* [x] M7.1 Design note: define the selective execution model. Terms to settle:
   `runnable`, `blocked`, `stale`, `superseded`, `active`, `recommended next`,
   and `explicit override`.
 
-* [ ] M7.2 Reframe `pipeline-state.md` from cursor state into recipe/status state.
+* [x] M7.2 Reframe `pipeline-state.md` from cursor state into recipe/status state.
   Remove the requirement that exactly one `[>]` marker controls execution. Preserve
   the default step order as the recommended happy path, not as the only legal path.
 
-* [ ] M7.3 Expand the step workflow contract so each step declares machine-readable
+* [x] M7.3 Expand the step workflow contract so each step declares machine-readable
   preconditions in addition to descriptive `inputs` / `outputs`. At minimum, distinguish:
   required files, optional files, prose-draft inputs, side-artifact inputs, and
   human-review-sensitive inputs.
 
-* [ ] M7.4 Implement explicit step invocation in the dispatcher:
+* [x] M7.4 Implement explicit step invocation in the dispatcher:
   `run_step <step_id>` or host-equivalent. The dispatcher resolves the requested
   workflow file, checks preconditions, then follows that step body in the same session.
 
-* [ ] M7.5 Keep a convenience command for the recommended path:
+* [x] M7.5 Keep a convenience command for the recommended path:
   `next_recommended_step` or host-equivalent. This reads the recipe/status file and
   chooses the next incomplete recommended step, but it is layered on top of selective
   execution rather than being the core control model.
 
-* [ ] M7.6 Generalize local ordering constraints. Report/fix and identify/apply pairs
+* [x] M7.6 Generalize local ordering constraints. Report/fix and identify/apply pairs
   must be enforced by artifact stamps such as `Reviewed-draft:`, not by global adjacency
   in the step list. A fix/apply step may run only when its paired report artifact was
   produced against the current usable draft, unless the human explicitly overrides.
 
-* [ ] M7.7 Update `orchestrator.md` to remove forward/back/redo language. The
+* [x] M7.7 Update `orchestrator.md` to remove forward/back/redo language. The
   orchestrator should describe Amanuensis as running selected transformations against
   explicit artifacts, with judgment living in the human and the step bodies.
 
-* [ ] M7.8 Host parity: expose the same selective invocation model in Claude Code and
+* [x] M7.8 Host parity: expose the same selective invocation model in Claude Code and
   OpenCode. The names do not have to be identical, but the behavior and safety checks
   must match.
 
-* [ ] M7.9 Smoke coverage: verify that the default recipe still runs in order; verify
+* [x] M7.9 Smoke coverage: verify that the default recipe still runs in order; verify
   that a human can rerun a completed report step; verify that a fix step blocks on a
   stale report; verify that a non-dependent step can run out of recipe order when its
   inputs are valid.

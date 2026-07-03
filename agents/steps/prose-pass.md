@@ -7,6 +7,19 @@ inputs:
   - voice.md
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/prose-pass.md
+preconditions:
+  - path: <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
+    kind: prose_draft
+    required: true
+    review_sensitive: false
+  - path: <chapter-folder>/storyboards/*-storyboard.md
+    kind: source
+    required: true
+    review_sensitive: false
+  - path: voice.md
+    kind: source
+    required: true
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -45,7 +58,7 @@ This step produces a report only — it does **not** write to the prose. The `KE
 
 Write a report in markdown to `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md`.
 
-The file begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the resolved `<latest-draft>` this pass reviewed. If the file exists and its stamp does not equal `<latest-draft>`, overwrite the file with a fresh stamp; the prior pass's recommendations against the superseded draft are discarded. `prose_fix` consumes this stamp to detect stale recommendations against a newer draft, per the report→fix adjacency invariant in `agents/orchestrator.md`; the stamp is load-bearing for that check.
+The file begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the resolved `<latest-draft>` this pass reviewed. If the file exists and its stamp does not equal `<latest-draft>`, overwrite the file with a fresh stamp; the prior pass's recommendations against the superseded draft are discarded. `prose_fix` consumes this stamp to detect stale recommendations against a newer draft, per the report→fix freshness invariant in `agents/orchestrator.md`; the stamp is load-bearing for that check.
 
 For each issue:
 - quote the line or short passage
@@ -274,7 +287,7 @@ Rules `prose_fix` relies on:
 - A finding whose `Action:` is anything other than `KEEP` but whose `Annotation:` is missing or holds an unrecognized token is **not actionable** — `prose_fix` treats it as an unannotated blocker rather than guessing intent.
 - **No bulk-annotation headers are used.** There is no file-level "annotate all as FIX" shortcut; every actionable finding is annotated individually. This is a deliberate, locked convention: `prose_pass` is selective (5-10 findings), so per-entry annotation is cheap and keeps intent explicit. Do not reintroduce a bulk header.
 
-This Findings section is the single canonical definition of the annotation grammar; `prose_fix` points here rather than restating the token set. The top-of-file `Reviewed-draft: draft-vNN.md` stamp is what lets `prose_fix` detect stale annotations — annotations written against a superseded draft — per the "Report→fix adjacency invariant" in `agents/orchestrator.md`, which is why that stamp is now load-bearing.
+This Findings section is the single canonical definition of the annotation grammar; `prose_fix` points here rather than restating the token set. The top-of-file `Reviewed-draft: draft-vNN.md` stamp is what lets `prose_fix` detect stale annotations — annotations written against a superseded draft — per the "Report→fix freshness invariant" in `agents/orchestrator.md`, which is why that stamp is now load-bearing.
 
 ---
 
@@ -332,4 +345,4 @@ Be selective, concrete, and unsentimental.
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs — including a missing project-root `voice.md` (or the override named in the project's `AGENTS.md`) — append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+If the step cannot complete because of missing or ambiguous inputs — including a missing project-root `voice.md` (or the override named in the project's `AGENTS.md`) — append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

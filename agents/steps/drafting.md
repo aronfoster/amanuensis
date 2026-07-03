@@ -8,6 +8,15 @@ outputs:
   - <chapter-folder>/drafts/<latest-attempt>/draft-v01.md
   - <chapter-folder>/drafts/<latest-attempt>/notes.md
   - <chapter-folder>/drafts/<latest-attempt>/draft-manifest.md
+preconditions:
+  - path: <chapter-folder>/storyboards/*-storyboard.md
+    kind: source
+    required: true
+    review_sensitive: false
+  - path: voice.md
+    kind: source
+    required: true
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -201,4 +210,4 @@ The per-scene `sceneNN.md` and `sceneNN-notes.md` files are transient working fi
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs — for example, the chapter has no storyboard files, storyboards are missing `scene_ref` or `beat_index` frontmatter required to group and order them, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) does not exist, or a subagent reports that its storyboard files do not contain enough to draft from — append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write a partial `draft-v01.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker (typically by editing storyboards).
+If the step cannot complete because of missing or ambiguous inputs — for example, the chapter has no storyboard files, storyboards are missing `scene_ref` or `beat_index` frontmatter required to group and order them, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) does not exist, or a subagent reports that its storyboard files do not contain enough to draft from — append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write a partial `draft-v01.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker (typically by editing storyboards). On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

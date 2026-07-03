@@ -9,6 +9,19 @@ outputs:
   - <chapter-folder>/drafts/<latest-attempt>/<next-draft>
   - <chapter-folder>/drafts/<latest-attempt>/prose-pass.md
   - <chapter-folder>/drafts/<latest-attempt>/draft-manifest.md
+preconditions:
+  - path: <chapter-folder>/drafts/<latest-attempt>/prose-pass.md
+    kind: side_artifact
+    required: true
+    review_sensitive: true
+  - path: <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
+    kind: prose_draft
+    required: true
+    review_sensitive: false
+  - path: voice.md
+    kind: source
+    required: true
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -23,7 +36,7 @@ See `agents/orchestrator.md` for the step workflow contract.
 
 - `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md` — the advisory report produced by `prose_pass`, annotated by the human. Each finding carries an `Action:` recommendation (`KEEP | TIGHTEN | FLATTEN | REWRITE`) from the report, plus a human-filled `Annotation:` line resolving what to do. See "Behavior" below for how the effective annotation is resolved. An unannotated report is not a valid input. See "Open questions handling" below.
 
-  At step start, before acting on any entry, read the `Reviewed-draft: draft-vNN.md` header at the top of `prose-pass.md` and confirm it equals `<latest-draft>`. If it does not, see "Open questions handling" below — this is a stale-report blocker. Cross-reference `agents/orchestrator.md`'s report→fix adjacency invariant as the canonical statement.
+  At step start, before acting on any entry, read the `Reviewed-draft: draft-vNN.md` header at the top of `prose-pass.md` and confirm it equals `<latest-draft>`. If it does not, see "Open questions handling" below — this is a stale-report blocker. Cross-reference `agents/orchestrator.md`'s report→fix freshness invariant as the canonical statement.
 - `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the current draft this step revises. Resolved at step start; read-only at this step's input boundary, revisions are written to `<next-draft>`.
 - `voice.md` — the project-root voice file (a sibling of `pipeline-state.md`, not the copy inside the `amanuensis/` submodule; overridable by the path named in the consuming project's local `AGENTS.md`), loaded in full as the system message for `REWRITE` generation, mirroring `line_pass`. It is the calibration anchor for in-voice rewrites. If no voice file can be found, see "Open questions handling" below.
 
@@ -111,9 +124,9 @@ Open-questions handling fires only when the input itself is unusable. Named bloc
 
 - **Unannotated report.** `prose-pass.md` contains findings with non-`KEEP` `Action:` values and no `Annotation:` line. The step requires human annotation to know which recommendations to apply and how; it must not guess.
 - **Missing inputs.** `prose-pass.md` is missing, `<latest-draft>` cannot be resolved (no `draft-vNN.md` in the attempt directory), or `voice.md` cannot be found (neither the project-root `voice.md` nor the override named in the project's `AGENTS.md`).
-- **Stale report.** The `Reviewed-draft:` header at the top of `prose-pass.md` names a draft other than `<latest-draft>`. The report was generated against a different draft than the current one, which means a prose-advancing step has slipped in between `prose_pass` and `prose_fix`. Applying the annotations to `<latest-draft>` would be applying notes against the wrong prose. The paired report→fix adjacency invariant must hold; only the human can decide whether to rerun `prose_pass` against the current draft or to roll back. See `agents/orchestrator.md`'s report→fix adjacency invariant for the canonical statement.
+- **Stale report.** The `Reviewed-draft:` header at the top of `prose-pass.md` names a draft other than `<latest-draft>`. The report was generated against a different draft than the current one, which means a prose-advancing step has slipped in between `prose_pass` and `prose_fix`. Applying the annotations to `<latest-draft>` would be applying notes against the wrong prose. The paired report→fix freshness invariant must hold; only the human can decide whether to rerun `prose_pass` against the current draft or to roll back. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
 
-In any of these, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate annotations and do not write a partial `<next-draft>`. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+In any of these, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate annotations and do not write a partial `<next-draft>`. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
 
 ## Anti-Patterns
 

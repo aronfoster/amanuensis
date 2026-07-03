@@ -5,6 +5,11 @@ inputs:
   - <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/anti-ai.md
+preconditions:
+  - path: <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
+    kind: prose_draft
+    required: true
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -29,7 +34,7 @@ Scan the input prose for the nine pattern categories below and the flagged-words
 
 The output file is one report per chapter; append across scenes with a scene header.
 
-The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed; the downstream `anti_ai_fix` step reads this stamp to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix adjacency invariant for the canonical statement.
+The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed; the downstream `anti_ai_fix` step reads this stamp to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
 
 ```markdown
 Reviewed-draft: draft-vNN.md
@@ -329,4 +334,4 @@ Bulk headers are only valid on categories declared `BULK permitted` in the BULK 
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. Anti-AI report is unusual in that it is a context-free pass against a single file; blockers are rare (effectively limited to `<latest-draft>` being missing or empty), but the same handling applies.
+If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. Anti-AI report is unusual in that it is a context-free pass against a single file; blockers are rare (effectively limited to `<latest-draft>` being missing or empty), but the same handling applies. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

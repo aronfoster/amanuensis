@@ -6,6 +6,15 @@ inputs:
   - <chapter-folder>/storyboards/*-storyboard.md
 outputs:
   - <chapter-folder>/drafts/<latest-attempt>/metaphors.md
+preconditions:
+  - path: <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
+    kind: prose_draft
+    required: true
+    review_sensitive: false
+  - path: <chapter-folder>/storyboards/*-storyboard.md
+    kind: source
+    required: true
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -35,7 +44,7 @@ Collect every simile and live metaphor in the prose. A **live metaphor** is a co
 
 ### Format
 
-The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed; this stamp is the draft-version identity the downstream `metaphor_fix` and `metaphor_apply` steps read to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix adjacency invariant for the canonical statement. `metaphor_fix` preserves whatever stamp it inherits and does not refresh it.
+The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed; this stamp is the draft-version identity the downstream `metaphor_fix` and `metaphor_apply` steps read to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement. `metaphor_fix` preserves whatever stamp it inherits and does not refresh it.
 
 ```markdown
 Reviewed-draft: draft-vNN.md
@@ -106,4 +115,4 @@ No pattern-level commentary. The summary is a count.
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without advancing the pipeline marker. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker.
+If the step cannot complete because of missing or ambiguous inputs, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.

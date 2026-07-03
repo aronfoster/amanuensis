@@ -6,8 +6,12 @@
 #   ./install.sh <target-dir>    # install into <target-dir>
 #
 # Always overwrites (framework dispatcher files):
+#   templates/dispatcher/.claude/commands/run-step.md
+#       -> <target>/.claude/commands/run-step.md
 #   templates/dispatcher/.claude/commands/next-step.md
 #       -> <target>/.claude/commands/next-step.md
+#   templates/dispatcher/.opencode/agents/run-step.md
+#       -> <target>/.opencode/agents/run-step.md
 #   templates/dispatcher/.opencode/agents/next-step.md
 #       -> <target>/.opencode/agents/next-step.md
 #   templates/dispatcher/.claude/hooks/session-start.sh
@@ -63,7 +67,9 @@ if [ ! -w "$target" ]; then
 fi
 
 # Source files.
+src_claude_run=$script_dir/templates/dispatcher/.claude/commands/run-step.md
 src_claude=$script_dir/templates/dispatcher/.claude/commands/next-step.md
+src_opencode_run=$script_dir/templates/dispatcher/.opencode/agents/run-step.md
 src_opencode=$script_dir/templates/dispatcher/.opencode/agents/next-step.md
 src_session_hook=$script_dir/templates/dispatcher/.claude/hooks/session-start.sh
 src_workflow=$script_dir/templates/dispatcher/.github/workflows/pipeline-state-check.yml
@@ -73,7 +79,8 @@ src_pipeline_state=$script_dir/templates/pipeline-state.md
 src_agents=$script_dir/templates/project-AGENTS.md
 src_voice=$script_dir/templates/voice.md
 
-for src in "$src_claude" "$src_opencode" "$src_session_hook" \
+for src in "$src_claude_run" "$src_claude" "$src_opencode_run" \
+           "$src_opencode" "$src_session_hook" \
            "$src_workflow" "$src_settings" "$src_project_yaml" \
            "$src_pipeline_state" "$src_agents" "$src_voice"; do
     if [ ! -f "$src" ]; then
@@ -87,7 +94,9 @@ dst_claude_dir=$target/.claude/commands
 dst_opencode_dir=$target/.opencode/agents
 dst_hooks_dir=$target/.claude/hooks
 dst_workflows_dir=$target/.github/workflows
+dst_claude_run=$dst_claude_dir/run-step.md
 dst_claude=$dst_claude_dir/next-step.md
+dst_opencode_run=$dst_opencode_dir/run-step.md
 dst_opencode=$dst_opencode_dir/next-step.md
 dst_session_hook=$dst_hooks_dir/session-start.sh
 dst_workflow=$dst_workflows_dir/pipeline-state-check.yml
@@ -97,13 +106,17 @@ mkdir -p "$dst_opencode_dir"
 mkdir -p "$dst_hooks_dir"
 mkdir -p "$dst_workflows_dir"
 
+cp "$src_claude_run" "$dst_claude_run"
 cp "$src_claude" "$dst_claude"
+cp "$src_opencode_run" "$dst_opencode_run"
 cp "$src_opencode" "$dst_opencode"
 cp "$src_session_hook" "$dst_session_hook"
 chmod +x "$dst_session_hook"
 cp "$src_workflow" "$dst_workflow"
 
+printf '  %s -> %s\n' "$src_claude_run" "$dst_claude_run"
 printf '  %s -> %s\n' "$src_claude" "$dst_claude"
+printf '  %s -> %s\n' "$src_opencode_run" "$dst_opencode_run"
 printf '  %s -> %s\n' "$src_opencode" "$dst_opencode"
 printf '  %s -> %s\n' "$src_session_hook" "$dst_session_hook"
 printf '  %s -> %s\n' "$src_workflow" "$dst_workflow"

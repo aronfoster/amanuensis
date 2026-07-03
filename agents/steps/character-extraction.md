@@ -9,6 +9,15 @@ outputs:
   - characters/<character-id>/knowledge/baseline.md
   - characters/<character-id>/knowledge/book-N.md
   - open-questions.md
+preconditions:
+  - path: <story-plan>
+    kind: source
+    required: true
+    review_sensitive: false
+  - path: canon/**/*.md
+    kind: source
+    required: false
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -81,6 +90,6 @@ This step overwrites whatever sits at its declared output paths when re-run. A s
 
 ## Open questions handling
 
-Unanswered details about individual characters are normal output for this step. Stub names, ambiguous fields, and minor plan/canon gaps are appended to `open-questions.md` using the format above and the step still completes — the dispatcher advances the marker.
+Unanswered details about individual characters are normal output for this step. Stub names, ambiguous fields, and minor plan/canon gaps are appended to `open-questions.md` using the format above and the step still completes — its final action marks its own step line `[x]` in `pipeline-state.md` and updates `last_updated`.
 
-Exit-without-advancing applies only when the step cannot run at all: the resolved `<story-plan>` file is missing or unreadable, or the project's `project_type` cannot be determined from `pipeline-state.md`. In that case, append a `critical` blocker to `open-questions.md` describing what could not be read, write no character files, and exit without advancing the marker. The next dispatcher invocation re-runs this step after the human resolves the blocker.
+A blocked exit — exiting without recording completion in `pipeline-state.md` — applies only when the step cannot run at all: the resolved `<story-plan>` file is missing or unreadable, or the project's `project_type` cannot be determined from `pipeline-state.md`. In that case, append a `critical` blocker to `open-questions.md` describing what could not be read, write no character files, and exit without recording completion in `pipeline-state.md`. The next dispatcher invocation re-runs this step after the human resolves the blocker.
