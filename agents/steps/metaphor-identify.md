@@ -27,7 +27,7 @@ Reviews drafted prose for figurative comparisons. Reports findings for human eva
 
 ## Inputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the latest prose, resolved at step start. This step does not mint a new draft version.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the latest prose, resolved at step start via the manifest's active head — or via the read-from override the dispatcher passed — per `agents/project-layouts.md`, not by highest-numbered draft. This step does not mint a new draft version.
 - `<chapter-folder>/storyboards/*-storyboard.md` — the storyboard blocks for the chapter, used for emotional register and scene intent only; do not treat storyboard fields as specifications to diff against.
 
 Do not read canon files, the scene list, or any other file.
@@ -44,7 +44,7 @@ Collect every simile and live metaphor in the prose. A **live metaphor** is a co
 
 ### Format
 
-The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed; this stamp is the draft-version identity the downstream `metaphor_fix` and `metaphor_apply` steps read to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement. `metaphor_fix` preserves whatever stamp it inherits and does not refresh it.
+The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed — the draft this run actually read, so when a read-from override is in effect the stamp names that draft; this stamp is the draft-version identity the downstream `metaphor_fix` and `metaphor_apply` steps read to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement. `metaphor_fix` preserves whatever stamp it inherits and does not refresh it.
 
 ```markdown
 Reviewed-draft: draft-vNN.md

@@ -48,7 +48,7 @@ This step produces a report only — it does **not** write to the prose. The `KE
 
 ## Inputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the latest prose, resolved at step start. This is the text the pass reviews; the step does not mint a new draft version.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the latest prose, resolved at step start via the manifest's active head — or via the read-from override the dispatcher passed — per `agents/project-layouts.md`, not by highest-numbered draft. This is the text the pass reviews; the step does not mint a new draft version.
 - `<chapter-folder>/storyboards/*-storyboard.md` — the chapter's storyboard blocks, used to judge whether the prose is serving the scene as designed.
 - `voice.md` — the project-root voice file (a sibling of `pipeline-state.md`, not the copy inside the `amanuensis/` submodule; overridable by the path named in the consuming project's local AGENTS.md). Used to judge POV and voice consistency. If no voice file can be found, see Open questions handling.
 
@@ -58,7 +58,7 @@ This step produces a report only — it does **not** write to the prose. The `KE
 
 Write a report in markdown to `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md`.
 
-The file begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the resolved `<latest-draft>` this pass reviewed. If the file exists and its stamp does not equal `<latest-draft>`, overwrite the file with a fresh stamp; the prior pass's recommendations against the superseded draft are discarded. `prose_fix` consumes this stamp to detect stale recommendations against a newer draft, per the report→fix freshness invariant in `agents/orchestrator.md`; the stamp is load-bearing for that check.
+The file begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the resolved `<latest-draft>` this pass reviewed — the draft this run actually read, so when a read-from override is in effect the stamp names that draft. If the file exists and its stamp does not equal `<latest-draft>`, overwrite the file with a fresh stamp; the prior pass's recommendations against the superseded draft are discarded. `prose_fix` consumes this stamp to detect stale recommendations against a newer draft, per the report→fix freshness invariant in `agents/orchestrator.md`; the stamp is load-bearing for that check.
 
 For each issue:
 - quote the line or short passage

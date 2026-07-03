@@ -26,7 +26,7 @@ The report is the human review artifact that gates the fix step. After this step
 
 ## Inputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the latest prose, resolved at step start. In the canonical pipeline order this will be the line-pass output. This is the only file this step reads. The pass is context-free by design.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the latest prose, resolved at step start via the manifest's active head — or via the read-from override the dispatcher passed — per `agents/project-layouts.md`, not by highest-numbered draft. In the canonical pipeline order this will be the line-pass output. This is the only file this step reads. The pass is context-free by design.
 
 ## Behavior
 
@@ -34,7 +34,7 @@ Scan the input prose for the nine pattern categories below and the flagged-words
 
 The output file is one report per chapter; append across scenes with a scene header.
 
-The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed; the downstream `anti_ai_fix` step reads this stamp to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
+The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed — the draft this run actually read, so when a read-from override is in effect the stamp names that draft; the downstream `anti_ai_fix` step reads this stamp to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — **overwrite the whole file** with a fresh top-of-file stamp; the prior run's findings against the superseded draft are discarded. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
 
 ```markdown
 Reviewed-draft: draft-vNN.md

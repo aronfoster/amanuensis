@@ -37,7 +37,7 @@ See `agents/orchestrator.md` for the step workflow contract.
 - `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md` — the advisory report produced by `prose_pass`, annotated by the human. Each finding carries an `Action:` recommendation (`KEEP | TIGHTEN | FLATTEN | REWRITE`) from the report, plus a human-filled `Annotation:` line resolving what to do. See "Behavior" below for how the effective annotation is resolved. An unannotated report is not a valid input. See "Open questions handling" below.
 
   At step start, before acting on any entry, read the `Reviewed-draft: draft-vNN.md` header at the top of `prose-pass.md` and confirm it equals `<latest-draft>`. If it does not, see "Open questions handling" below — this is a stale-report blocker. Cross-reference `agents/orchestrator.md`'s report→fix freshness invariant as the canonical statement.
-- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the current draft this step revises. Resolved at step start; read-only at this step's input boundary, revisions are written to `<next-draft>`.
+- `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the current draft this step revises. Resolved at step start via the manifest's `Active-head:` pointer (the active head), or via the read-from override the dispatcher passed, per `agents/project-layouts.md` — not by highest-numbered draft. Read-only at this step's input boundary; revisions are written to `<next-draft>`.
 - `voice.md` — the project-root voice file (a sibling of `pipeline-state.md`, not the copy inside the `amanuensis/` submodule; overridable by the path named in the consuming project's local `AGENTS.md`), loaded in full as the system message for `REWRITE` generation, mirroring `line_pass`. It is the calibration anchor for in-voice rewrites. If no voice file can be found, see "Open questions handling" below.
 
 Storyboards and canon are **not** inputs. `prose_pass` already reviewed the prose against them when it emitted its recommendations; `prose_fix` applies those reviewed judgments without re-evaluating them. If a fix would require re-checking the prose against the storyboard or canon, the human should have marked it `ESCALATE`.
@@ -104,14 +104,16 @@ For each `SKIP` (whether annotated directly or resolved from an unannotated `KEE
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — the full revised prose, written as the next versioned draft file (e.g., if `<latest-draft>` is `draft-v03.md`, this writes `draft-v04.md`). The original `<latest-draft>` is not modified. All unchanged prose is copied through verbatim, with `FIX` edits applied in place. Block comment markers, scene breaks, dialogue formatting, and any prior apply-log block-comment are preserved.
+- `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — the full revised prose, written as the next versioned draft file. `<next-draft>` is the highest existing draft number + 1 (monotonic; per `agents/project-layouts.md`), not one greater than the draft read, so a branch rerun never collides with an existing file. The original `<latest-draft>` is not modified. All unchanged prose is copied through verbatim, with `FIX` edits applied in place. Block comment markers, scene breaks, dialogue formatting, and any prior apply-log block-comment are preserved.
 - `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md` — the same input file, with `Applied:` blocks appended for each `FIX` entry actioned and `Escalated:` blocks appended for each `ESCALATE` entry. Pre-existing content (the report, its `Reviewed-draft:` stamp, and the human's annotations) is not modified; this step only appends. The apply log for this run lives here.
-- `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` — append a per-version entry for `<next-draft>` after a successful prose write, following the schema in `agents/project-layouts.md`. Example:
+- `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` — append a per-version entry for `<next-draft>` after a successful prose write, following the schema in `agents/project-layouts.md`. `read_from` names the draft this step actually read (the active head, or the read-from override); `timestamp` is the write time (ISO 8601 with timezone offset); `review_gate` is this step's `review_required` value (`false`). Example:
 
   ```markdown
   ## draft-v04.md
   - produced_by: prose_fix
   - read_from: [draft-v03.md]
+  - timestamp: 2026-05-18T14:16:18-06:00
+  - review_gate: false
   - side_artifacts: [prose-pass.md]
   - apply_log: apply log appended to `prose-pass.md`
   ```
@@ -126,7 +128,7 @@ Open-questions handling fires only when the input itself is unusable. Named bloc
 - **Missing inputs.** `prose-pass.md` is missing, `<latest-draft>` cannot be resolved (no `draft-vNN.md` in the attempt directory), or `voice.md` cannot be found (neither the project-root `voice.md` nor the override named in the project's `AGENTS.md`).
 - **Stale report.** The `Reviewed-draft:` header at the top of `prose-pass.md` names a draft other than `<latest-draft>`. The report was generated against a different draft than the current one, which means a prose-advancing step has slipped in between `prose_pass` and `prose_fix`. Applying the annotations to `<latest-draft>` would be applying notes against the wrong prose. The paired report→fix freshness invariant must hold; only the human can decide whether to rerun `prose_pass` against the current draft or to roll back. See `agents/orchestrator.md`'s report→fix freshness invariant for the canonical statement.
 
-In any of these, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate annotations and do not write a partial `<next-draft>`. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
+In any of these, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate annotations and do not write a partial `<next-draft>`. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to repoint the manifest's `Active-head:` to the `<next-draft>` it just wrote — and, on a branch (the draft read was not the old active head), stamp each displaced draft `superseded_by: draft-vNN.md` naming `<next-draft>`, per the algorithm in `agents/project-layouts.md` — then mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
 
 ## Anti-Patterns
 
