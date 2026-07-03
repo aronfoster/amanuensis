@@ -59,6 +59,19 @@ A foundational task that many others reference (e.g. defining a rule the rest
 cite) usually belongs in its own first wave so later waves build on the final
 wording.
 
+**Audit the sprint's verification commands against the repo's current state**
+before spawning anything. Run each defined check (greps, scripts, diff
+comparisons) once on the untouched tree and confirm its expectation is
+coherent: a grep whose "must return only X" already matches a pre-existing,
+legitimate line needs its pass condition interpreted (and that interpretation
+noted in the plan) rather than treated as mechanical pass/fail; a check that
+assumes repo state — a fresh `origin/main`, a clean baseline, a ref that may
+be stale in this clone — should be re-anchored to a base you've verified (e.g.
+the branch point) before you rely on it. Finding this out during planning
+costs a minute; finding it out during closeout costs a re-diagnosis under
+pressure to ship. When a check's literal expectation fails later, first decide
+whether the check or the work is wrong before re-dispatching an agent.
+
 Resolve any open decisions the sprint flags. If a decision is genuinely the
 user's (a name, an approach with real trade-offs), ask before planning is
 final; if the sprint gives a default, take it and note that you did.
