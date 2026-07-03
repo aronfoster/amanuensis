@@ -25,7 +25,9 @@ outputs:
 #     source — everything else the step reads (plans, scene lists, storyboards, canon, voice, config).
 #   required: true — the step cannot start safely without it; false — a conditional-use input.
 #   review_sensitive: true — the input is expected to carry human annotations/review before this
-#     step consumes it; false — otherwise.
+#     step consumes it; false — otherwise. This declares a review expectation only: a consuming
+#     step surfaces it as a non-blocking notice (see the Artifact-state section of
+#     agents/orchestrator.md), and the dispatcher does not enforce it.
 preconditions:
   - path: <chapter-folder>/<input-file>.md
     kind: <source|prose_draft|side_artifact>

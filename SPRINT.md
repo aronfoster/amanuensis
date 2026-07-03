@@ -52,6 +52,8 @@ Locked at planning (the starred item is the owner decision from this Sprint's pl
 - **The design note lands in `agents/orchestrator.md`.** That doc owns the freshness invariant (`:145-164`) and the execution-model vocabulary (`:17-28`), so the general artifact-state model belongs there; `agents/project-layouts.md` is referenced for the manifest fields it reads (`Active-head:`, `review_gate`) but not duplicated. This follows the Sprint 12/13 precedent that a design note lands in the doc that owns the contract, not a separate design file.
 - **The report→fix invariant is preserved verbatim as the named special case.** M9 generalizes; it does not rewrite the invariant's mechanics. The pairs list, the stamp-overwrite-on-regenerate behavior, `metaphor_fix`'s stamp-preserving role, and the stale-report blocker path are unchanged (`agents/orchestrator.md:153-164`). The general contract is stated above the invariant; the invariant remains its canonical worked instance.
 - **Override is recorded, source-specific, and human-visible.** An override names the specific stale-or-review-pending artifact and the draft mismatch it overrides, and is written into the consuming step's apply log alongside the `Applied:` blocks (the same place the fix step already records what it did — `agents/steps/compliance-fix.md:59`, `:116`). No stale or unreviewed apply happens silently; the absence of a recorded override means the step blocks as today.
+
+  **Refinement (post-sprint, PR #38 review).** Override applies to the **`stale` axis only**, not `review_pending`. An override authorizes consuming an artifact despite a known *state* problem (staleness); it does not supply missing editorial intent, so a `review_pending` (unannotated report / unselected variant) input has nothing to apply and is resolved by the human **adding review evidence**, not by an override. Overriding staleness also stays **anchor-gated**: it waives the freshness block, not the requirement that each edit land on a real anchor in `<latest-draft>` — an annotation whose anchor cannot be found is skipped, not guessed. The corrected contract lives in `agents/orchestrator.md`'s Artifact-state section and the four fix/apply step bodies; this note supersedes the "stale-or-review-pending" scope stated above (which is left as the original plan record).
 - **`discarded` and `regenerated` are named, not changed.** `regenerated` = a report re-emitted against the current active head (the stale-blocker recovery path), overwriting the stale artifact with a fresh stamp; `discarded` = the prior run's findings against the superseded draft, dropped in that overwrite because their prose anchors no longer apply. Both are the existing behavior at `agents/orchestrator.md:160`, given names for the M9.1 vocabulary.
 
 ---
@@ -62,7 +64,7 @@ Wave order: **Task 1** defines the model and must land first (Tasks 2–4 refere
 
 ### Task 1 — Artifact-state model + vocabulary + override behavior in `agents/orchestrator.md`
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Land the M9.1 design note and the M9.2/M9.3/M9.5 model as the single source in the doc that owns the freshness invariant. Everything downstream references this section. Closes **M9.1**, the model side of **M9.2**, **M9.3**, and **M9.5**.
 
@@ -82,7 +84,7 @@ Wave order: **Task 1** defines the model and must land first (Tasks 2–4 refere
 
 ### Task 2 — Freshness-stamp contract adoption in the four report-emitting steps
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Point each report-emitting step at the named general freshness contract and use the named `regenerated`/`discarded` behavior, with no mechanics change. Closes the step side of **M9.2**.
 
@@ -98,7 +100,7 @@ Wave order: **Task 1** defines the model and must land first (Tasks 2–4 refere
 
 ### Task 3 — Dual-check + override branch in the four fix/apply steps (+ `metaphor_fix`)
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Frame the freshness and review-evidence checks the fix/apply steps already perform as instances of the general contract, make the review-evidence gate uniform, and add an explicit recorded-override branch. Closes **M9.4** and the step side of **M9.5**.
 
@@ -117,7 +119,7 @@ Wave order: **Task 1** defines the model and must land first (Tasks 2–4 refere
 
 ### Task 4 — Review-legibility surface: `AGENTS.md`, step-workflow template
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Make the signal-only review model and the derived-freshness model legible in the catalog docs, single-sourced to `agents/orchestrator.md`. Closes the catalog side of **M9.3**.
 
@@ -133,7 +135,7 @@ Wave order: **Task 1** defines the model and must land first (Tasks 2–4 refere
 
 ### Task 5 — Smoke coverage, verification sweep, ROADMAP / SPRINT check-off
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Document runnable verification of the state model and close the milestone. Closes **M9.7** and the residual of **M9**.
 

@@ -58,7 +58,7 @@ This step produces a report only — it does **not** write to the prose. The `KE
 
 Write a report in markdown to `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md`.
 
-The file begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the resolved `<latest-draft>` this pass reviewed — the draft this run actually read, so when a read-from override is in effect the stamp names that draft. If the file exists and its stamp does not equal `<latest-draft>`, overwrite the file with a fresh stamp; the prior pass's recommendations against the superseded draft are discarded. `prose_fix` consumes this stamp to detect stale recommendations against a newer draft, per the report→fix freshness invariant in `agents/orchestrator.md`; the stamp is load-bearing for that check.
+The file begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the resolved `<latest-draft>` this pass reviewed — the draft this run actually read, so when a read-from override is in effect the stamp names that draft. If the file exists and its stamp does not equal `<latest-draft>`, the report is `regenerated`: overwrite the file with a fresh stamp, and the prior pass's recommendations against the superseded draft are `discarded`. `prose_fix` consumes this stamp to detect stale recommendations against a newer draft, per the general freshness contract in `agents/orchestrator.md`'s Artifact-state section (the report→fix freshness invariant is its canonical worked instance); the stamp is load-bearing for that check.
 
 For each issue:
 - quote the line or short passage
@@ -287,7 +287,7 @@ Rules `prose_fix` relies on:
 - A finding whose `Action:` is anything other than `KEEP` but whose `Annotation:` is missing or holds an unrecognized token is **not actionable** — `prose_fix` treats it as an unannotated blocker rather than guessing intent.
 - **No bulk-annotation headers are used.** There is no file-level "annotate all as FIX" shortcut; every actionable finding is annotated individually. This is a deliberate, locked convention: `prose_pass` is selective (5-10 findings), so per-entry annotation is cheap and keeps intent explicit. Do not reintroduce a bulk header.
 
-This Findings section is the single canonical definition of the annotation grammar; `prose_fix` points here rather than restating the token set. The top-of-file `Reviewed-draft: draft-vNN.md` stamp is what lets `prose_fix` detect stale annotations — annotations written against a superseded draft — per the "Report→fix freshness invariant" in `agents/orchestrator.md`, which is why that stamp is now load-bearing.
+This Findings section is the single canonical definition of the annotation grammar; `prose_fix` points here rather than restating the token set. The top-of-file `Reviewed-draft: draft-vNN.md` stamp is what lets `prose_fix` detect stale annotations — annotations written against a superseded draft — per the general freshness contract in `agents/orchestrator.md`'s Artifact-state section (whose `### Report→fix freshness invariant` subsection is the canonical worked instance), which is why that stamp is now load-bearing.
 
 ---
 
@@ -341,7 +341,7 @@ Be selective, concrete, and unsentimental.
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md` — the advisory report described above. Begins with a `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this pass reviewed (overwritten on regenerate against a newer draft), then contains `Top priorities`, per-finding entries using the Findings template, a `Chapter-level diagnosis` section (with `What the prose is already doing well`, `Repeated failure modes`, `Best revision strategy`), and `Lines worth preserving`. The step does not modify the prose file; `prose_fix` consumes the annotated report and applies the fixes.
+- `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md` — the advisory report described above. Begins with a `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this pass reviewed (against a newer draft the report is `regenerated` — the file is overwritten with a fresh stamp and the prior findings `discarded`), then contains `Top priorities`, per-finding entries using the Findings template, a `Chapter-level diagnosis` section (with `What the prose is already doing well`, `Repeated failure modes`, `Best revision strategy`), and `Lines worth preserving`. The step does not modify the prose file; `prose_fix` consumes the annotated report and applies the fixes.
 
 ## Open questions handling
 

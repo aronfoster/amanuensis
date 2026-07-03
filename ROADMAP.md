@@ -18,23 +18,23 @@ fix/apply steps refuse stale artifacts by default; review-required artifacts car
 an explicit review status or equivalent human-acknowledgment marker; the dispatcher
 and step bodies consistently block, warn, or proceed according to declared rules.
 
-* [ ] M9.1 Design note: define side-artifact state. Terms to settle:
+* [x] M9.1 Design note: define side-artifact state. Terms to settle:
   `fresh`, `stale`, `review_pending`, `reviewed`, `override`, `discarded`,
   and `regenerated`.
 
-* [ ] M9.2 Standardize freshness stamps for prose-derived side artifacts. Existing
+* [x] M9.2 Standardize freshness stamps for prose-derived side artifacts. Existing
   `Reviewed-draft:` behavior becomes the common pattern for reports, annotations,
   metaphor findings, anti-AI findings, and similar artifacts.
 
-* [ ] M9.3 Standardize review markers for artifacts produced by `review_required: true`
+* [x] M9.3 Standardize review markers for artifacts produced by `review_required: true`
   steps. Decide whether review state lives in the artifact itself, in a manifest, or
   in the recipe/status file.
 
-* [ ] M9.4 Update fix/apply steps to check both freshness and review state before
+* [x] M9.4 Update fix/apply steps to check both freshness and review state before
   consuming side artifacts. On mismatch, append a clear blocker to `open-questions.md`
   and exit without modifying prose.
 
-* [ ] M9.5 Define explicit override behavior. Overrides must be human-visible,
+* [x] M9.5 Define explicit override behavior. Overrides must be human-visible,
   source-specific, and recorded in the relevant artifact or manifest. No stale apply
   should happen silently.
 
@@ -43,7 +43,7 @@ and step bodies consistently block, warn, or proceed according to declared rules
   Sprint 14** to a follow-on: the checks stay in the step bodies until the state model
   proves out (see the Sprint-14 note below and the Deferred list).
 
-* [ ] M9.7 Smoke coverage: verify stale report detection, reviewed-artifact detection,
+* [x] M9.7 Smoke coverage: verify stale report detection, reviewed-artifact detection,
   pending-review blocking or warning behavior, regeneration of a stale report against
   the active draft, and explicit override recording.
 
