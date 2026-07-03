@@ -8,140 +8,6 @@ are sequenced, not parallel, so it is never edited by two at once.
 
 ---
 
-## M7 — Selective step execution
-
-Replace the linear `next-step` cursor model with explicit, selective step invocation.
-The default pipeline remains a recommended recipe, but correctness is governed by
-artifact preconditions, not by strict sequence position.
-
-Done when: a human can invoke a specific step by `step_id`; the dispatcher validates
-that the step's declared inputs exist and are usable; locally ordered pairs such as
-`compliance_report -> compliance_fix` are enforced by artifact freshness rules rather
-than by global pipeline position; `pipeline-state.md` no longer requires a single
-`[>]` cursor to define what may run next; both hosts expose the same model.
-
-* [x] M7.1 Design note: define the selective execution model. Terms to settle:
-  `runnable`, `blocked`, `stale`, `superseded`, `active`, `recommended next`,
-  and `explicit override`.
-
-* [x] M7.2 Reframe `pipeline-state.md` from cursor state into recipe/status state.
-  Remove the requirement that exactly one `[>]` marker controls execution. Preserve
-  the default step order as the recommended happy path, not as the only legal path.
-
-* [x] M7.3 Expand the step workflow contract so each step declares machine-readable
-  preconditions in addition to descriptive `inputs` / `outputs`. At minimum, distinguish:
-  required files, optional files, prose-draft inputs, side-artifact inputs, and
-  human-review-sensitive inputs.
-
-* [x] M7.4 Implement explicit step invocation in the dispatcher:
-  `run_step <step_id>` or host-equivalent. The dispatcher resolves the requested
-  workflow file, checks preconditions, then follows that step body in the same session.
-
-* [x] M7.5 Keep a convenience command for the recommended path:
-  `next_recommended_step` or host-equivalent. This reads the recipe/status file and
-  chooses the next incomplete recommended step, but it is layered on top of selective
-  execution rather than being the core control model.
-
-* [x] M7.6 Generalize local ordering constraints. Report/fix and identify/apply pairs
-  must be enforced by artifact stamps such as `Reviewed-draft:`, not by global adjacency
-  in the step list. A fix/apply step may run only when its paired report artifact was
-  produced against the current usable draft, unless the human explicitly overrides.
-
-* [x] M7.7 Update `orchestrator.md` to remove forward/back/redo language. The
-  orchestrator should describe Amanuensis as running selected transformations against
-  explicit artifacts, with judgment living in the human and the step bodies.
-
-* [x] M7.8 Host parity: expose the same selective invocation model in Claude Code and
-  OpenCode. The names do not have to be identical, but the behavior and safety checks
-  must match.
-
-* [x] M7.9 Smoke coverage: verify that the default recipe still runs in order; verify
-  that a human can rerun a completed report step; verify that a fix step blocks on a
-  stale report; verify that a non-dependent step can run out of recipe order when its
-  inputs are valid.
-
-Notes: This milestone deliberately does not change draft version lineage. For now,
-`<latest-draft>` may remain the highest-numbered `draft-vNN.md` as defined by M4.
-Non-destructive reruns, active draft heads, and superseded draft branches are deferred
-to M8. The purpose of M7 is to decouple dispatcher control from strict linear cursor
-movement without rewriting the draft manifest model in the same sprint.
-
-Sprint 12 plans M7 (see SPRINT.md). Locked there: the state grammar becomes `[x]`/`[ ]`
-only, with `[>]` retired but tolerated as a legacy synonym of `[ ]` (no migration, no
-`check-pipeline-state.sh` change); recommended next = first non-`[x]` step. The command
-surface adds `run-step` on both hosts and keeps `next-step` as a convenience layer over
-the same procedure. The M7.1 design note lands inside `agents/orchestrator.md` as an
-Execution model section (single-sourcing; a separate design doc was rejected).
-Preconditions are an additive frontmatter block (`path`/`kind: source|prose_draft|side_artifact`/
-`required`/`review_sensitive`); the dispatcher checks required-file existence only —
-freshness and review checks stay in step bodies until M9.6. The adjacency invariant is
-renamed the report→fix freshness invariant with mechanics unchanged.
-
----
-
-## M8 — Active draft lineage
-
-Replace highest-numbered draft resolution with an explicit active draft head in
-`draft-manifest.md`, so arbitrary reruns can create new draft versions without deleting
-or archiving prior work.
-
-Done when: `<latest-draft>` resolves to the manifest's active head rather than the
-highest-numbered `draft-vNN.md`; rerunning a prose-advancing step can read an earlier
-draft and produce a new active draft; superseded downstream drafts remain on disk but
-are no longer considered active; stale side artifacts can identify which draft lineage
-they belong to.
-
-* [x] M8.1 Design note: define active draft lineage. Terms to settle:
-  `active_head`, `reads`, `produced_by`, `supersedes`, `superseded_by`,
-  `lineage`, and `abandoned`.
-
-* [x] M8.2 Update `draft-manifest.md` schema so each prose-bearing draft version records:
-  producing step, input draft(s), side artifacts consumed, timestamp, review gate if any,
-  and whether it is the active head.
-
-* [x] M8.3 Change `<latest-draft>` resolution from highest-numbered draft to active
-  manifest head. Keep draft filenames monotonic: reruns create the next `draft-vNN.md`
-  rather than overwriting or reusing old numbers.
-
-* [x] M8.4 Define non-destructive rerun semantics. If a human reruns a prose-advancing
-  step from an earlier draft, the new output becomes the active head and any previously
-  active downstream drafts are marked superseded in the manifest, not deleted.
-
-* [x] M8.5 Update all prose-advancing steps to append manifest entries that preserve
-  lineage. Steps must not infer active state from filenames alone.
-
-* [x] M8.6 Update all prose-reading/report steps to resolve the active head through the
-  manifest before reading `<latest-draft>`.
-
-* [x] M8.7 Smoke coverage: create a linear draft chain, rerun a prose-advancing step from
-  an earlier draft, verify the new draft becomes active, verify old downstream drafts
-  remain on disk but are superseded, and verify report steps read the new active head.
-
-Notes: This milestone replaces the archive-on-redo idea from the old M7. Amanuensis
-does not move backward. It creates a new version from selected inputs and records which
-draft lineage is now active.
-
-Sprint 13 plans M8 (see SPRINT.md). Locked there: the active head is a top-of-manifest
-`Active-head: draft-vNN.md` pointer (parallel to the `Reviewed-draft:` stamp), and
-`<latest-draft>` resolves to it — falling back to the highest-numbered draft when no
-pointer exists, so existing projects need no migration. `<latest-draft>` (the read
-pointer) and `<next-draft>` (highest existing draft number + 1, kept monotonic) decouple.
-Branch selection is an owner decision: a read-from argument on `run-step`
-(`run-step <step_id> from <draft-vNN>`) that overrides which draft `<latest-draft>`
-resolves to for that one invocation; `next-step` never branches. On a branch (read-from ≠
-active head) the prose-advancing step writes `<next-draft>`, repoints `Active-head`, and
-stamps each displaced active-lineage draft `superseded_by: <next-draft>`; abandonment is
-derived from that stamp, not a separate field, and a linear advance supersedes nothing.
-The M8.1 design note and the lineage/supersession algorithm land in
-`agents/project-layouts.md` (the doc that owns the manifest); `orchestrator.md`'s
-Execution-model terms are updated to match and cross-reference it. The report→fix
-freshness invariant keeps its filename-comparison mechanics unchanged — with active-head
-resolution, a report stamped against an abandoned draft is correctly stale, and stamp
-filename plus the manifest's `read_from` chain identifies which lineage a stale artifact
-belongs to.
-
----
-
 ## M9 — Stale artifacts and review gates
 
 Make arbitrary step execution safe by tracking whether side artifacts are fresh,
@@ -440,6 +306,140 @@ invariant. It runs three checks: takeaway-supported, reveal-has-prior-setup (wit
 only), and a takeaway/concealment contradiction guard. Reveal dependencies are inferred from
 `beat_type`/`reader_takeaway`/`concealment_from_reader` plus `scene-list.md` ordering — no new
 dependency field is added.
+
+---
+
+### M7 — Selective step execution
+
+Replace the linear `next-step` cursor model with explicit, selective step invocation.
+The default pipeline remains a recommended recipe, but correctness is governed by
+artifact preconditions, not by strict sequence position.
+
+Done when: a human can invoke a specific step by `step_id`; the dispatcher validates
+that the step's declared inputs exist and are usable; locally ordered pairs such as
+`compliance_report -> compliance_fix` are enforced by artifact freshness rules rather
+than by global pipeline position; `pipeline-state.md` no longer requires a single
+`[>]` cursor to define what may run next; both hosts expose the same model.
+
+- [x] M7.1 Design note: define the selective execution model. Terms to settle:
+  `runnable`, `blocked`, `stale`, `superseded`, `active`, `recommended next`,
+  and `explicit override`.
+
+- [x] M7.2 Reframe `pipeline-state.md` from cursor state into recipe/status state.
+  Remove the requirement that exactly one `[>]` marker controls execution. Preserve
+  the default step order as the recommended happy path, not as the only legal path.
+
+- [x] M7.3 Expand the step workflow contract so each step declares machine-readable
+  preconditions in addition to descriptive `inputs` / `outputs`. At minimum, distinguish:
+  required files, optional files, prose-draft inputs, side-artifact inputs, and
+  human-review-sensitive inputs.
+
+- [x] M7.4 Implement explicit step invocation in the dispatcher:
+  `run_step <step_id>` or host-equivalent. The dispatcher resolves the requested
+  workflow file, checks preconditions, then follows that step body in the same session.
+
+- [x] M7.5 Keep a convenience command for the recommended path:
+  `next_recommended_step` or host-equivalent. This reads the recipe/status file and
+  chooses the next incomplete recommended step, but it is layered on top of selective
+  execution rather than being the core control model.
+
+- [x] M7.6 Generalize local ordering constraints. Report/fix and identify/apply pairs
+  must be enforced by artifact stamps such as `Reviewed-draft:`, not by global adjacency
+  in the step list. A fix/apply step may run only when its paired report artifact was
+  produced against the current usable draft, unless the human explicitly overrides.
+
+- [x] M7.7 Update `orchestrator.md` to remove forward/back/redo language. The
+  orchestrator should describe Amanuensis as running selected transformations against
+  explicit artifacts, with judgment living in the human and the step bodies.
+
+- [x] M7.8 Host parity: expose the same selective invocation model in Claude Code and
+  OpenCode. The names do not have to be identical, but the behavior and safety checks
+  must match.
+
+- [x] M7.9 Smoke coverage: verify that the default recipe still runs in order; verify
+  that a human can rerun a completed report step; verify that a fix step blocks on a
+  stale report; verify that a non-dependent step can run out of recipe order when its
+  inputs are valid.
+
+Notes: This milestone deliberately does not change draft version lineage. For now,
+`<latest-draft>` may remain the highest-numbered `draft-vNN.md` as defined by M4.
+Non-destructive reruns, active draft heads, and superseded draft branches are deferred
+to M8. The purpose of M7 is to decouple dispatcher control from strict linear cursor
+movement without rewriting the draft manifest model in the same sprint.
+
+Sprint 12 plans M7 (see SPRINT.md). Locked there: the state grammar becomes `[x]`/`[ ]`
+only, with `[>]` retired but tolerated as a legacy synonym of `[ ]` (no migration, no
+`check-pipeline-state.sh` change); recommended next = first non-`[x]` step. The command
+surface adds `run-step` on both hosts and keeps `next-step` as a convenience layer over
+the same procedure. The M7.1 design note lands inside `agents/orchestrator.md` as an
+Execution model section (single-sourcing; a separate design doc was rejected).
+Preconditions are an additive frontmatter block (`path`/`kind: source|prose_draft|side_artifact`/
+`required`/`review_sensitive`); the dispatcher checks required-file existence only —
+freshness and review checks stay in step bodies until M9.6. The adjacency invariant is
+renamed the report→fix freshness invariant with mechanics unchanged.
+
+---
+
+### M8 — Active draft lineage
+
+Replace highest-numbered draft resolution with an explicit active draft head in
+`draft-manifest.md`, so arbitrary reruns can create new draft versions without deleting
+or archiving prior work.
+
+Done when: `<latest-draft>` resolves to the manifest's active head rather than the
+highest-numbered `draft-vNN.md`; rerunning a prose-advancing step can read an earlier
+draft and produce a new active draft; superseded downstream drafts remain on disk but
+are no longer considered active; stale side artifacts can identify which draft lineage
+they belong to.
+
+- [x] M8.1 Design note: define active draft lineage. Terms to settle:
+  `active_head`, `reads`, `produced_by`, `supersedes`, `superseded_by`,
+  `lineage`, and `abandoned`.
+
+- [x] M8.2 Update `draft-manifest.md` schema so each prose-bearing draft version records:
+  producing step, input draft(s), side artifacts consumed, timestamp, review gate if any,
+  and whether it is the active head.
+
+- [x] M8.3 Change `<latest-draft>` resolution from highest-numbered draft to active
+  manifest head. Keep draft filenames monotonic: reruns create the next `draft-vNN.md`
+  rather than overwriting or reusing old numbers.
+
+- [x] M8.4 Define non-destructive rerun semantics. If a human reruns a prose-advancing
+  step from an earlier draft, the new output becomes the active head and any previously
+  active downstream drafts are marked superseded in the manifest, not deleted.
+
+- [x] M8.5 Update all prose-advancing steps to append manifest entries that preserve
+  lineage. Steps must not infer active state from filenames alone.
+
+- [x] M8.6 Update all prose-reading/report steps to resolve the active head through the
+  manifest before reading `<latest-draft>`.
+
+- [x] M8.7 Smoke coverage: create a linear draft chain, rerun a prose-advancing step from
+  an earlier draft, verify the new draft becomes active, verify old downstream drafts
+  remain on disk but are superseded, and verify report steps read the new active head.
+
+Notes: This milestone replaces the archive-on-redo idea from the old M7. Amanuensis
+does not move backward. It creates a new version from selected inputs and records which
+draft lineage is now active.
+
+Sprint 13 plans M8 (see SPRINT.md). Locked there: the active head is a top-of-manifest
+`Active-head: draft-vNN.md` pointer (parallel to the `Reviewed-draft:` stamp), and
+`<latest-draft>` resolves to it — falling back to the highest-numbered draft when no
+pointer exists, so existing projects need no migration. `<latest-draft>` (the read
+pointer) and `<next-draft>` (highest existing draft number + 1, kept monotonic) decouple.
+Branch selection is an owner decision: a read-from argument on `run-step`
+(`run-step <step_id> from <draft-vNN>`) that overrides which draft `<latest-draft>`
+resolves to for that one invocation; `next-step` never branches. On a branch (read-from ≠
+active head) the prose-advancing step writes `<next-draft>`, repoints `Active-head`, and
+stamps each displaced active-lineage draft `superseded_by: <next-draft>`; abandonment is
+derived from that stamp, not a separate field, and a linear advance supersedes nothing.
+The M8.1 design note and the lineage/supersession algorithm land in
+`agents/project-layouts.md` (the doc that owns the manifest); `orchestrator.md`'s
+Execution-model terms are updated to match and cross-reference it. The report→fix
+freshness invariant keeps its filename-comparison mechanics unchanged — with active-head
+resolution, a report stamped against an abandoned draft is correctly stale, and stamp
+filename plus the manifest's `read_from` chain identifies which lineage a stale artifact
+belongs to.
 
 ---
 
