@@ -91,29 +91,29 @@ draft and produce a new active draft; superseded downstream drafts remain on dis
 are no longer considered active; stale side artifacts can identify which draft lineage
 they belong to.
 
-* [ ] M8.1 Design note: define active draft lineage. Terms to settle:
+* [x] M8.1 Design note: define active draft lineage. Terms to settle:
   `active_head`, `reads`, `produced_by`, `supersedes`, `superseded_by`,
   `lineage`, and `abandoned`.
 
-* [ ] M8.2 Update `draft-manifest.md` schema so each prose-bearing draft version records:
+* [x] M8.2 Update `draft-manifest.md` schema so each prose-bearing draft version records:
   producing step, input draft(s), side artifacts consumed, timestamp, review gate if any,
   and whether it is the active head.
 
-* [ ] M8.3 Change `<latest-draft>` resolution from highest-numbered draft to active
+* [x] M8.3 Change `<latest-draft>` resolution from highest-numbered draft to active
   manifest head. Keep draft filenames monotonic: reruns create the next `draft-vNN.md`
   rather than overwriting or reusing old numbers.
 
-* [ ] M8.4 Define non-destructive rerun semantics. If a human reruns a prose-advancing
+* [x] M8.4 Define non-destructive rerun semantics. If a human reruns a prose-advancing
   step from an earlier draft, the new output becomes the active head and any previously
   active downstream drafts are marked superseded in the manifest, not deleted.
 
-* [ ] M8.5 Update all prose-advancing steps to append manifest entries that preserve
+* [x] M8.5 Update all prose-advancing steps to append manifest entries that preserve
   lineage. Steps must not infer active state from filenames alone.
 
-* [ ] M8.6 Update all prose-reading/report steps to resolve the active head through the
+* [x] M8.6 Update all prose-reading/report steps to resolve the active head through the
   manifest before reading `<latest-draft>`.
 
-* [ ] M8.7 Smoke coverage: create a linear draft chain, rerun a prose-advancing step from
+* [x] M8.7 Smoke coverage: create a linear draft chain, rerun a prose-advancing step from
   an earlier draft, verify the new draft becomes active, verify old downstream drafts
   remain on disk but are superseded, and verify report steps read the new active head.
 

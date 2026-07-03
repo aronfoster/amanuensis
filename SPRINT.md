@@ -63,7 +63,7 @@ Locked at planning (the starred item is the owner decision from this Sprint's pl
 
 ### Task 1 — Lineage model + manifest schema + resolution rules in `agents/project-layouts.md`
 
-- [ ] Not started
+- [x] Done
 
 **Goal.** Land the M8.1 design and the M8.2/M8.3 schema and resolution rules as the single source in the doc that owns the manifest. Everything downstream references this file. Closes **M8.1**, **M8.2**, and the resolution side of **M8.3**.
 
@@ -84,7 +84,7 @@ Locked at planning (the starred item is the owner decision from this Sprint's pl
 
 ### Task 2 — Dispatcher contract + execution-model vocabulary in `agents/orchestrator.md`
 
-- [ ] Not started
+- [x] Done
 
 **Goal.** Make the orchestrator contract express active-head resolution, the read-from argument, and the branch completion action, cross-referencing `agents/project-layouts.md` as the lineage owner. Closes the dispatcher side of **M8.3** and the contract side of **M8.4**.
 
@@ -103,7 +103,7 @@ Locked at planning (the starred item is the owner decision from this Sprint's pl
 
 ### Task 3 — `run-step` read-from argument on both hosts, `next-step` confirmation, `AGENTS.md`
 
-- [ ] Not started
+- [x] Done
 
 **Goal.** Ship the branch surface at parity on both hosts and catalog it. Closes the host side of **M8.4**.
 
@@ -122,7 +122,7 @@ Locked at planning (the starred item is the owner decision from this Sprint's pl
 
 ### Task 4 — Prose-advancing step rewiring (M8.5)
 
-- [ ] Not started
+- [x] Done
 
 **Goal.** Make every draft-minting step resolve the active head (or read-from override), keep filenames monotonic, and preserve lineage in the manifest. Closes **M8.5**.
 
@@ -143,7 +143,7 @@ Locked at planning (the starred item is the owner decision from this Sprint's pl
 
 ### Task 5 — Draft-reading step rewiring (M8.6)
 
-- [ ] Not started
+- [x] Done
 
 **Goal.** Make every step that reads a draft without minting one resolve the active head (or read-from override) before reading. Closes **M8.6**.
 
@@ -160,7 +160,7 @@ Locked at planning (the starred item is the owner decision from this Sprint's pl
 
 ### Task 6 — Smoke branch recipe, verification sweep, ROADMAP / SPRINT check-off
 
-- [ ] Not started
+- [x] Done
 
 **Goal.** Document a runnable branch verification and close the milestone. Closes **M8.7** and the residual of **M8**.
 
