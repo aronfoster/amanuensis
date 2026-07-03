@@ -173,7 +173,9 @@ and step bodies consistently block, warn, or proceed according to declared rules
   should happen silently.
 
 * [ ] M9.6 Update the dispatcher to surface stale/review blockers before loading the
-  requested step body when the precondition is machine-checkable.
+  requested step body when the precondition is machine-checkable. **Deferred out of
+  Sprint 14** to a follow-on: the checks stay in the step bodies until the state model
+  proves out (see the Sprint-14 note below and the Deferred list).
 
 * [ ] M9.7 Smoke coverage: verify stale report detection, reviewed-artifact detection,
   pending-review blocking or warning behavior, regeneration of a stale report against
@@ -182,6 +184,23 @@ and step bodies consistently block, warn, or proceed according to declared rules
 Notes: M9 generalizes the report→fix adjacency invariant into an artifact-freshness
 model. The old adjacency rule remains valid as a special case, but the framework no
 longer depends on global step order to protect fix/apply steps.
+
+Sprint 14 plans M9 (see SPRINT.md). Locked there: staleness is a **derived predicate**
+(`Reviewed-draft:` stamp = manifest `Active-head:` → fresh, else stale), computed by the
+consuming step at step start and never stored or swept — no update walks every artifact
+(the owner decision; it applies M8's derived-`abandoned` precedent to the whole model).
+Review is **surfaced, not enforced**: `review_sensitive`/`review_gate` remain the
+declaration, annotation is the review evidence for the four reports, consumption emits a
+non-blocking notice, and the only hard review block is the pre-existing unannotated-report
+path. The design note lands in `agents/orchestrator.md` (which owns the freshness invariant
+and execution-model vocabulary), generalizing the report→fix invariant into a single
+**Artifact state** section that keeps the invariant verbatim as its named special case and
+adds the terms `fresh`/`review_pending`/`reviewed`/`override`/`discarded`/`regenerated`.
+No new frontmatter or manifest field: override is recorded in the consuming step's apply
+log; `discarded`/`regenerated` name behavior that already ships. The one new step-body
+behavior is an explicit recorded-override branch in the four fix/apply steps. M9.6
+(dispatcher lift) is deferred so the model proves out in step bodies first; Sprint 14
+delivers M9.1–M9.5 and M9.7.
 
 ---
 
@@ -426,6 +445,8 @@ dependency field is added.
 
 ## Deferred
 
+- dispatcher-level staleness/review lift (M9.6) — surface stale/review blockers before
+  loading the step body; deferred out of Sprint 14 until the step-body state model proves out
 - storyboard_review_fix apply step (after M6 proves out)
 - story-level reveals ledger with buildup (couples to continuity review; matters for book/series)
 - continuity review step
