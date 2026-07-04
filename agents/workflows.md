@@ -76,6 +76,10 @@ For projects on the orchestrator, this file is produced by [`steps/metaphor-iden
 
 Scan the line-pass output for AI-pattern flags and apply the human-annotated fixes. See [`steps/anti-ai-report.md`](steps/anti-ai-report.md) for the report phase (categories include em dashes, negative parallelism, significance inflation, copula avoidance, superficial -ing analysis, transition openers, synonym cycling, cadence tics, animacy projection, plus a flagged-words list) and [`steps/anti-ai-fix.md`](steps/anti-ai-fix.md) for the apply phase. The report supports both per-entry annotations (`FIX`/`SKIP`/`ESCALATE`) and per-category bulk headers; em dashes are typically handled in bulk.
 
+## Workflow: targeted revision
+
+Run this whenever a human finds something that must change — a corrected fact, a reshaped concept, a renamed element — after artifacts already carry it. Follow [`revision.md`](revision.md) via the `revise` host command. Not a pipeline step: it fixes the canonical source first, sweeps the project for every occurrence (including paraphrases a keyword search misses), edits character, canon, and storyboard files in place plus the active draft (in place by default; as a new draft version on request), leaves archives and `pipeline-state.md` untouched, and reports what it changed and what it deliberately left.
+
 ## Workflow: post-chapter update
 
 Run this after all scenes in a chapter are drafted and knowledge files are current.
