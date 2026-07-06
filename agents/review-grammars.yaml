@@ -1,0 +1,169 @@
+# review-grammars.yaml — single source of truth for the four human-gated
+# review artifact grammars (agent-addressable review, M10-M13; the summary
+# table in ROADMAP.md's M10 section is derived from this file).
+#
+# Consumers: scripts/validate-review-artifact.sh (the deterministic parser and
+# counter), agents/review-validation.md (the interpretation contract), the
+# amanuensis-review companion skill, and the fix/apply steps of migrated
+# families. Step docs reference this file rather than restating token sets.
+#
+# Adoption markers. Each family carries exactly one adoption marker line with
+# value `adopted` or `pending`. `adopted` means the structured grammar below
+# is authoritative for the family and the validator applies to its artifact.
+# `pending` means the family's current in-step annotation grammar remains
+# authoritative until the milestone named in `migrates_in` flips the marker;
+# the validator rejects the family with a not-yet-adopted error until then.
+#
+# Machine-read keys — parsed by scripts/validate-review-artifact.sh; keep them
+# flat, single-line, and free of colons in their values:
+#   adoption, migrates_in, path_pattern, tokens, payload_optional,
+#   payload_required, payload_forbidden, bulk_supported, bulk_actions,
+#   bulk_payload_optional
+# Every other key is contract prose for agents and humans; the script never
+# reads it. Token lists are space-separated; the script reads them from here
+# and hardcodes nothing.
+#
+# Shared review item shape (ROADMAP.md M10 shared-design principle 3):
+#
+#   <!-- review-id: ... -->          anchor, immediately above the item
+#   <the item as the producing step emits it>
+#     - Decision:                    legal token, plus payload where the
+#                                    grammar requires or permits one
+#     - Decision-note:               optional free text; never machine-parsed
+#
+# `Decision:` carries the machine-readable what; `Decision-note:` the human
+# why. A blank `Decision:` means pending — no review evidence — for every
+# family; anti-AI bulk inheritance is the only exception. A payload follows
+# its token after a colon, e.g. `Decision: FIX: cut the clause`.
+#
+# review-id grammar: `<artifact-family>:<location...>:<item-id>`.
+#   book / series : <family>:<book-id>:<chapter-id>[:<scene-id>]:<item-id>
+#   short_story   : <family>[:<scene-id>]:<item-id>  (book/chapter collapse)
+# Location segments are derivable from the artifact's resolved path (the
+# book and chapter folder names, per agents/project-layouts.md) plus
+# identifiers already present in the report (scene ids, block numbers,
+# category names, emission ordinals). The scene segment appears only for
+# artifacts with per-scene sections (compliance, anti_ai, metaphor);
+# prose_pass is chapter-scoped and has no scene segment. Nothing is invented
+# that is not already on disk. IDs are unique within the artifact +
+# `Reviewed-draft:` epoch only; regeneration discards prior findings and may
+# re-mint IDs (shared-design principle 9).
+#
+# Fixtures: examples/review/ holds one specimen per family in the target
+# format, each documenting its expected ledger; they are the validator's test
+# inputs. See examples/review/README.md.
+
+compliance:
+  adoption: adopted
+  migrates_in: M10
+  artifact: reviewer-actions.md
+  path_pattern: reviewer-actions.md
+  path: "<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md"
+  producer: compliance_report
+  consumer: compliance_fix
+  item_shape: "One review unit per violation line. The anchor sits immediately above the violation line; `- Decision:` / `- Decision-note:` are nested one level below it. `CLEAN` blocks stay a single `### Block NNN — CLEAN` line with no anchor and no fields — they are not review units and never inflate counts."
+  required_fields: Decision
+  optional_fields: Decision-note
+  anchor: "`<!-- review-id: ... -->` on its own line immediately above the violation line it addresses"
+  review_id_item: "block-<NNN>-v<KK> — the storyboard block number plus the violation's ordinal within that block's entry, both already in the report"
+  review_id_book: "compliance:<book-id>:<chapter-id>:<scene-id>:block-<NNN>-v<KK> — e.g. compliance:book1:chapter02:02-03:block-050-v01"
+  review_id_short_story: "compliance:<scene-id>:block-<NNN>-v<KK> — e.g. compliance:01-01:block-011-v01"
+  tokens: FIX SKIP ESCALATE
+  payload_optional: FIX
+  payload_required:
+  payload_forbidden: SKIP ESCALATE
+  payload_meaning: "The FIX payload is the fix instruction, carried to compliance_fix exactly as the positional `FIX: <instruction>` annotation carried it before migration."
+  blank_means: "pending — the unit carries no review evidence; any actionable violation with a blank Decision blocks compliance_fix as review_pending (per-unit gate, deliberately stronger than the old whole-file gate)"
+  bulk_supported: no
+  bulk_rules: "None. No generic bulk of any kind; every actionable violation is decided per entry."
+  counting: "Review unit = one violation line (one anchor). CLEAN blocks are not units. Progress = decided + skipped + escalated over total."
+  review_evidence: "A filled `Decision:` field holding a legal token, with payload where given."
+  proceed_state: "compliance_fix proceeds only at zero actionable-pending units and zero invalid units. Staleness is a separate axis, adjudicated per the Artifact-state contract in agents/orchestrator.md (recorded override lifts stale only, never pending or invalid)."
+  fixture: examples/review/reviewer-actions.md
+
+prose_pass:
+  adoption: pending
+  migrates_in: M12
+  artifact: prose-pass.md
+  path_pattern: prose-pass.md
+  path: "<chapter-folder>/drafts/<latest-attempt>/prose-pass.md"
+  producer: prose_pass
+  consumer: prose_fix
+  item_shape: "One review unit per actionable finding — a finding whose `Action:` is anything other than KEEP. The anchor sits immediately above the finding's `##### [short label]` heading; `- Decision:` / `- Decision-note:` replace today's `Annotation:` line among the finding's fields. KEEP findings carry no anchor and no fields — like compliance CLEAN blocks they are not review units (this is the grammar's chosen KEEP handling; it preserves the locked M5 rule that KEEP findings are treated as SKIP by prose_fix)."
+  required_fields: Decision
+  optional_fields: Decision-note
+  anchor: "`<!-- review-id: ... -->` on its own line immediately above the finding's `##### [short label]` heading"
+  review_id_item: "finding-<NN> — the finding's emission ordinal within the report, counted over actionable findings only"
+  review_id_book: "prose_pass:<book-id>:<chapter-id>:finding-<NN> — e.g. prose_pass:book1:chapter02:finding-01 (chapter-scoped report; no scene segment)"
+  review_id_short_story: "prose_pass:finding-<NN> — e.g. prose_pass:finding-01"
+  tokens: FIX SKIP ESCALATE
+  payload_optional: FIX
+  payload_required:
+  payload_forbidden: SKIP ESCALATE
+  payload_meaning: "The FIX payload is the human's inline instruction, followed instead of (or in addition to) the finding's recommended Action."
+  blank_means: "pending — a non-KEEP finding with a blank Decision blocks prose_fix as review_pending"
+  bulk_supported: no
+  bulk_rules: "None — locked M5 decision. The pass is selective (5-10 findings), so per-entry decisions are cheap and intent stays explicit. The validator rejects any BULK header in this artifact as invalid."
+  counting: "Review unit = one actionable (non-KEEP) finding. KEEP findings are not units."
+  review_evidence: "A filled `Decision:` field holding a legal token, with payload where given."
+  proceed_state: "prose_fix proceeds only at zero pending units and zero invalid units; staleness per the Artifact-state contract."
+  fixture: examples/review/prose-pass.md
+
+anti_ai:
+  adoption: pending
+  migrates_in: M11
+  artifact: anti-ai.md
+  path_pattern: anti-ai.md
+  path: "<chapter-folder>/drafts/<latest-attempt>/anti-ai.md"
+  producer: anti_ai_report
+  consumer: anti_ai_fix
+  item_shape: "One review unit per flagged instance, listed under its `### <Category>` subsection inside a scene section. The anchor sits immediately above the flagged-quote line; `- Decision:` / `- Decision-note:` are nested one level below it. A scene section opens with the report's `BULK eligibility:` declaration block, and a category subsection may open with one `BULK:` header line (before any anchors) where that declaration permits."
+  required_fields: Decision
+  optional_fields: Decision-note
+  anchor: "`<!-- review-id: ... -->` on its own line immediately above the flagged-quote line it addresses"
+  review_id_item: "<category-slug>-<NN> — the category name lowercased and dash-joined, plus the instance's emission ordinal within that category and scene (e.g. em-dashes-03, negative-parallelism-01)"
+  review_id_book: "anti_ai:<book-id>:<chapter-id>:<scene-id>:<category-slug>-<NN> — e.g. anti_ai:book1:chapter02:02-01:em-dashes-01"
+  review_id_short_story: "anti_ai:<scene-id>:<category-slug>-<NN> — e.g. anti_ai:01-01:em-dashes-01"
+  tokens: FIX SKIP ESCALATE
+  payload_optional: FIX
+  payload_required:
+  payload_forbidden: SKIP ESCALATE
+  payload_meaning: "The FIX payload is the fix instruction (e.g. `FIX: comma`), passed to anti_ai_fix as today."
+  blank_means: "pending, unless the unit sits under a legal BULK header for its category — then it inherits the bulk default and counts as decided-inherited-by-bulk. This inheritance is the only blank-means-decided exception in any family."
+  bulk_supported: yes
+  bulk_actions: FIX SKIP
+  bulk_payload_optional: FIX
+  bulk_rules: "Two layers, both required. Static: this is the only family with bulk support. Dynamic: a BULK header is legal only on a category the report's per-scene `BULK eligibility:` block declares `BULK permitted`. Header grammar, one line at the head of the category subsection: `BULK: FIX[: <instruction>]` or `BULK: SKIP`. Per-entry decisions override the bulk default. A BULK header on an undeclared category (or in any other family) is invalid and never satisfies review evidence — the items under it stay pending absent per-entry decisions."
+  counting: "Review unit = one flagged instance, except that a category under a legal BULK header is adjudicated as one category-level unit: its blank items count as decided-inherited-by-bulk, never pending, and its explicitly decided items count in their own buckets as overrides."
+  review_evidence: "A filled `Decision:` field, or a blank `Decision:` covered by a legal BULK header for its category."
+  proceed_state: "anti_ai_fix proceeds only at zero pending units and zero invalid units (an illegal BULK header is invalid); staleness per the Artifact-state contract."
+  fixture: examples/review/anti-ai.md
+
+metaphor:
+  adoption: pending
+  migrates_in: M13
+  artifact: metaphors.md
+  path_pattern: metaphors.md
+  path: "<chapter-folder>/drafts/<latest-attempt>/metaphors.md"
+  producer: metaphor_identify
+  consumer: metaphor_fix metaphor_apply
+  item_shape: "One review unit per metaphor entry. The anchor sits immediately above the entry's `### [Short label]` heading; `- Decision:` / `- Decision-note:` replace the free-text `Human Assessment:` line among the entry's fields. Deletion is no longer a decision signal: a rejected figure carries `Decision: REJECT` and stays in the file as the audit record."
+  required_fields: Decision
+  optional_fields: Decision-note
+  anchor: "`<!-- review-id: ... -->` on its own line immediately above the entry's `### [Short label]` heading"
+  review_id_item: "figure-<NN> — the entry's emission ordinal within its scene section"
+  review_id_book: "metaphor:<book-id>:<chapter-id>:<scene-id>:figure-<NN> — e.g. metaphor:book1:chapter02:02-03:figure-04"
+  review_id_short_story: "metaphor:<scene-id>:figure-<NN> — e.g. metaphor:01-02:figure-03"
+  tokens: KEEP REJECT FLATTEN REPLACE WORKSHOP
+  payload_optional:
+  payload_required: REPLACE
+  payload_forbidden: KEEP REJECT FLATTEN WORKSHOP
+  payload_meaning: "The REPLACE payload is the target image the human wants integrated (`REPLACE: <image>`)."
+  replace_policy: "Bare REPLACE is invalid — the payload is REQUIRED, and a bare REPLACE is not normalized to WORKSHOP (this supersedes the treat-as-WORKSHOP convenience in agents/steps/metaphor-fix.md when M13 retargets the metaphor steps). WORKSHOP is the ask-for-candidates path; REPLACE is the integrate-this-image path. Locked in M10 per ROADMAP M10.1."
+  blank_means: "pending — an entry with a blank Decision is unreviewed; the producer's CLEAN / REVIEW / BROKEN flag is a recommendation, never a disposition"
+  bulk_supported: no
+  bulk_rules: "None. Every figure is decided per entry; no auto-disposition from CLEAN / REVIEW / BROKEN flags."
+  counting: "Review unit = one metaphor entry. All five tokens are decisions: a file of all KEEP / REJECT is fully reviewed and is a valid pass-through for metaphor_apply, not a nothing-to-do failure."
+  review_evidence: "A filled `Decision:` field holding a legal token, with the image payload on REPLACE."
+  proceed_state: "metaphor_fix proceeds only at zero pending units and zero invalid units, then acts only on FLATTEN / REPLACE / WORKSHOP entries; metaphor_apply additionally treats an all-KEEP/REJECT file as valid pass-through. Staleness per the Artifact-state contract."
+  fixture: examples/review/metaphors.md
