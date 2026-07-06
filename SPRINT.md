@@ -56,7 +56,7 @@ Wave order: **Task 1** defines the contract and must land first (everything refe
 
 ### Task 1 — Review contract: `agents/review-grammars.yaml`, validator script, interpretation contract, fixtures
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Land the single-source contract the companion, the compliance steps, and the three later milestones all consume. Closes **M10.1**, **M10.2**, **M10.3**.
 
@@ -74,7 +74,7 @@ Wave order: **Task 1** defines the contract and must land first (everything refe
 
 ### Task 2 — Retarget `compliance_report` to emit structured review items
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The report emits addressable, countable review units. Closes **M10.4**.
 
@@ -90,7 +90,7 @@ Wave order: **Task 1** defines the contract and must land first (everything refe
 
 ### Task 3 — Retarget `compliance_fix` to consume structured decisions
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The fix step consumes explicit `Decision:` fields through the shared validator. Closes **M10.5**.
 
@@ -108,7 +108,7 @@ Wave order: **Task 1** defines the contract and must land first (everything refe
 
 ### Task 4 — `amanuensis-review` companion skill + install + catalog
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Ship the human-decision capture layer and progress ledger as an installable skill. Closes **M10.6**.
 
@@ -126,7 +126,7 @@ Wave order: **Task 1** defines the contract and must land first (everything refe
 
 ### Task 5 — Smoke recipes, verification sweep, ROADMAP / SPRINT check-off
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Runnable verification of the compliance round-trip; close the milestone. Closes **M10.7** and the residual of **M10**.
 
