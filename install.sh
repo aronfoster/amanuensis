@@ -18,6 +18,8 @@
 #       -> <target>/.opencode/agents/next-step.md
 #   templates/dispatcher/.opencode/agents/revise.md
 #       -> <target>/.opencode/agents/revise.md
+#   templates/dispatcher/.claude/skills/amanuensis-review/SKILL.md
+#       -> <target>/.claude/skills/amanuensis-review/SKILL.md
 #   templates/dispatcher/.claude/hooks/session-start.sh
 #       -> <target>/.claude/hooks/session-start.sh
 #   templates/dispatcher/.github/workflows/pipeline-state-check.yml
@@ -77,6 +79,7 @@ src_claude_revise=$script_dir/templates/dispatcher/.claude/commands/revise.md
 src_opencode_run=$script_dir/templates/dispatcher/.opencode/agents/run-step.md
 src_opencode=$script_dir/templates/dispatcher/.opencode/agents/next-step.md
 src_opencode_revise=$script_dir/templates/dispatcher/.opencode/agents/revise.md
+src_review_skill=$script_dir/templates/dispatcher/.claude/skills/amanuensis-review/SKILL.md
 src_session_hook=$script_dir/templates/dispatcher/.claude/hooks/session-start.sh
 src_workflow=$script_dir/templates/dispatcher/.github/workflows/pipeline-state-check.yml
 src_settings=$script_dir/templates/dispatcher/.claude/settings.json
@@ -87,7 +90,7 @@ src_voice=$script_dir/templates/voice.md
 
 for src in "$src_claude_run" "$src_claude" "$src_claude_revise" \
            "$src_opencode_run" "$src_opencode" "$src_opencode_revise" \
-           "$src_session_hook" \
+           "$src_review_skill" "$src_session_hook" \
            "$src_workflow" "$src_settings" "$src_project_yaml" \
            "$src_pipeline_state" "$src_agents" "$src_voice"; do
     if [ ! -f "$src" ]; then
@@ -99,6 +102,7 @@ done
 # Dispatcher destinations (always overwrite).
 dst_claude_dir=$target/.claude/commands
 dst_opencode_dir=$target/.opencode/agents
+dst_review_skill_dir=$target/.claude/skills/amanuensis-review
 dst_hooks_dir=$target/.claude/hooks
 dst_workflows_dir=$target/.github/workflows
 dst_claude_run=$dst_claude_dir/run-step.md
@@ -107,11 +111,13 @@ dst_claude_revise=$dst_claude_dir/revise.md
 dst_opencode_run=$dst_opencode_dir/run-step.md
 dst_opencode=$dst_opencode_dir/next-step.md
 dst_opencode_revise=$dst_opencode_dir/revise.md
+dst_review_skill=$dst_review_skill_dir/SKILL.md
 dst_session_hook=$dst_hooks_dir/session-start.sh
 dst_workflow=$dst_workflows_dir/pipeline-state-check.yml
 
 mkdir -p "$dst_claude_dir"
 mkdir -p "$dst_opencode_dir"
+mkdir -p "$dst_review_skill_dir"
 mkdir -p "$dst_hooks_dir"
 mkdir -p "$dst_workflows_dir"
 
@@ -121,6 +127,7 @@ cp "$src_claude_revise" "$dst_claude_revise"
 cp "$src_opencode_run" "$dst_opencode_run"
 cp "$src_opencode" "$dst_opencode"
 cp "$src_opencode_revise" "$dst_opencode_revise"
+cp "$src_review_skill" "$dst_review_skill"
 cp "$src_session_hook" "$dst_session_hook"
 chmod +x "$dst_session_hook"
 cp "$src_workflow" "$dst_workflow"
@@ -131,6 +138,7 @@ printf '  %s -> %s\n' "$src_claude_revise" "$dst_claude_revise"
 printf '  %s -> %s\n' "$src_opencode_run" "$dst_opencode_run"
 printf '  %s -> %s\n' "$src_opencode" "$dst_opencode"
 printf '  %s -> %s\n' "$src_opencode_revise" "$dst_opencode_revise"
+printf '  %s -> %s\n' "$src_review_skill" "$dst_review_skill"
 printf '  %s -> %s\n' "$src_session_hook" "$dst_session_hook"
 printf '  %s -> %s\n' "$src_workflow" "$dst_workflow"
 

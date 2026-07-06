@@ -17,7 +17,10 @@
 #               `Reviewed-draft:` stamp must equal the manifest's
 #               `Active-head:` pointer.
 #   structural  every unit anchored, review-ids unique within the file,
-#               required fields present.
+#               required fields present; where the family defines a
+#               `container_pattern`, a non-exempt container heading with zero
+#               anchored units is invalid (a positional/pre-migration report
+#               is an invalid input, not a silently empty one).
 #   grammar     filled decisions hold a token from the family's token list;
 #               payload-bearing tokens carry non-empty payloads; bulk headers
 #               only where the family has static bulk support AND the scene's
@@ -156,6 +159,8 @@ payload_forbidden=$(yaml_get "$family" payload_forbidden)
 bulk_supported=$(yaml_get "$family" bulk_supported)
 bulk_actions=$(yaml_get "$family" bulk_actions)
 bulk_payload_optional=$(yaml_get "$family" bulk_payload_optional)
+container_pattern=$(yaml_get "$family" container_pattern)
+container_exempt_suffix=$(yaml_get "$family" container_exempt_suffix)
 
 if [ -z "$tokens" ]; then
     err "family \`$family\` defines no token list in $grammar_file"
@@ -197,6 +202,8 @@ report=$(awk \
     -v bulk_supported="$bulk_supported" \
     -v bulk_actions="$bulk_actions" \
     -v bulk_payload_optional="$bulk_payload_optional" \
+    -v container_pattern="$container_pattern" \
+    -v container_exempt="$container_exempt_suffix" \
 '
 function in_list(tok, list,    i, n, arr) {
     if (tok == "" || list == "") return 0
@@ -206,6 +213,17 @@ function in_list(tok, list,    i, n, arr) {
 }
 function finding(line, msg) {
     printf "  line %d: %s\n", line, msg
+}
+# Close the current review-unit container (structural layer). A non-exempt
+# container holding zero anchored units is the positional/pre-migration
+# format (or missing anchors) and is invalid.
+function close_container() {
+    if (container_line == 0) return
+    if (container_units == 0) {
+        finding(container_line, "unanchored violation block `" container_name "` — positional/pre-M10 format or missing anchors")
+        defects++
+    }
+    container_line = 0; container_name = ""; container_units = 0
 }
 # Close the currently open review unit, classifying it into a ledger bucket.
 function close_unit(    key) {
@@ -238,6 +256,7 @@ function close_unit(    key) {
     sub(/[[:space:]]*-->[[:space:]]*$/, "", id)
     cur_id = id
     anchor_line = NR
+    if (container_line > 0) container_units++
     if (id in seen) {
         invalid_reason = "duplicate review-id `" id "`"
         reason_line = NR
@@ -319,6 +338,16 @@ in_elig {
 # metaphor items whose unit begins at a heading).
 /^#/ {
     if (cur_id != "" && NR != anchor_line + 1) close_unit()
+    close_container()
+    if (container_pattern != "" && index($0, container_pattern) == 1) {
+        line = $0
+        sub(/[[:space:]]+$/, "", line)
+        if (container_exempt == "" || \
+            substr(line, length(line) - length(container_exempt) + 1) != container_exempt) {
+            container_line = NR
+            container_name = line
+        }
+    }
     if ($0 ~ /^##[^#]/) {
         if (match($0, /Scene[[:space:]]+[^ ,]+/)) {
             scene = substr($0, RSTART + 6, RLENGTH - 6)
@@ -388,6 +417,7 @@ in_elig {
 }
 END {
     close_unit()
+    close_container()
     printf "#COUNTS %d %d %d %d %d %d\n", \
         pending, decided, inherited, skipped, escalated, invalid + defects
 }

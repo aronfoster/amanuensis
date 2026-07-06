@@ -38,7 +38,7 @@ Read all storyboard blocks for the scene in order. For each block, run the three
 
 ### Output file format
 
-The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` filename (e.g. `draft-v03.md`) — the draft this run actually read, so when a read-from override is in effect the stamp names that draft; the stamp lets `compliance_fix` detect stale annotations when a newer draft has been minted since this report was written. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, append this run's per-scene sections beneath the existing content. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — the report is `regenerated`: **overwrite the whole file** with a fresh top-of-file stamp, and the prior run's findings against the superseded draft are `discarded`. See the general freshness contract in `agents/orchestrator.md`'s Artifact-state section (the report→fix freshness invariant is its canonical worked instance).
+The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` filename (e.g. `draft-v03.md`) — the draft this run actually read, so when a read-from override is in effect the stamp names that draft; the stamp lets `compliance_fix` detect stale annotations when a newer draft has been minted since this report was written. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, append this run's per-scene sections beneath the existing content. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — the report is `regenerated`: **overwrite the whole file** with a fresh top-of-file stamp, and the prior run's findings against the superseded draft are `discarded`. See the general freshness contract in `agents/orchestrator.md`'s Artifact-state section (the report→fix freshness invariant is its canonical worked instance). On the append path, new items' review-ids must not collide with any already in the file — same epoch, same uniqueness scope: when a block already has anchored violations from an earlier run against this draft, continue that block's `v<KK>` ordinals rather than restarting at `v01` where a collision would result.
 
 Below the top-of-file stamp, begin each scene's section with a dated header:
 
@@ -54,19 +54,41 @@ If a block is fully clean across all three checks, record a single line:
 ### Block NNN — CLEAN
 ```
 
-If a block has any violation, record only the violations — not the passing items:
+CLEAN blocks are not review units: exactly one line, no anchor, no decision fields. They never appear in the review-unit count.
+
+If a block has any violation, record only the violations — not the passing items. Each violation line is one review unit: it gets a `<!-- review-id: ... -->` anchor on its own line immediately above it, and blank `- Decision:` / `- Decision-note:` fields nested one level below it:
 
 ```markdown
 ### Block NNN
+<!-- review-id: compliance:[scene-id]:block-NNN-v01 -->
 - DEGRADED (must_preserve): [Item label] — [one sentence: what was required, what is wrong with what was written]. Prose: "[quote]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: compliance:[scene-id]:block-NNN-v02 -->
 - MISSING (must_preserve): [Item label] — not found in prose range
+  - Decision:
+  - Decision-note:
+<!-- review-id: compliance:[scene-id]:block-NNN-v03 -->
 - NOT ENACTED (character_state_out): [CharacterName] — closing state "[spec]" not reached
+  - Decision:
+  - Decision-note:
+<!-- review-id: compliance:[scene-id]:block-NNN-v04 -->
 - VIOLATED (concealment_from_reader): "[quote]" names or implies [what it reveals]
+  - Decision:
+  - Decision-note:
+<!-- review-id: compliance:[scene-id]:block-NNN-v05 -->
 - VIOLATED (concealment_from_characters): [Character A]'s [X] accessible to [Character B] — "[quote]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: compliance:[scene-id]:block-NNN-v06 -->
 - INCONSISTENT (canon): [Mechanic label] — "[quote]" violates rule: "[rule as stated in block]"
+  - Decision:
+  - Decision-note:
 ```
 
 Use only the violation types that apply. Do not record passing items alongside violations.
+
+The review-id follows the `compliance:` family segment grammar in `agents/review-grammars.yaml`: short_story form `compliance:<scene-id>:block-<NNN>-v<KK>`, book form `compliance:<book-id>:<chapter-id>:<scene-id>:block-<NNN>-v<KK>`. `<NNN>` is the storyboard block number and `<KK>` the violation's ordinal within that block's entry — both already in the report; the location segments are derivable from the artifact's resolved path. Emit `Decision:` and `Decision-note:` blank — they belong to the human, and a blank `Decision:` means the unit is pending review. The fixture `examples/review/reviewer-actions.md` shows the exact target shape.
 
 Work block by block. Do not collapse findings across blocks.
 
@@ -105,6 +127,7 @@ After all blocks, append a summary:
 - Must-Not-Contain violations: N
 - Canon violations: N
 - Blocks fully clean: N of N
+- Review units emitted: N
 
 [Any pattern-level observation — e.g. "violations cluster in blocks 011 and 050" — goes here. One or two lines only. Do not propose fixes.]
 ```
@@ -113,13 +136,17 @@ Do not propose fixes. The summary observation is a diagnostic, not a recommendat
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md` — the compliance report. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers — the draft this run actually read; subsequent runs against the same draft append below, runs against a newer draft (recovery path) overwrite the file with a fresh stamp (the report is `regenerated`, the prior findings `discarded`). Then one `## Compliance Report — Scene [scene-id], [date]` header per scene-run, one `### Block NNN` entry per storyboard block (either a single `CLEAN` line or a list of violations), and a `### Summary` block per run tallying violations by check type and noting any pattern-level observation. The `Reviewed-draft` stamp is required so `compliance_fix` can detect stale annotations against a newer draft. The file is the human review artifact that the human annotates with `FIX` / `FIX: [instruction]` / `SKIP` / `ESCALATE` before `compliance_fix` runs.
+- `<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md` — the compliance report. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers — the draft this run actually read; subsequent runs against the same draft append below, runs against a newer draft (recovery path) overwrite the file with a fresh stamp (the report is `regenerated`, the prior findings `discarded`). Then one `## Compliance Report — Scene [scene-id], [date]` header per scene-run, one `### Block NNN` entry per storyboard block (either a single `CLEAN` line — no anchor, no fields, not a review unit — or a list of violations, each carrying its `<!-- review-id: ... -->` anchor immediately above the violation line and blank `- Decision:` / `- Decision-note:` fields nested below it), and a `### Summary` block per run tallying violations by check type, reporting the review units emitted this run, and noting any pattern-level observation. The `Reviewed-draft` stamp is required so `compliance_fix` can detect stale annotations against a newer draft. The file is the human review artifact: the human records decisions in each unit's `Decision:` field per the `compliance:` family grammar in `agents/review-grammars.yaml` before `compliance_fix` runs.
 
 ## Anti-Patterns
 
 **Fixing during reporting.** This step is read-only. If the reporting pass rewrites anything, it has failed. Prose changes are the `compliance_fix` step's job.
 
-**Recording passing items.** Clean checks are not recorded. A block entry is either one line (`CLEAN`) or a list of violations only. Passing items alongside violations inflate the file and defeat the purpose of the format.
+**Recording passing items.** Clean checks are not recorded. A block entry is either one line (`CLEAN`) or a list of anchored violations only. Passing items alongside violations inflate the file and defeat the purpose of the format.
+
+**Filling decision fields.** `Decision:` and `Decision-note:` are emitted blank. They belong to the human; a report that pre-fills a decision — however obvious — has decided instead of reported, and a blank `Decision:` is the only honest signal that a unit is still pending.
+
+**Anchoring CLEAN blocks.** A CLEAN block is one line, no anchor, no fields. An anchor turns it into a countable review unit and inflates the ledger with items that need no decision.
 
 **Collapsing blocks.** Report findings block by block. Pattern-level observations belong only in the summary.
 

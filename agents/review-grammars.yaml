@@ -18,10 +18,21 @@
 # flat, single-line, and free of colons in their values:
 #   adoption, migrates_in, path_pattern, tokens, payload_optional,
 #   payload_required, payload_forbidden, bulk_supported, bulk_actions,
-#   bulk_payload_optional
+#   bulk_payload_optional, container_pattern, container_exempt_suffix
 # Every other key is contract prose for agents and humans; the script never
 # reads it. Token lists are space-separated; the script reads them from here
 # and hardcodes nothing.
+#
+# Container detection (optional per family). `container_pattern` is a heading
+# prefix identifying a section of the report that must hold anchored review
+# units when it holds violation content (compliance uses `### Block `). A
+# container heading ending in `container_exempt_suffix` (compliance: the
+# `— CLEAN` suffix) legitimately holds no units. Any other container with
+# zero anchored units fails structural validation as invalid — this is what
+# makes a positional/pre-migration report an invalid input rather than a
+# silently empty one. Families that leave these keys unset get no container
+# check; the pending families settle their container shapes when their
+# milestones retarget their report steps (M11-M13).
 #
 # Shared review item shape (ROADMAP.md M10 shared-design principle 3):
 #
@@ -61,13 +72,15 @@ compliance:
   path: "<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md"
   producer: compliance_report
   consumer: compliance_fix
-  item_shape: "One review unit per violation line. The anchor sits immediately above the violation line; `- Decision:` / `- Decision-note:` are nested one level below it. `CLEAN` blocks stay a single `### Block NNN — CLEAN` line with no anchor and no fields — they are not review units and never inflate counts."
+  item_shape: "One review unit per violation line. The anchor sits immediately above the violation line; `- Decision:` / `- Decision-note:` are nested one level below it. `CLEAN` blocks stay a single `### Block NNN — CLEAN` line with no anchor and no fields — they are not review units and never inflate counts. A non-CLEAN `### Block` section with zero anchored units fails structural validation: a positional/pre-M10 report is an invalid input, never a silently empty one."
   required_fields: Decision
   optional_fields: Decision-note
   anchor: "`<!-- review-id: ... -->` on its own line immediately above the violation line it addresses"
   review_id_item: "block-<NNN>-v<KK> — the storyboard block number plus the violation's ordinal within that block's entry, both already in the report"
   review_id_book: "compliance:<book-id>:<chapter-id>:<scene-id>:block-<NNN>-v<KK> — e.g. compliance:book1:chapter02:02-03:block-050-v01"
   review_id_short_story: "compliance:<scene-id>:block-<NNN>-v<KK> — e.g. compliance:01-01:block-011-v01"
+  container_pattern: "### Block "
+  container_exempt_suffix: "— CLEAN"
   tokens: FIX SKIP ESCALATE
   payload_optional: FIX
   payload_required:
