@@ -22,7 +22,7 @@ Hygiene workflow. Identifies patterns that signal AI-generated prose to trained 
 
 This pass is the second-to-last step in the pipeline. It runs against `<latest-draft>` resolved at step start — the latest prose available in the attempt folder, which in the canonical pipeline order will be the line-pass output. It operates on surface and structural signals only — it has no awareness of canon, storyboard requirements, or voice spec. Do not use it to evaluate whether prose is good. Use it to find patterns that will get a reader's guard up. This step does not mint a new draft version.
 
-The report is the human review artifact that gates the fix step. After this step runs, the human annotates the report; `anti_ai_fix` then reads the annotated report and applies edits to the prose.
+The report is the human review artifact that gates the fix step. After this step runs, the human (companion-assisted) records a decision in each review unit's `Decision:` field; `anti_ai_fix` then reads the decided report and applies edits to the prose.
 
 ## Inputs
 
@@ -34,7 +34,7 @@ Scan the input prose for the nine pattern categories below and the flagged-words
 
 The output file is one report per chapter; append across scenes with a scene header.
 
-The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed — the draft this run actually read, so when a read-from override is in effect the stamp names that draft; the downstream `anti_ai_fix` step reads this stamp to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — the report is `regenerated`: **overwrite the whole file** with a fresh top-of-file stamp, and the prior run's findings against the superseded draft are `discarded`. See the general freshness contract in `agents/orchestrator.md`'s Artifact-state section (the report→fix freshness invariant is its canonical worked instance).
+The file begins with a single top-of-file `Reviewed-draft:` line naming the resolved `<latest-draft>` this run reviewed — the draft this run actually read, so when a read-from override is in effect the stamp names that draft; the downstream `anti_ai_fix` step reads this stamp to detect stale annotations against a newer draft. If the file does not exist, create it with the stamp. If the file exists and its top-of-file stamp equals `<latest-draft>`, preserve the stamp and append new findings below. If the file exists and its top-of-file stamp does not equal `<latest-draft>` — the recovery path when the human is regenerating after a stale-report blocker — the report is `regenerated`: **overwrite the whole file** with a fresh top-of-file stamp, and the prior run's findings against the superseded draft are `discarded`. See the general freshness contract in `agents/orchestrator.md`'s Artifact-state section (the report→fix freshness invariant is its canonical worked instance). On the append path, new units' review-ids must not collide with any already in the file — same epoch, same uniqueness scope: when a category already has anchored instances from an earlier run against this draft in the same scene, continue that category-and-scene's `<NN>` ordinals rather than restarting at `01` where a collision would result.
 
 ```markdown
 Reviewed-draft: draft-vNN.md
@@ -46,23 +46,26 @@ Begin each scene's section with:
 ## Anti-AI Report — Scene <scene-id>
 ```
 
-At the head of each scene's section, before any category subsections, emit one line per bulk-eligible category declaring the default action:
+A scene with zero flags records its scene header plus a single `No flags.` line — no anchor, no fields, not a review unit. It is the audit record that the scene was scanned:
 
 ```markdown
-BULK eligibility:
-- Em Dashes: BULK permitted (recommended default: FIX: rewrite)
-- Copula Avoidance: BULK permitted (recommended default: FIX)
-- Superficial -ing Analysis: BULK permitted (recommended default: FIX)
-- Transition Openers: BULK permitted (recommended default: FIX)
-- Flagged Words: BULK permitted (recommended default: FIX)
-- Negative Parallelism: BULK not permitted
-- Significance Inflation: BULK not permitted
-- Synonym Cycling: BULK not permitted
-- Cadence tics: BULK not permitted
-- Animacy Projection: BULK not permitted
+## Anti-AI Report — Scene <scene-id>
+
+No flags.
 ```
 
-The human writes their bulk choice (or omits it) at the head of the relevant category subsection during annotation. See "Annotation grammar" at the bottom of this document.
+**Review unit shape.** Every flagged instance in every category — the nine pattern categories and Flagged Words — is one review unit and shares one shape: a `<!-- review-id: ... -->` anchor on its own line immediately above the unit's single top-level `- ` entry line, with blank `- Decision:` / `- Decision-note:` fields nested one level below it, placed after any nested auxiliary lines (Synonym Cycling's `- Cycled terms:` is the only auxiliary line):
+
+```markdown
+<!-- review-id: anti_ai:<scene-id>:<category-slug>-<NN> -->
+- [the entry line as the category's Format specifies]
+  - Decision:
+  - Decision-note:
+```
+
+The review-id follows the `anti_ai` family segment grammar in `agents/review-grammars.yaml`. The item segment is `<category-slug>-<NN>`: the category name lowercased and dash-joined (e.g. `em-dashes`, `superficial-ing-analysis`) plus the instance's emission ordinal within that category and scene. Short_story form: `anti_ai:<scene-id>:<category-slug>-<NN>`; book form adds the book and chapter segments: `anti_ai:<book-id>:<chapter-id>:<scene-id>:<category-slug>-<NN>`. The location segments are derivable from the artifact's resolved path. Emit `Decision:` and `Decision-note:` blank — they belong to the human, and a blank `Decision:` means the unit is pending review. The fixture `examples/review/anti-ai.md` shows the exact target shape.
+
+The per-category `Format:` fences below show each category's entry line inside this shape, with short_story-form ids.
 
 ---
 
@@ -75,8 +78,14 @@ Em dashes are a strong AI tell and the standing project policy is zero em dashes
 Format:
 ```markdown
 ### Em Dashes
+<!-- review-id: anti_ai:<scene-id>:em-dashes-01 -->
 - "[quote containing em dash]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: anti_ai:<scene-id>:em-dashes-02 -->
 - "[quote containing em dash]"
+  - Decision:
+  - Decision-note:
 ```
 
 ---
@@ -90,8 +99,14 @@ This sentence structure has become strongly associated with AI-generated text an
 Format:
 ```markdown
 ### Negative Parallelism
+<!-- review-id: anti_ai:<scene-id>:negative-parallelism-01 -->
 - two-beat: "[quote]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: anti_ai:<scene-id>:negative-parallelism-02 -->
 - three-beat: "[quote]"
+  - Decision:
+  - Decision-note:
 ```
 
 ---
@@ -107,8 +122,14 @@ Flag each instance with its quote.
 Format:
 ```markdown
 ### Significance Inflation
+<!-- review-id: anti_ai:<scene-id>:significance-inflation-01 -->
 - "vibrant" — "[quote]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: anti_ai:<scene-id>:significance-inflation-02 -->
 - "tapestry" — "[quote]"
+  - Decision:
+  - Decision-note:
 ```
 
 ---
@@ -126,7 +147,10 @@ Flag each instance.
 Format:
 ```markdown
 ### Copula Avoidance
+<!-- review-id: anti_ai:<scene-id>:copula-avoidance-01 -->
 - "serves as" — "[quote]"
+  - Decision:
+  - Decision-note:
 ```
 
 ---
@@ -144,7 +168,10 @@ This pattern is a tell because it does the reader's interpretive work for them. 
 Format:
 ```markdown
 ### Superficial -ing Analysis
+<!-- review-id: anti_ai:<scene-id>:superficial-ing-analysis-01 -->
 - "[quote]"
+  - Decision:
+  - Decision-note:
 ```
 
 ---
@@ -160,7 +187,10 @@ These are not banned in all positions — flag them only as openers, where they 
 Format:
 ```markdown
 ### Transition Openers
+<!-- review-id: anti_ai:<scene-id>:transition-openers-01 -->
 - "Moreover, ..." — "[full sentence or opening clause]"
+  - Decision:
+  - Decision-note:
 ```
 
 ---
@@ -171,13 +201,16 @@ When the prose rotates through multiple synonyms for the same noun within a shor
 
 Example: referring to the same character as "the girl," "the young woman," "the princess," "the child," and the character's proper name within a single paragraph.
 
-Flag the passage and list the synonyms being cycled.
+Flag the passage and list the synonyms being cycled. Each instance is exactly one top-level `- Passage:` line — the unit's entry line — with `- Cycled terms:` nested beneath it and the decision fields after it.
 
 Format:
 ```markdown
 ### Synonym Cycling
+<!-- review-id: anti_ai:<scene-id>:synonym-cycling-01 -->
 - Passage: "[quote]"
-- Cycled terms: [term1], [term2], [term3]
+  - Cycled terms: [term1], [term2], [term3]
+  - Decision:
+  - Decision-note:
 ```
 
 ---
@@ -196,10 +229,22 @@ Flag the passage and list the examples.
 Format:
 ```markdown
 ### Cadence tics
+<!-- review-id: anti_ai:<scene-id>:cadence-tics-01 -->
 - triplet: "[quote]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: anti_ai:<scene-id>:cadence-tics-02 -->
 - paralepsis cascade: "[quote]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: anti_ai:<scene-id>:cadence-tics-03 -->
 - tautological recursion: "[quote]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: anti_ai:<scene-id>:cadence-tics-04 -->
 - delayed-subject inversion: "[quote]"
+  - Decision:
+  - Decision-note:
 ```
 
 ---
@@ -217,9 +262,18 @@ The flag is the verb-plus-inanimate-subject pairing. Do not flag these verbs whe
 Format:
 ```markdown
 ### Animacy Projection
+<!-- review-id: anti_ai:<scene-id>:animacy-projection-01 -->
 - "remembered" / subject: grove — "[quote]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: anti_ai:<scene-id>:animacy-projection-02 -->
 - "witnesses" / subject: bastions — "[quote]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: anti_ai:<scene-id>:animacy-projection-03 -->
 - "hums" / subject: city — "[quote]"
+  - Decision:
+  - Decision-note:
 ```
 
 ---
@@ -246,65 +300,31 @@ Flag each with its quote, under a separate section:
 
 ```markdown
 ### Flagged Words
+<!-- review-id: anti_ai:<scene-id>:flagged-words-01 -->
 - "delve" — "[quote]"
+  - Decision:
+  - Decision-note:
+<!-- review-id: anti_ai:<scene-id>:flagged-words-02 -->
 - "tapestry" — "[quote]"
+  - Decision:
+  - Decision-note:
 ```
 
 ---
 
-## At the end of each scene
+## Decisions
 
-```markdown
-### Summary — Scene <scene-id>
+After this step runs, the human — companion-assisted, via the `amanuensis-review` skill — records a decision in each unit's `Decision:` field, per the `anti_ai` family grammar in `agents/review-grammars.yaml` (the legal tokens, payload rules, and blank-means-pending semantics live there, not here). `Decision-note:` is optional free text for the human's why and is never machine-parsed. `anti_ai_fix` then consumes the filled per-unit fields.
 
-- Em dashes: N
-- Negative parallelism: N (two-beat: N, three-beat: N)
-- Significance inflation: N
-- Copula avoidance: N
-- Superficial -ing analysis: N
-- Transition openers: N
-- Synonym cycling: N
-- Cadence tics: N
-- Animacy projection: N
-- Flagged words: N
-- Total flags: N
-```
-
----
-
-## Annotation grammar
-
-After this step runs, the human edits this report file to direct `anti_ai_fix`. The grammar parallels `compliance_report.md` and adds an optional bulk header per category.
-
-**Per-entry annotations** (write the annotation after the quote, on the same line or the next):
-
-- `FIX` — apply the obvious local edit defined by the category's fix rule.
-- `FIX: <instruction>` — apply the fix as specified. Required for categories where there is no obvious local edit (Categories 2, 3, 7, 8, 9 generally; em dashes when a specific strategy is wanted).
-- `SKIP` — leave the prose as-is. The instance is accepted.
-- `ESCALATE` — the fix cannot be applied by a local edit; flag for human rewrite. The fixer records the escalation in the apply log and moves on.
-
-**Per-category bulk header** (write at the head of the category subsection during annotation, before any per-entry annotations):
-
-```markdown
-### Em Dashes
-BULK: FIX: rewrite
-
-- "[quote 1]" (no annotation — takes bulk default)
-- "[quote 2]" FIX: comma (override: this one wants a comma)
-- "[quote 3]" SKIP (override: keep this one)
-```
-
-Grammar: `BULK: <action>[: <instruction>]`, where `<action>` is `FIX` or `SKIP`, and `<instruction>` is free text passed to the fixer the same way `FIX: <instruction>` is passed on individual entries.
-
-Per-entry annotations override the bulk header.
-
-Bulk headers are only valid on categories declared `BULK permitted` in the BULK eligibility block at the head of the scene section. Writing a bulk header on a `BULK not permitted` category is an annotation defect; the fixer will treat it as if no bulk header were present and require per-entry annotations.
+Category-level review is a companion capture behavior, not an artifact grammar: for the categories named in that file's `fanout_categories` declaration, one stated human decision is fanned out into every pending unit of the category per its `fanout_rules` — each unit's `Decision:` filled, each `Decision-note:` marked as a category decision. The artifact itself carries decisions only in per-unit fields; no header of any kind carries one.
 
 **Em dash specifics** (the most common fix-step decision):
 
-- Default bulk: `BULK: FIX: rewrite`. The fixer reads the local sentence and picks split / comma / restructure per instance.
-- Per-entry overrides: `FIX: split` (force period split), `FIX: comma` (force comma), `FIX: rewrite` (force restructure), `FIX: <bespoke instruction>`.
-- `SKIP` is reserved for mid-speech interruption in dialogue, where alternatives all read worse. The standing project policy is zero em dashes in narration.
+- Default category decision: `FIX: rewrite`. The fixer reads the local sentence and picks split / comma / restructure per instance.
+- Per-entry payloads: `Decision: FIX: split` (force period split), `Decision: FIX: comma` (force comma), `Decision: FIX: rewrite` (force restructure), `Decision: FIX: <bespoke instruction>`.
+- `Decision: SKIP` is reserved for mid-speech interruption in dialogue, where alternatives all read worse. The standing project policy is zero em dashes in narration.
+
+Which categories have an obvious local edit for a bare `FIX` — and which treat a bare `FIX` as an escalation — is defined by the category fix rules in `agents/steps/anti-ai-fix.md`, not restated here.
 
 ---
 
@@ -328,9 +348,15 @@ Bulk headers are only valid on categories declared `BULK permitted` in the BULK 
 
 **Fixing.** This pass reports. The fix step is `anti_ai_fix`.
 
+**Filling decision fields.** `Decision:` and `Decision-note:` are emitted blank. They belong to the human; a report that pre-fills a decision — however obvious the fix — has decided instead of reported, and a blank `Decision:` is the only honest signal that a unit is still pending.
+
+**Anchoring non-units.** A zero-flag scene is its header plus one `No flags.` line — no anchor, no fields. An anchor turns it into a countable review unit and inflates the ledger with items that need no decision.
+
+**Emitting the retired apparatus.** No eligibility block, no `BULK:` headers, no per-scene summary tally. Category-level eligibility and defaults live in `agents/review-grammars.yaml`'s fan-out declaration; the validator's ledger is the authoritative count.
+
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — one report per chapter. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers. Subsequent runs against the same draft append below and preserve the stamp; against a newer draft (stale-report recovery path) the report is `regenerated` — the file is overwritten with a fresh stamp and the prior findings `discarded`. Has a `## Anti-AI Report — Scene <scene-id>` header per scene, a BULK eligibility block at the head of each scene section, the per-category flag sections (only those with hits), a `### Flagged Words` section, and a `### Summary — Scene <scene-id>` block at the end of each scene tallying counts per category and a total. The file is the human review artifact that the human annotates with the grammar above before `anti_ai_fix` runs; `anti_ai_fix` reads the reviewed-draft stamp to detect stale annotations.
+- `<chapter-folder>/drafts/<latest-attempt>/anti-ai.md` — one report per chapter. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers — the draft this run actually read; subsequent runs against the same draft append below and preserve the stamp (continuing each category-and-scene's review-id ordinals so ids never collide), runs against a newer draft (stale-report recovery path) overwrite the file with a fresh stamp (the report is `regenerated`, the prior findings `discarded`). Then one `## Anti-AI Report — Scene <scene-id>` header per scene, holding either a single `No flags.` line (no anchor, no fields, not a review unit) or `### <Category>` subsections — only the categories with hits, `### Flagged Words` included — in which every flagged instance carries its `<!-- review-id: ... -->` anchor immediately above its single top-level entry line and blank `- Decision:` / `- Decision-note:` fields nested below it. The `Reviewed-draft` stamp is required so `anti_ai_fix` can detect stale decisions against a newer draft. The file is the human review artifact: the human records decisions in each unit's `Decision:` field per the `anti_ai` family grammar in `agents/review-grammars.yaml` before `anti_ai_fix` runs.
 
 ## Open questions handling
 
