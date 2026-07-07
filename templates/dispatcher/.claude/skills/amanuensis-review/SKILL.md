@@ -83,8 +83,13 @@ still needs its own filled `Decision:` field.
 Where the family's `fanout_categories` declaration in
 `amanuensis/agents/review-grammars.yaml` names a category, you may offer a
 category-level decision on entering that category's queue, surfacing the
-grammar's recommended default from its `fanout_rules` line. A fan-out is one
-human decision mechanically applied — never an agent-originated one:
+grammar's recommended default from its `fanout_rules` line. Match a category
+to the declaration by the slug in its units' review-ids — the
+`<category-slug>` segment before the trailing `-NN` (e.g. `em-dashes-03` →
+`em-dashes`) — not by normalizing the heading text, whose spacing does not
+always reduce cleanly to the slug (`### Superficial -ing Analysis` →
+`superficial-ing-analysis`). A fan-out is one human decision mechanically
+applied — never an agent-originated one:
 
 - When the human states a category-level decision, write it into **every
   pending unit** of that category: fill each unit's `Decision:` field with
