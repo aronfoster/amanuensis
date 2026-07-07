@@ -30,30 +30,46 @@ Notes: Sprint 16 plans M11 (see SPRINT.md). The milestone was reshaped at planni
 
 ## M12 — Agent-addressable review: prose-pass slice
 
-Retarget `prose-pass.md` findings to the structured contract: selective per-entry review, no bulk anywhere (the locked M5 convention stands).
+Retarget `prose-pass.md` findings to the structured contract, under the AI-plus-human review directive recorded in Sprint 16 planning (see the M11 Notes): the companion captures and writes, the human decides, and hand-edit-era affordances are retired where that makes agent review simpler or more reliable. Prose-pass declares no `fanout_categories`: the pass is deliberately selective (5–10 findings), so per-entry decisions are the point — the locked M5 no-bulk convention, restated in the post-Sprint-16 vocabulary.
 
-Done when: each finding carries a `review-id` anchor and decision fields (the current `Annotation:` line is replaced by `Decision:` / `Decision-note:`); `KEEP` findings are non-actionable (emitted with `Decision: SKIP` or omitted from the actionable queue, per the grammar); non-`KEEP` findings require explicit review evidence; the validator rejects any bulk annotation; `prose_fix` consumes structured decisions.
+Done when: each actionable finding carries a `review-id` anchor and plain blank decision fields — the `Annotation:` line, including its bracketed token-set placeholder (a hand-edit affordance that restates the grammar inline), is replaced by `Decision:` / `Decision-note:`; `KEEP` findings are non-actionable per the grammar (no anchor, no fields, not review units); any non-`KEEP` finding with a blank `Decision:` blocks `prose_fix` as `review_pending`, per unit; the container shape is settled so a legitimately all-`KEEP` report validates clean while an unanchored pre-M12 report is invalid input; `prose_fix` consumes structured decisions via the shared validator.
 
-- [ ] M12.1 Retarget `prose_pass` findings format: anchor plus decision fields; `KEEP` handling per grammar; the annotation-grammar section moves to a `review-grammars.yaml` reference.
-- [ ] M12.2 Update `prose_fix` to consume `Decision:` fields via the shared validator.
-- [ ] M12.3 Flip prose-pass to `adopted` in `review-grammars.yaml`; no-bulk enforced by the validator.
-- [ ] M12.4 Companion support for small, high-value finding queues.
-- [ ] M12.5 Smoke coverage: non-`KEEP` finding pending/decided flow; a bulk annotation rejected as invalid.
+- [ ] M12.1 Retarget `prose_pass` findings format: anchor plus plain blank decision fields on actionable findings; `KEEP` handling and the no-actionable-findings marker per grammar; the annotation-grammar section (with its bracketed placeholder) moves to a `review-grammars.yaml` reference.
+- [ ] M12.2 Update `prose_fix` to consume `Decision:` fields via the shared validator (per-unit pending gate; positional annotations are invalid input).
+- [ ] M12.3 Flip prose-pass to `adopted` in `review-grammars.yaml` with the container shape settled; no `fanout_categories` declared; restate the family's `bulk_rules` in the post-Sprint-16 vocabulary (artifact bulk is retired everywhere; per-entry is this family's point).
+- [ ] M12.4 Companion support for small, high-value finding queues (no fan-out offers anywhere in this family).
+- [ ] M12.5 Smoke coverage: non-`KEEP` finding pending/decided flow; an all-`KEEP` report validating clean; an unanchored pre-M12 report rejected as invalid.
+
+Notes — planning inputs recorded ahead (Sprint 16 AI-first review, so M12 planning doesn't rediscover them):
+
+- **The all-`KEEP` container problem.** `KEEP` findings carry no anchors, so a legitimately all-`KEEP` report has a `#### Findings` section with zero anchored units — indistinguishable, to a plain container check, from a pre-M12 unanchored report. Candidate: an explicit `No actionable findings.` marker line (the analog of anti-AI's `No flags.`); settle the mechanism at M12 planning.
+- **Producer analysis survives the directive.** `#### Top priorities` and the `### Chapter-level diagnosis` subsections carry non-derivable producer analysis (failure modes, revision strategy, lines worth preserving) — unlike the retired anti-AI tallies they are not machine-redundant, and they stay. Container settlement must accommodate headings that legitimately hold no anchored units.
+- **No tally to retire** — prose-pass has no summary-count block; its diagnosis sections are analysis, not counts.
 
 ---
 
 ## M13 — Agent-addressable review: metaphor slice
 
-Retarget `metaphors.md` to the structured contract and make rejection non-destructive: accepted, rejected, and unreviewed figures must be distinct, and every figurative decision stays in the audit record.
+Retarget `metaphors.md` to the structured contract, under the AI-plus-human review directive recorded in Sprint 16 planning (see the M11 Notes). This is the deepest slice: the metaphor family has **two human-decision rounds** — disposition (which figures to act on) and variant selection (which rewrite to apply) — and both are hand-edit conventions today. Rejection is deletion; selection is "delete the variants you don't want" with `metaphor_apply` instructed to best-guess ambiguity (`agents/steps/metaphor-fix.md:60`, `agents/steps/metaphor-apply.md:51`). Both rounds become structured, addressable, and countable; deletion stops being a decision signal anywhere in the family; every figurative decision — including rejected variants — stays in the audit record; and no step guesses a human decision.
 
-Done when: each metaphor entry carries a `review-id` anchor and decision fields with tokens `KEEP` / `REJECT` / `FLATTEN` / `REPLACE: <image>` / `WORKSHOP`, replacing the free-text `Human Assessment:` line and delete-as-rejection; bare `REPLACE` is invalid per the policy locked in M10.1; `metaphor_fix` generates variants only for `FLATTEN` / `REPLACE` / `WORKSHOP` and skips `KEEP` / `REJECT`; `metaphor_apply` treats a fully reviewed file of all `KEEP` / `REJECT` decisions as valid pass-through, not a nothing-to-do failure; pending entries block downstream.
+This slice extends the shared contract itself: the grammar file gains its first two-evidence-layer family (`Decision:` gates `metaphor_fix`; `Selected:` gates `metaphor_apply`), and the validator must parse and ledger the selection layer — unlike M11, which shipped the validator byte-for-byte unchanged, M13 includes contract and validator work. Scope it at M13 planning.
 
-- [ ] M13.1 Retarget `metaphor_identify` entry format: anchor plus decision fields; drop the `Human Assessment:` line.
-- [ ] M13.2 Update `metaphor_fix` to consume `Decision:` tokens: bare `REPLACE` becomes invalid (the treat-as-`WORKSHOP` convenience in `agents/steps/metaphor-fix.md` is removed); `KEEP` / `REJECT` entries stay in the file untouched; deletion is no longer a decision signal.
-- [ ] M13.3 Update `metaphor_apply` to consume selected variants under the structured contract, with all-`KEEP`/`REJECT` pass-through.
-- [ ] M13.4 Flip metaphors to `adopted` in `review-grammars.yaml`.
-- [ ] M13.5 Companion support for metaphor pacing, progress counts, and non-automated review (no auto-disposition from `CLEAN` / `REVIEW` / `BROKEN` flags).
-- [ ] M13.6 Smoke coverage: non-destructive rejection, all-`KEEP`/`REJECT` pass-through, pending-entries block, bare-`REPLACE` rejection.
+Done when: each metaphor entry carries a `review-id` anchor and decision fields with tokens `KEEP` / `REJECT` / `FLATTEN` / `REPLACE: <image>` / `WORKSHOP`, replacing the free-text `Human Assessment:` line and delete-as-rejection; bare `REPLACE` is invalid per the policy locked in M10.1; `metaphor_fix` consumes decisions via the shared validator, generates variants only for `FLATTEN` / `REPLACE` / `WORKSHOP`, treats an all-`KEEP`/`REJECT` file as a clean no-op rather than a nothing-to-do blocker, and appends its variants with stable variant ids plus a blank `Selected:` field per actionable entry; `metaphor_apply` consumes the `Selected:` field via the shared validator — a blank `Selected:` on an actionable entry is selection-pending and blocks, an ambiguous selection is invalid and never best-guessed, and an all-`KEEP`/`REJECT` file is valid pass-through; pending entries block downstream at both rounds; the container shape is settled, with the count-only `### Summary` block retired (the validator's ledger is the count) and the variant sections shaped so they never read as unanchored containers.
+
+- [ ] M13.1 Retarget `metaphor_identify` entry format: anchor plus decision fields; drop the `Human Assessment:` line and the count-only `### Summary` block; a clean scene records a single `No figures.` line; grammar referenced from `review-grammars.yaml`, not restated.
+- [ ] M13.2 Extend the shared contract for two evidence layers: rewrite the metaphor entry in `review-grammars.yaml` (it predates this reshape and models only the disposition round) to define `Decision:` (gates `metaphor_fix`) and `Selected:` (gates `metaphor_apply`) with per-consumer proceed states; validator support for parsing and ledgering the selection layer, with selection-pending reported distinctly from decision-pending; container shape settled; flip metaphors to `adopted`; extend the `examples/review/metaphors.md` fixture (currently round-one only) with variant sections and selection states.
+- [ ] M13.3 Update `metaphor_fix`: consume `Decision:` tokens via the shared validator (bare `REPLACE` invalid — the treat-as-`WORKSHOP` convenience is removed; `KEEP` / `REJECT` entries stay in the file untouched; all-`KEEP`/`REJECT` is a clean no-op); append variants with ids and a blank `Selected:` field; deletion is no longer a decision signal.
+- [ ] M13.4 Update `metaphor_apply`: consume `Selected:` variants via the shared validator; blank `Selected:` blocks as selection-pending; ambiguous or missing selections are invalid, never best-guessed (removes the "use your best understanding" instruction); all-`KEEP`/`REJECT` pass-through.
+- [ ] M13.5 Companion support: disposition and selection queues with progress counts across both rounds; flag-based queue prioritization (e.g. `BROKEN` first); payload capture (`REPLACE` images; a selection with the human's inline edits); no auto-disposition from `CLEAN` / `REVIEW` / `BROKEN` flags.
+- [ ] M13.6 Smoke coverage: non-destructive rejection, all-`KEEP`/`REJECT` pass-through at both consumers, decision-pending and selection-pending blocks, bare-`REPLACE` rejection, an ambiguous selection rejected as invalid.
+
+Notes — planning inputs recorded ahead (Sprint 16 AI-first review, so M13 planning doesn't rediscover them):
+
+- **Structured selection replaces delete-and-guess.** Variants get stable ids; the human's pick is recorded in the entry's `Selected:` field; rejected variants stay in the file as the audit record. The carrier for a selection the human edits inline (payload on `Selected:` vs. note) is settled at M13 planning. `metaphor_apply`'s best-guess instruction exists only because deletion is a noisy signal; with a structured field, ambiguity blocks like every other consumer.
+- **Two evidence layers is a contract extension.** The M10 grammar models one review round per artifact (one `Decision:` field is the review evidence; one proceed state per consumer); `metaphor_apply`'s evidence is currently defined outside that model ("a surviving variant per entry"). M13.2 brings it inside.
+- **Inline corrections** below today's action word (honored by the fix subagents) need an explicit carrier — likely `Decision-note:` — so they don't survive as an undocumented side channel.
+- **Container settlement interacts with the entry shape**: entries are themselves anchored `### ` headings, and the variant sections `metaphor_fix` appends are heading-titled today (`### Flatten Options` etc.) — they must be reshaped (e.g. demoted a level or restructured as nested fields) so a plain container check works. Dropping the count-only `### Summary` block helps, per the anti-AI precedent.
+- **`CLEAN` / `REVIEW` / `BROKEN` flags stay producer recommendations** — never auto-disposed (locked in M10) — and gain value under AI-first as companion queue-prioritization signal.
 
 ---
 
@@ -513,7 +529,7 @@ Done when: `agents/review-grammars.yaml`, `scripts/validate-review-artifact.sh`,
 
 1. **Human decisions remain human.** The companion may recommend actions, explain tradeoffs, and batch presentation. It must not silently make editorial decisions except where the artifact grammar explicitly permits mechanical bulk handling.
 2. **The report/identify step surfaces findings; the companion captures decisions; the fix/apply step changes prose.** The companion never becomes the checker or the fixer.
-3. **A field is a promise; a position is only a hope.** Every review item carries an embedded HTML-comment anchor (`<!-- review-id: ... -->`) plus explicit `- Decision:` / `- Decision-note:` fields. No positional annotation conventions ("insert below the flag line").
+3. **A field is a promise; a position is only a hope.** Every review item carries an embedded HTML-comment anchor (`<!-- review-id: ... -->`) plus explicit `- Decision:` / `- Decision-note:` fields. No positional annotation conventions ("insert below the flag line"). *(Extended in Sprint 16 planning: M13 adds a second evidence field, `Selected:`, for the metaphor family's variant-selection round — the same field-not-position rule applied to the family's second human-decision round.)*
 4. **Progress must be countable.** Blank decision fields mean pending; filled decision fields mean adjudicated. Accepted and unreviewed items must never look identical at the review-unit level.
 5. **Category-level decisions are capture behavior, not artifact grammar.** *(Revised in Sprint 16 planning; formerly header bulk, anti-AI only.)* Where the grammar declares a category fan-out-eligible, the human may state one decision for the whole category and the companion writes it into every pending unit's `Decision:` field, each marked with an audit note. The artifact carries no bulk grammar: blank means pending in every family with no exceptions, and a `BULK:` header is invalid input.
 6. **Grammars are artifact-specific and single-sourced** in `agents/review-grammars.yaml`. The parser, validator, companion, and fix/apply steps consume the same contract; step docs reference it rather than restating token sets in prose.
@@ -557,7 +573,23 @@ Notes: Sprint 15 plans M10 (see SPRINT.md). Locked there: the validator is a **d
   compliance slice proves out (M10 ships it agent-run only)
 - agentic fallback for review-artifact validation — if the strict script proves too
   rigid against hand-edited artifacts in practice, front it with an agent-followed
-  procedure (Sprint 15 chose the script; owner decision)
+  procedure (Sprint 15 chose the script; owner decision). Note: the Sprint-16
+  AI-plus-human directive makes this less likely to be needed — the companion writes
+  canonical format, so hand-edit noise shrinks on the write path
+- companion-captured `Override:` blocks — the stale-override is a stated human
+  decision about artifact state, hand-written into the artifact today (the fix/apply
+  steps' Override sections; `agents/orchestrator.md`'s Artifact-state contract). Under
+  the AI-plus-human directive the companion is the natural capture surface; its write
+  surface currently excludes overrides. Revisit once M12–M13 land
+- strip the validator's inert artifact-bulk machinery and the always-0
+  `inherited-by-bulk` ledger row once M12–M13 confirm no family defines artifact-level
+  bulk (retired for anti-AI in Sprint 16; the machinery currently doubles as the
+  stray-`BULK:`-header rejection path, which must survive any cleanup)
+- compliance hand-edit-era residue — the blank `Decision-note:` slot emission and the
+  `### Summary` block's ledger-redundant `Review units emitted:` line (the
+  clean-block count and the pattern-level observation are *not* ledger-derivable and
+  stay). Cosmetic; fold into a later slice rather than churning the shipped M10
+  surface on its own
 - storyboard_review_fix apply step (after M6 proves out)
 - story-level reveals ledger with buildup (couples to continuity review; matters for book/series)
 - continuity review step
