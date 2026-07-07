@@ -47,11 +47,14 @@ Amanuensis is an orchestrator-driven pipeline for long-form writing. Each projec
 - `templates/dispatcher/.opencode/agents/next-step.md` — OpenCode agent implementing the recommended-next convenience layer at parity with the Claude Code version.
 - `templates/dispatcher/.opencode/agents/revise.md` — OpenCode agent implementing the targeted-revision command at parity with the Claude Code version.
 - `scripts/check-pipeline-state.sh` — consistency check between a `pipeline-state.md` and an `agents/steps/` directory, in resolvable (default) or exhaustive mode.
+- `agents/review-grammars.yaml` — single source of truth for the four human-gated review artifact grammars: per-family adoption markers, review-id grammar, decision tokens, payload and bulk rules. Read by `scripts/validate-review-artifact.sh`; nothing else restates its token sets.
+- `agents/review-validation.md` — the interpretation contract for `scripts/validate-review-artifact.sh`: when agents run it, how they read its ledger and exit codes, and the decision-automation allowed/forbidden lists. Binds the `amanuensis-review` companion skill and the fix/apply steps of adopted families.
+- `templates/dispatcher/.claude/skills/amanuensis-review/SKILL.md` — Claude Code skill installed into consuming projects: the human-decision capture layer and progress ledger for human-gated review artifacts. Walks the human through pending review units, records their decisions by `review-id`, and reports validator-backed counts; never the checker, fixer, or decider.
 - `templates/dispatcher/.github/workflows/pipeline-state-check.yml` — consumer-side CI workflow installed by `install.sh`; validates the consumer's `pipeline-state.md` against the installed Amanuensis step files.
 
 ## Setup
 
-From the consuming project's root, run `./amanuensis/install.sh` to copy the dispatcher into `.claude/commands/run-step.md`, `.claude/commands/next-step.md`, `.claude/commands/revise.md`, `.opencode/agents/run-step.md`, `.opencode/agents/next-step.md`, and `.opencode/agents/revise.md`. `install.sh` also installs the pipeline-state check workflow into `.github/workflows/pipeline-state-check.yml`, creating that directory if missing. Prerequisite: Amanuensis must be present at `<project>/amanuensis/` (typically as a git submodule). See `templates/dispatcher/` and `agents/orchestrator.md` for the source-of-truth dispatcher contract.
+From the consuming project's root, run `./amanuensis/install.sh` to copy the dispatcher into `.claude/commands/run-step.md`, `.claude/commands/next-step.md`, `.claude/commands/revise.md`, `.opencode/agents/run-step.md`, `.opencode/agents/next-step.md`, and `.opencode/agents/revise.md`, and the review companion skill into `.claude/skills/amanuensis-review/`. `install.sh` also installs the pipeline-state check workflow into `.github/workflows/pipeline-state-check.yml`, creating that directory if missing. Prerequisite: Amanuensis must be present at `<project>/amanuensis/` (typically as a git submodule). See `templates/dispatcher/` and `agents/orchestrator.md` for the source-of-truth dispatcher contract.
 
 ## Step workflows
 
