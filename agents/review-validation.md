@@ -52,7 +52,8 @@ findings (each naming a line number and the specific defect), the ledger, and
 the verdict. Ledger fields: `total` (review units plus standalone defects),
 `pending` (blank decision, no bulk cover), `decided` (explicit legal
 non-SKIP/ESCALATE decisions), `inherited-by-bulk` (blank under a legal bulk
-header), `skipped`, `escalated`, `invalid` (illegal tokens, payload
+header — printed but permanently 0: no adopted family grants artifact-level
+bulk), `skipped`, `escalated`, `invalid` (illegal tokens, payload
 violations, duplicate or missing anchors, missing `Decision:` fields, illegal
 bulk headers), `stale` (0 or 1, artifact-level).
 
@@ -104,22 +105,25 @@ What an agent may and may not do without a human decision.
 
 Allowed:
 
-- Treat compliance `CLEAN` blocks as non-actionable — they carry no anchor
-  and no fields and are not review units.
-- Honor anti-AI bulk, but only where it is both statically supported (the
-  family's bulk keys in the grammar file) and dynamically declared (the
-  report's `BULK eligibility:` block marks the category `BULK permitted`).
-- Honor per-entry decisions as overrides of a bulk default.
-- Treat a valid bulk header as adjudicating its category: blank decisions
-  under it are inherited, not pending.
+- Fan out one human-stated category-level decision into every pending unit
+  of that category — but only where the family's `fanout_categories`
+  declaration in the grammar file names the category. The companion writes
+  the stated decision into each pending unit's `Decision:` field.
+- Mark each fanned-out unit's `Decision-note:` as a category decision — the
+  audit record that the unit was decided at category level, not entry by
+  entry.
+- Honor per-entry statements as exceptions: a unit the human decides
+  individually — before or after a fan-out — keeps its own decision.
 
 Forbidden:
 
-- Bulk-annotating prose-pass findings — the family has no bulk, by locked M5
-  decision.
+- Fan-out anywhere the grammar does not declare it: a category absent from
+  `fanout_categories`, or a family with no fan-out declaration at all.
+- Treating any blank decision as decided — blank means pending in every
+  family, and no inheritance of any kind exists anywhere (header bulk is
+  retired; the validator rejects a `BULK:` header as invalid input).
 - Auto-disposing metaphor entries from their `CLEAN` / `REVIEW` / `BROKEN`
   flags — those are producer recommendations, never decisions.
-- Treating blank decisions under no valid bulk header as decided, or blank
-  decisions under a valid bulk header as pending.
-- Inventing bulk anywhere the grammar or the report's own declarations do not
-  grant it.
+- Writing any decision the human did not state. A recommendation is not a
+  decision; a fan-out is one human decision mechanically applied, never an
+  agent-originated one.
