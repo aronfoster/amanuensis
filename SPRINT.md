@@ -64,7 +64,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 
 ### Task 1 — Contract: `anti_ai` grammar rewrite, fan-out declaration, interpretation update, fixture
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** `anti_ai` becomes an `adopted` family with pure per-unit semantics, a single-sourced fan-out declaration, and complete validator coverage — with zero changes to the validator itself. Closes **M11.3**.
 
@@ -82,7 +82,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 
 ### Task 2 — Retarget `anti_ai_report` to emit structured review items
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The report emits addressable, countable review units and stops emitting the retired human-ergonomics apparatus. Closes **M11.1**.
 
@@ -102,7 +102,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 
 ### Task 3 — Retarget `anti_ai_fix` to consume structured decisions
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The fix step consumes explicit per-unit `Decision:` fields through the shared validator — a pure compliance clone, simpler than what it replaces. Closes **M11.2**.
 
@@ -119,7 +119,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 
 ### Task 4 — Companion support: category queues, fan-out capture, payload prompting
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The companion makes category-scale anti-AI review one human decision where the grammar permits it — without ever deciding itself. Closes **M11.4**.
 
@@ -136,7 +136,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 
 ### Task 5 — Smoke recipes, verification sweep, ROADMAP / SPRINT check-off
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Runnable verification of the anti-AI round-trip including fan-out; close the milestone. Closes **M11.5** and the residual of **M11**.
 
