@@ -8,99 +8,68 @@ are sequenced, not parallel, so it is never edited by two at once.
 
 ---
 
-## M10 — Agent-addressable review: shared contract + compliance slice
-
-### Goal
-
-First of four milestones (M10–M13) delivering **agent-addressable human review**: the four human-gated review artifact families are retargeted from human-only markdown to structured markdown an agent can address, count, and validate, and an agent-assisted **review companion** makes working through them fast, auditable, resumable, and visibly finite.
-
-The companion is **not** a checker, fixer, or decider. It is the human-decision capture layer and progress ledger over structured review artifacts. Most review decisions are irreducibly human; the problem is that the work is not ergonomic or visibly finite. The value is not that the agent decides more — it is that the human decides faster, safer, and with visible progress toward done:
-
-```text
-identify/report → human decision capture + progress ledger → fix/apply
-```
-
-M10 lands the shared contract — grammar file, validator script, fixtures, companion skill — and migrates the crispest artifact family (compliance) end-to-end. M11 (anti-AI), M12 (prose pass), and M13 (metaphors) migrate the remaining families against that proven contract, one milestone per sprint. Each slice is a big-bang migration for its family: once a family is migrated, its old human-only annotation format is an invalid input and no compatibility path is kept.
-
-Done when: `agents/review-grammars.yaml`, `scripts/validate-review-artifact.sh`, and `agents/review-validation.md` exist as the single-source contract covering all four families; the compliance family round-trips — `compliance_report` emits structured review items, the human (companion-assisted) records decisions into explicit fields by `review-id`, and `compliance_fix` consumes those decisions via the shared validator; progress counts are accurate; and a human can stop mid-review and later resume from accurate remaining counts.
-
-### Shared design (governs M10–M13)
-
-1. **Human decisions remain human.** The companion may recommend actions, explain tradeoffs, and batch presentation. It must not silently make editorial decisions except where the artifact grammar explicitly permits mechanical bulk handling.
-2. **The report/identify step surfaces findings; the companion captures decisions; the fix/apply step changes prose.** The companion never becomes the checker or the fixer.
-3. **A field is a promise; a position is only a hope.** Every review item carries an embedded HTML-comment anchor (`<!-- review-id: ... -->`) plus explicit `- Decision:` / `- Decision-note:` fields. No positional annotation conventions ("insert below the flag line").
-4. **Progress must be countable.** Blank decision fields mean pending; filled decision fields mean adjudicated. Accepted and unreviewed items must never look identical at the review-unit level.
-5. **Bulk changes the unit of countability** (anti-AI only). A legal `BULK:` header makes the category the review unit; blank item-level decisions under it inherit the category decision and are not counted as pending.
-6. **Grammars are artifact-specific and single-sourced** in `agents/review-grammars.yaml`. The parser, validator, companion, and fix/apply steps consume the same contract; step docs reference it rather than restating token sets in prose.
-7. **Static grammar and dynamic report declarations are separate.** The static grammar defines what an artifact type can support; the report itself may declare narrower per-report permissions (anti-AI `BULK permitted` categories). Both layers are validated.
-8. **Structured markdown remains the primary artifact** — readable, hand-editable, Git-diff-friendly. No JSON sidecars as source of truth.
-9. **IDs are stable within a reviewed-draft epoch, not across regenerations.** A `review-id` only needs to be stable for the report generated against its `Reviewed-draft:` stamp; regeneration discards prior findings (existing contract) and may regenerate IDs.
-
-Target grammar per artifact — the full machine-readable definition lives in `agents/review-grammars.yaml` once M10.1 lands; this table is the summary:
-
-| Artifact              | Producer            | Consumer                         | Review Unit                                                          | Legal Decisions                                                                                                                          | Blank Means                                         | Bulk Legal?                                                                                     | Notes                                                                                                                                        |
-| --------------------- | ------------------- | -------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `reviewer-actions.md` | `compliance_report` | `compliance_fix`                 | Per violation                                                        | `FIX`, `FIX: <instruction>`, `SKIP`, `ESCALATE`                                                                                          | Pending / review evidence missing                   | No generic bulk                                                                                 | Crispest grammar; migrated first (M10). `CLEAN` blocks require no action and are not review units.                                           |
-| `prose-pass.md`       | `prose_pass`        | `prose_fix`                      | Per finding                                                          | `FIX`, `FIX: <instruction>`, `SKIP`, `ESCALATE`                                                                                          | Pending for non-`KEEP` findings                     | No                                                                                              | `KEEP` recommendations are treated as `SKIP`; actionable non-`KEEP` findings require explicit per-entry decisions. Migrated in M12.          |
-| `anti-ai.md`          | `anti_ai_report`    | `anti_ai_fix`                    | Per item, except legal bulk categories count as category-level units | Per item: `FIX`, `FIX: <instruction>`, `SKIP`, `ESCALATE`; category header: `BULK: FIX[: <instruction>]` or `BULK: SKIP` where permitted | Pending unless a legal category bulk header applies | Yes, only when static grammar allows bulk and the report declares the category `BULK permitted` | Per-entry decisions override category bulk defaults. The companion must not offer bulk where the report says bulk is not permitted. Migrated in M11. |
-| `metaphors.md`        | `metaphor_identify` | `metaphor_fix`, `metaphor_apply` | Per metaphor entry                                                   | `KEEP`, `REJECT`, `FLATTEN`, `REPLACE: <image>`, `WORKSHOP`                                                                              | Pending                                             | No                                                                                              | Replaces delete-as-rejection with `Decision: REJECT` so the file remains an audit record and progress is countable. Migrated in M13.         |
-
-Freshness, review, and override stay governed by `agents/orchestrator.md`'s Artifact-state contract; M10–M13 change none of its mechanics. For a migrated family, the structured decision fields *are* the review evidence: a blank `Decision:` (with no legal bulk cover) is `review_pending`, and override remains stale-axis-only and anchor-gated.
-
-### Tasks
-
-- [x] M10.1 `agents/review-grammars.yaml`: machine-readable grammar definitions for all four families — per artifact: producer/consumer steps, artifact path pattern, review item shape, anchor pattern, legal decision tokens, payload requirements, blank-means semantics, bulk rules (static support + dynamic declaration requirement + header grammar), progress-counting rules, what constitutes review evidence, and what state lets the consumer proceed — with a per-family adoption marker (compliance `adopted` in M10; the other three defined here but `pending` until their milestone). Locks the bare-`REPLACE` policy: `REPLACE` requires a non-empty image payload; bare `REPLACE` is invalid and `WORKSHOP` is the ask-for-candidates path.
-- [x] M10.2 `scripts/validate-review-artifact.sh` + `agents/review-validation.md`: a read-only validator script (parse review units; validate state, structure, and grammar with token lists read from `review-grammars.yaml`, never hardcoded; print the progress ledger — total / pending / decided / inherited-by-bulk / skipped / escalated / invalid / stale; exit with a distinct proceed / pending / invalid / stale code) plus the thin interpretation contract the companion and fix/apply steps of migrated families follow — when to run the script, how to act on its output, and what remains agentic judgment.
-- [x] M10.3 Fixture examples of all four target formats under `examples/review/`, exercising each grammar's distinctive cases (compliance CLEAN vs violation; anti-AI bulk and non-bulk categories; prose-pass KEEP handling; metaphor decision tokens).
-- [x] M10.4 Retarget `compliance_report` to emit structured review items: a `review-id` anchor plus `Decision:` / `Decision-note:` fields per violation; `CLEAN` blocks are not review units and carry no anchor or fields.
-- [x] M10.5 Retarget `compliance_fix` to consume explicit `Decision:` fields via the shared validator (blank decision = `review_pending`; positional annotations are no longer valid input; stale/override behavior unchanged).
-- [x] M10.6 `amanuensis-review` Claude Code skill, installed by `install.sh` into consuming projects: identify artifact, load grammar, validate, show progress counts, present pending units as a queue, explain legal decisions, capture and write decisions by `review-id`, support pacing controls. Compliance support in this milestone.
-- [x] M10.7 Smoke coverage: compliance round-trip (structured report → decisions → fix consumes), blank-decision `review_pending` block, progress counts, resume mid-review; existing compliance-format recipes updated to the structured format.
-
-Notes: Sprint 15 plans M10 (see SPRINT.md). Locked there: the validator is a **deterministic script** (`scripts/validate-review-artifact.sh`) with a thin agentic interpretation contract (`agents/review-validation.md`) — an agentic prose procedure was chosen first and flipped after discussion (owner decision: the ledger counts and the proceed/block verdict are the two things that must never be wrong, and LLM counting is the design's weakest point; strictness is a feature since `invalid` is a reported state and the companion writes canonical format; the grammar YAML stays the single source — the script reads its token lists from it; the agentic fallback is on the Deferred list if the script proves too rigid). The companion ships as a **Claude Code skill**, not a host command pair (owner decision: conversational activation wins over host parity; OpenCode parity is on the Deferred list). The roadmap was restructured to one milestone per sprint (owner decision), splitting the former monolithic M10 into M10–M13 and renumbering reverse ingestion to M14. Shipped in Sprint 15 as planned, with one addition found in verification: the validator detects a pre-M10 positional report (violation blocks with no anchors) as structurally invalid via per-family container-pattern keys in `review-grammars.yaml`, so an old-format report can never pass as zero-units/proceed.
-
----
-
 ## M11 — Agent-addressable review: anti-AI slice
 
-Retarget `anti-ai.md` to the structured contract while preserving category-level bulk, and fix progress accounting: a legal `BULK:` header adjudicates its category as one category-level review unit; blank item decisions under it inherit the default and are not pending; per-entry decisions override the bulk default.
+Second of the four agent-addressable-review milestones (M10–M13). The shared design
+and target grammar table governing all four live in the completed M10 section below;
+the machine-readable contract is `agents/review-grammars.yaml`.
 
-Done when: anti-AI entries carry `review-id` anchors and decision fields; `BULK eligibility` declarations and `BULK:` headers survive and are validated in two layers (static grammar + dynamic report declaration — a `BULK:` header on a category not declared `BULK permitted` is invalid and never satisfies review evidence); `anti_ai_fix` consumes structured per-entry decisions and legal bulk defaults; progress reports distinguish item units from category units; the companion offers bulk only where the report permits it.
+Retarget `anti-ai.md` to the structured contract, and simplify it under the review model's shift from human-edits-markdown to **AI-plus-human review** (owner direction, Sprint 16): conventions that existed to make hand-annotating markdown cheap — the per-category `BULK:` header, its per-scene `BULK eligibility:` declaration block, and bulk inheritance — are retired rather than migrated. Category-level review survives as **companion fan-out**: where the grammar declares a category fan-out-eligible, the human states one decision for the category and the companion writes it into every pending unit's `Decision:` field, each marked with an audit note. The artifact itself carries pure per-unit decisions: blank means pending in every family, with no exceptions.
 
-- [ ] M11.1 Retarget `anti_ai_report` output: `review-id` anchor plus decision fields per item; keep the `BULK eligibility` block and per-category `BULK:` header grammar, with the grammar single-sourced in `agents/review-grammars.yaml` and the step doc referencing it.
-- [ ] M11.2 Update `anti_ai_fix` to consume structured per-entry decisions and legal bulk defaults via the shared validator.
-- [ ] M11.3 Flip anti-AI to `adopted` in `review-grammars.yaml`; the validator exercises the two-layer bulk rules and mixed-granularity counting.
-- [ ] M11.4 Companion support for category queues and legal bulk prompting.
-- [ ] M11.5 Smoke coverage: bulk-header adjudication with a per-entry override, an invalid bulk header on an undeclared category, mixed pending counts; the existing anti-AI-format recipes updated to the structured format.
+Done when: anti-AI flagged instances carry `review-id` anchors and decision fields; blank `Decision:` means pending with no inheritance exception; a `BULK:` header, the old positional annotation format, and an anchorless pre-M11 report are all invalid inputs to `anti_ai_fix` (never silently empty, never silently tolerated); `anti_ai_fix` consumes structured per-entry decisions via the shared validator; fan-out eligibility and recommended defaults are single-sourced in `agents/review-grammars.yaml`; the companion offers category-level capture only for declared categories and writes only human-stated decisions, fanned per-unit with audit notes.
+
+- [ ] M11.1 Retarget `anti_ai_report` output: `review-id` anchor plus blank decision fields per flagged instance; drop the `BULK eligibility:` block and the per-scene `### Summary` tally (the validator's ledger is the authoritative count); a clean scene records a single `No flags.` line; grammar referenced from `agents/review-grammars.yaml`, not restated.
+- [ ] M11.2 Update `anti_ai_fix` to consume `Decision:` fields via the shared validator (per-unit pending gate; positional annotations and `BULK:` headers are invalid input; category fix rules and stale/override mechanics unchanged).
+- [ ] M11.3 Flip anti-AI to `adopted` in `review-grammars.yaml` with `container_pattern` settled and artifact bulk support withdrawn (`bulk_supported: no`); add the fan-out declaration (eligible categories plus recommended defaults). The validator itself needs no change — verified at planning.
+- [ ] M11.4 Companion support: category queues; fan-out capture per the grammar's declaration (one stated decision written into every pending unit of the category, each with an audit note); payload prompting on categories whose bare `FIX` has no fix rule.
+- [ ] M11.5 Smoke coverage: fan-out round-trip with a per-entry exception and mixed pending counts, a stray `BULK:` header rejected as invalid; the existing anti-AI-format recipes updated to the structured format.
+
+Notes: Sprint 16 plans M11 (see SPRINT.md). The milestone was reshaped at planning under an owner directive: the review process is now AI-plus-human — the companion captures and writes, the human decides — so conventions that existed to make human hand-editing of markdown cheap are retired when retiring them makes agent review simpler or more reliable. Header bulk was the largest: it was the design's only blank-means-decided exception and its only two-layer validation case, and the `BULK eligibility:` block was fake-dynamic (the report emitted the same fixed list every run, restating static knowledge the grammar file owns). Shared-design principles 5 and 7 in the M10 section were revised accordingly. Locked at planning (owner decisions): the bare-`FIX` fallback on categories with no bare-FIX rule stays fixer-level treat-as-`ESCALATE` — the validator stays category-agnostic, and the companion instead prompts for the needed instruction at capture time (rejected: per-category payload keys in the grammar YAML and validator); the companion writes only what the human states — a category fan-out is one human decision mechanically applied, marked per unit in `Decision-note:` (this supersedes the same session's earlier plan, where the companion would write `BULK:` headers); the progress ledger is unchanged — `inherited-by-bulk` now stays 0, since no adopted family grants artifact-level bulk. Verified at planning with the stock validator against a scratch grammar copy: the fan-out-shaped artifact yields the correct ledger; a pre-M11 positional report — including its `### Summary` heading — fails the plain `container_pattern` check as invalid, so the old format can never pass as zero-units/proceed; and a stray `BULK:` header is rejected through the existing no-bulk-support path. `scripts/validate-review-artifact.sh` therefore ships byte-for-byte unchanged this milestone.
 
 ---
 
 ## M12 — Agent-addressable review: prose-pass slice
 
-Retarget `prose-pass.md` findings to the structured contract: selective per-entry review, no bulk anywhere (the locked M5 convention stands).
+Retarget `prose-pass.md` findings to the structured contract, under the AI-plus-human review directive recorded in Sprint 16 planning (see the M11 Notes): the companion captures and writes, the human decides, and hand-edit-era affordances are retired where that makes agent review simpler or more reliable. Prose-pass declares no `fanout_categories`: the pass is deliberately selective (5–10 findings), so per-entry decisions are the point — the locked M5 no-bulk convention, restated in the post-Sprint-16 vocabulary.
 
-Done when: each finding carries a `review-id` anchor and decision fields (the current `Annotation:` line is replaced by `Decision:` / `Decision-note:`); `KEEP` findings are non-actionable (emitted with `Decision: SKIP` or omitted from the actionable queue, per the grammar); non-`KEEP` findings require explicit review evidence; the validator rejects any bulk annotation; `prose_fix` consumes structured decisions.
+Done when: each actionable finding carries a `review-id` anchor and plain blank decision fields — the `Annotation:` line, including its bracketed token-set placeholder (a hand-edit affordance that restates the grammar inline), is replaced by `Decision:` / `Decision-note:`; `KEEP` findings are non-actionable per the grammar (no anchor, no fields, not review units); any non-`KEEP` finding with a blank `Decision:` blocks `prose_fix` as `review_pending`, per unit; the container shape is settled so a legitimately all-`KEEP` report validates clean while an unanchored pre-M12 report is invalid input; `prose_fix` consumes structured decisions via the shared validator.
 
-- [ ] M12.1 Retarget `prose_pass` findings format: anchor plus decision fields; `KEEP` handling per grammar; the annotation-grammar section moves to a `review-grammars.yaml` reference.
-- [ ] M12.2 Update `prose_fix` to consume `Decision:` fields via the shared validator.
-- [ ] M12.3 Flip prose-pass to `adopted` in `review-grammars.yaml`; no-bulk enforced by the validator.
-- [ ] M12.4 Companion support for small, high-value finding queues.
-- [ ] M12.5 Smoke coverage: non-`KEEP` finding pending/decided flow; a bulk annotation rejected as invalid.
+- [ ] M12.1 Retarget `prose_pass` findings format: anchor plus plain blank decision fields on actionable findings; `KEEP` handling and the no-actionable-findings marker per grammar; the annotation-grammar section (with its bracketed placeholder) moves to a `review-grammars.yaml` reference.
+- [ ] M12.2 Update `prose_fix` to consume `Decision:` fields via the shared validator (per-unit pending gate; positional annotations are invalid input).
+- [ ] M12.3 Flip prose-pass to `adopted` in `review-grammars.yaml` with the container shape settled; no `fanout_categories` declared; restate the family's `bulk_rules` in the post-Sprint-16 vocabulary (artifact bulk is retired everywhere; per-entry is this family's point).
+- [ ] M12.4 Companion support for small, high-value finding queues (no fan-out offers anywhere in this family).
+- [ ] M12.5 Smoke coverage: non-`KEEP` finding pending/decided flow; an all-`KEEP` report validating clean; an unanchored pre-M12 report rejected as invalid.
+
+Notes — planning inputs recorded ahead (Sprint 16 AI-first review, so M12 planning doesn't rediscover them):
+
+- **The all-`KEEP` container problem.** `KEEP` findings carry no anchors, so a legitimately all-`KEEP` report has a `#### Findings` section with zero anchored units — indistinguishable, to a plain container check, from a pre-M12 unanchored report. Candidate: an explicit `No actionable findings.` marker line (the analog of anti-AI's `No flags.`); settle the mechanism at M12 planning.
+- **Producer analysis survives the directive.** `#### Top priorities` and the `### Chapter-level diagnosis` subsections carry non-derivable producer analysis (failure modes, revision strategy, lines worth preserving) — unlike the retired anti-AI tallies they are not machine-redundant, and they stay. Container settlement must accommodate headings that legitimately hold no anchored units.
+- **No tally to retire** — prose-pass has no summary-count block; its diagnosis sections are analysis, not counts.
 
 ---
 
 ## M13 — Agent-addressable review: metaphor slice
 
-Retarget `metaphors.md` to the structured contract and make rejection non-destructive: accepted, rejected, and unreviewed figures must be distinct, and every figurative decision stays in the audit record.
+Retarget `metaphors.md` to the structured contract, under the AI-plus-human review directive recorded in Sprint 16 planning (see the M11 Notes). This is the deepest slice: the metaphor family has **two human-decision rounds** — disposition (which figures to act on) and variant selection (which rewrite to apply) — and both are hand-edit conventions today. Rejection is deletion; selection is "delete the variants you don't want" with `metaphor_apply` instructed to best-guess ambiguity (`agents/steps/metaphor-fix.md:60`, `agents/steps/metaphor-apply.md:51`). Both rounds become structured, addressable, and countable; deletion stops being a decision signal anywhere in the family; every figurative decision — including rejected variants — stays in the audit record; and no step guesses a human decision.
 
-Done when: each metaphor entry carries a `review-id` anchor and decision fields with tokens `KEEP` / `REJECT` / `FLATTEN` / `REPLACE: <image>` / `WORKSHOP`, replacing the free-text `Human Assessment:` line and delete-as-rejection; bare `REPLACE` is invalid per the policy locked in M10.1; `metaphor_fix` generates variants only for `FLATTEN` / `REPLACE` / `WORKSHOP` and skips `KEEP` / `REJECT`; `metaphor_apply` treats a fully reviewed file of all `KEEP` / `REJECT` decisions as valid pass-through, not a nothing-to-do failure; pending entries block downstream.
+This slice extends the shared contract itself: the grammar file gains its first two-evidence-layer family (`Decision:` gates `metaphor_fix`; `Selected:` gates `metaphor_apply`), and the validator must parse and ledger the selection layer — unlike M11, which shipped the validator byte-for-byte unchanged, M13 includes contract and validator work. Scope it at M13 planning.
 
-- [ ] M13.1 Retarget `metaphor_identify` entry format: anchor plus decision fields; drop the `Human Assessment:` line.
-- [ ] M13.2 Update `metaphor_fix` to consume `Decision:` tokens: bare `REPLACE` becomes invalid (the treat-as-`WORKSHOP` convenience in `agents/steps/metaphor-fix.md` is removed); `KEEP` / `REJECT` entries stay in the file untouched; deletion is no longer a decision signal.
-- [ ] M13.3 Update `metaphor_apply` to consume selected variants under the structured contract, with all-`KEEP`/`REJECT` pass-through.
-- [ ] M13.4 Flip metaphors to `adopted` in `review-grammars.yaml`.
-- [ ] M13.5 Companion support for metaphor pacing, progress counts, and non-automated review (no auto-disposition from `CLEAN` / `REVIEW` / `BROKEN` flags).
-- [ ] M13.6 Smoke coverage: non-destructive rejection, all-`KEEP`/`REJECT` pass-through, pending-entries block, bare-`REPLACE` rejection.
+Done when: each metaphor entry carries a `review-id` anchor and decision fields with tokens `KEEP` / `REJECT` / `FLATTEN` / `REPLACE: <image>` / `WORKSHOP`, replacing the free-text `Human Assessment:` line and delete-as-rejection; bare `REPLACE` is invalid per the policy locked in M10.1; `metaphor_fix` consumes decisions via the shared validator, generates variants only for `FLATTEN` / `REPLACE` / `WORKSHOP`, treats an all-`KEEP`/`REJECT` file as a clean no-op rather than a nothing-to-do blocker, and appends its variants with stable variant ids plus a blank `Selected:` field per actionable entry; `metaphor_apply` consumes the `Selected:` field via the shared validator — a blank `Selected:` on an actionable entry is selection-pending and blocks, an ambiguous selection is invalid and never best-guessed, and an all-`KEEP`/`REJECT` file is valid pass-through; pending entries block downstream at both rounds; the container shape is settled, with the count-only `### Summary` block retired (the validator's ledger is the count) and the variant sections shaped so they never read as unanchored containers.
+
+- [ ] M13.1 Retarget `metaphor_identify` entry format: anchor plus decision fields; drop the `Human Assessment:` line and the count-only `### Summary` block; a clean scene records a single `No figures.` line; grammar referenced from `review-grammars.yaml`, not restated.
+- [ ] M13.2 Extend the shared contract for two evidence layers: rewrite the metaphor entry in `review-grammars.yaml` (it predates this reshape and models only the disposition round) to define `Decision:` (gates `metaphor_fix`) and `Selected:` (gates `metaphor_apply`) with per-consumer proceed states; validator support for parsing and ledgering the selection layer, with selection-pending reported distinctly from decision-pending; container shape settled; flip metaphors to `adopted`; extend the `examples/review/metaphors.md` fixture (currently round-one only) with variant sections and selection states.
+- [ ] M13.3 Update `metaphor_fix`: consume `Decision:` tokens via the shared validator (bare `REPLACE` invalid — the treat-as-`WORKSHOP` convenience is removed; `KEEP` / `REJECT` entries stay in the file untouched; all-`KEEP`/`REJECT` is a clean no-op); append variants with ids and a blank `Selected:` field; deletion is no longer a decision signal.
+- [ ] M13.4 Update `metaphor_apply`: consume `Selected:` variants via the shared validator; blank `Selected:` blocks as selection-pending; ambiguous or missing selections are invalid, never best-guessed (removes the "use your best understanding" instruction); all-`KEEP`/`REJECT` pass-through.
+- [ ] M13.5 Companion support: disposition and selection queues with progress counts across both rounds; flag-based queue prioritization (e.g. `BROKEN` first); payload capture (`REPLACE` images; a selection with the human's inline edits); no auto-disposition from `CLEAN` / `REVIEW` / `BROKEN` flags.
+- [ ] M13.6 Smoke coverage: non-destructive rejection, all-`KEEP`/`REJECT` pass-through at both consumers, decision-pending and selection-pending blocks, bare-`REPLACE` rejection, an ambiguous selection rejected as invalid.
+
+Notes — planning inputs recorded ahead (Sprint 16 AI-first review, so M13 planning doesn't rediscover them):
+
+- **Structured selection replaces delete-and-guess.** Variants get stable ids; the human's pick is recorded in the entry's `Selected:` field; rejected variants stay in the file as the audit record. The carrier for a selection the human edits inline (payload on `Selected:` vs. note) is settled at M13 planning. `metaphor_apply`'s best-guess instruction exists only because deletion is a noisy signal; with a structured field, ambiguity blocks like every other consumer.
+- **Two evidence layers is a contract extension.** The M10 grammar models one review round per artifact (one `Decision:` field is the review evidence; one proceed state per consumer); `metaphor_apply`'s evidence is currently defined outside that model ("a surviving variant per entry"). M13.2 brings it inside.
+- **Inline corrections** below today's action word (honored by the fix subagents) need an explicit carrier — likely `Decision-note:` — so they don't survive as an undocumented side channel.
+- **Container settlement interacts with the entry shape**: entries are themselves anchored `### ` headings, and the variant sections `metaphor_fix` appends are heading-titled today (`### Flatten Options` etc.) — they must be reshaped (e.g. demoted a level or restructured as nested fields) so a plain container check works. Dropping the count-only `### Summary` block helps, per the anti-AI precedent.
+- **`CLEAN` / `REVIEW` / `BROKEN` flags stay producer recommendations** — never auto-disposed (locked in M10) — and gain value under AI-first as companion queue-prioritization signal.
 
 ---
 
@@ -540,6 +509,59 @@ delivers M9.1–M9.5 and M9.7.
 
 ---
 
+## M10 — Agent-addressable review: shared contract + compliance slice
+
+### Goal
+
+First of four milestones (M10–M13) delivering **agent-addressable human review**: the four human-gated review artifact families are retargeted from human-only markdown to structured markdown an agent can address, count, and validate, and an agent-assisted **review companion** makes working through them fast, auditable, resumable, and visibly finite.
+
+The companion is **not** a checker, fixer, or decider. It is the human-decision capture layer and progress ledger over structured review artifacts. Most review decisions are irreducibly human; the problem is that the work is not ergonomic or visibly finite. The value is not that the agent decides more — it is that the human decides faster, safer, and with visible progress toward done:
+
+```text
+identify/report → human decision capture + progress ledger → fix/apply
+```
+
+M10 lands the shared contract — grammar file, validator script, fixtures, companion skill — and migrates the crispest artifact family (compliance) end-to-end. M11 (anti-AI), M12 (prose pass), and M13 (metaphors) migrate the remaining families against that proven contract, one milestone per sprint. Each slice is a big-bang migration for its family: once a family is migrated, its old human-only annotation format is an invalid input and no compatibility path is kept.
+
+Done when: `agents/review-grammars.yaml`, `scripts/validate-review-artifact.sh`, and `agents/review-validation.md` exist as the single-source contract covering all four families; the compliance family round-trips — `compliance_report` emits structured review items, the human (companion-assisted) records decisions into explicit fields by `review-id`, and `compliance_fix` consumes those decisions via the shared validator; progress counts are accurate; and a human can stop mid-review and later resume from accurate remaining counts.
+
+### Shared design (governs M10–M13)
+
+1. **Human decisions remain human.** The companion may recommend actions, explain tradeoffs, and batch presentation. It must not silently make editorial decisions except where the artifact grammar explicitly permits mechanical bulk handling.
+2. **The report/identify step surfaces findings; the companion captures decisions; the fix/apply step changes prose.** The companion never becomes the checker or the fixer.
+3. **A field is a promise; a position is only a hope.** Every review item carries an embedded HTML-comment anchor (`<!-- review-id: ... -->`) plus explicit `- Decision:` / `- Decision-note:` fields. No positional annotation conventions ("insert below the flag line"). *(Extended in Sprint 16 planning: M13 adds a second evidence field, `Selected:`, for the metaphor family's variant-selection round — the same field-not-position rule applied to the family's second human-decision round.)*
+4. **Progress must be countable.** Blank decision fields mean pending; filled decision fields mean adjudicated. Accepted and unreviewed items must never look identical at the review-unit level.
+5. **Category-level decisions are capture behavior, not artifact grammar.** *(Revised in Sprint 16 planning; formerly header bulk, anti-AI only.)* Where the grammar declares a category fan-out-eligible, the human may state one decision for the whole category and the companion writes it into every pending unit's `Decision:` field, each marked with an audit note. The artifact carries no bulk grammar: blank means pending in every family with no exceptions, and a `BULK:` header is invalid input.
+6. **Grammars are artifact-specific and single-sourced** in `agents/review-grammars.yaml`. The parser, validator, companion, and fix/apply steps consume the same contract; step docs reference it rather than restating token sets in prose.
+7. **Fan-out eligibility is static and single-sourced in the grammar file.** *(Revised in Sprint 16 planning; formerly a static-grammar/dynamic-report-declaration split.)* The per-report `BULK eligibility:` declaration was retired with the header grammar: the report emitted the same fixed list every run, restating static knowledge the grammar file owns. No family currently defines per-report review permissions.
+8. **Structured markdown remains the primary artifact** — readable, hand-editable, Git-diff-friendly. No JSON sidecars as source of truth.
+9. **IDs are stable within a reviewed-draft epoch, not across regenerations.** A `review-id` only needs to be stable for the report generated against its `Reviewed-draft:` stamp; regeneration discards prior findings (existing contract) and may regenerate IDs.
+
+Target grammar per artifact — the full machine-readable definition lives in `agents/review-grammars.yaml` once M10.1 lands; this table is the summary:
+
+| Artifact              | Producer            | Consumer                         | Review Unit                                                          | Legal Decisions                                                                                                                          | Blank Means                                         | Bulk Legal?                                                                                     | Notes                                                                                                                                        |
+| --------------------- | ------------------- | -------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reviewer-actions.md` | `compliance_report` | `compliance_fix`                 | Per violation                                                        | `FIX`, `FIX: <instruction>`, `SKIP`, `ESCALATE`                                                                                          | Pending / review evidence missing                   | No generic bulk                                                                                 | Crispest grammar; migrated first (M10). `CLEAN` blocks require no action and are not review units.                                           |
+| `prose-pass.md`       | `prose_pass`        | `prose_fix`                      | Per finding                                                          | `FIX`, `FIX: <instruction>`, `SKIP`, `ESCALATE`                                                                                          | Pending for non-`KEEP` findings                     | No                                                                                              | `KEEP` recommendations are treated as `SKIP`; actionable non-`KEEP` findings require explicit per-entry decisions. Migrated in M12.          |
+| `anti-ai.md`          | `anti_ai_report`    | `anti_ai_fix`                    | Per flagged instance                                                  | `FIX`, `FIX: <instruction>`, `SKIP`, `ESCALATE`                                                                                          | Pending                                             | No — category fan-out is companion capture, not artifact grammar (revised Sprint 16)            | Fan-out-eligible categories and recommended defaults are declared in the grammar file; a `BULK:` header is invalid input. Migrated in M11.   |
+| `metaphors.md`        | `metaphor_identify` | `metaphor_fix`, `metaphor_apply` | Per metaphor entry                                                   | `KEEP`, `REJECT`, `FLATTEN`, `REPLACE: <image>`, `WORKSHOP`                                                                              | Pending                                             | No                                                                                              | Replaces delete-as-rejection with `Decision: REJECT` so the file remains an audit record and progress is countable. Migrated in M13.         |
+
+Freshness, review, and override stay governed by `agents/orchestrator.md`'s Artifact-state contract; M10–M13 change none of its mechanics. For a migrated family, the structured decision fields *are* the review evidence: a blank `Decision:` is `review_pending`, and override remains stale-axis-only and anchor-gated.
+
+### Tasks
+
+- [x] M10.1 `agents/review-grammars.yaml`: machine-readable grammar definitions for all four families — per artifact: producer/consumer steps, artifact path pattern, review item shape, anchor pattern, legal decision tokens, payload requirements, blank-means semantics, bulk rules (static support + dynamic declaration requirement + header grammar), progress-counting rules, what constitutes review evidence, and what state lets the consumer proceed — with a per-family adoption marker (compliance `adopted` in M10; the other three defined here but `pending` until their milestone). Locks the bare-`REPLACE` policy: `REPLACE` requires a non-empty image payload; bare `REPLACE` is invalid and `WORKSHOP` is the ask-for-candidates path.
+- [x] M10.2 `scripts/validate-review-artifact.sh` + `agents/review-validation.md`: a read-only validator script (parse review units; validate state, structure, and grammar with token lists read from `review-grammars.yaml`, never hardcoded; print the progress ledger — total / pending / decided / inherited-by-bulk / skipped / escalated / invalid / stale; exit with a distinct proceed / pending / invalid / stale code) plus the thin interpretation contract the companion and fix/apply steps of migrated families follow — when to run the script, how to act on its output, and what remains agentic judgment.
+- [x] M10.3 Fixture examples of all four target formats under `examples/review/`, exercising each grammar's distinctive cases (compliance CLEAN vs violation; anti-AI bulk and non-bulk categories; prose-pass KEEP handling; metaphor decision tokens).
+- [x] M10.4 Retarget `compliance_report` to emit structured review items: a `review-id` anchor plus `Decision:` / `Decision-note:` fields per violation; `CLEAN` blocks are not review units and carry no anchor or fields.
+- [x] M10.5 Retarget `compliance_fix` to consume explicit `Decision:` fields via the shared validator (blank decision = `review_pending`; positional annotations are no longer valid input; stale/override behavior unchanged).
+- [x] M10.6 `amanuensis-review` Claude Code skill, installed by `install.sh` into consuming projects: identify artifact, load grammar, validate, show progress counts, present pending units as a queue, explain legal decisions, capture and write decisions by `review-id`, support pacing controls. Compliance support in this milestone.
+- [x] M10.7 Smoke coverage: compliance round-trip (structured report → decisions → fix consumes), blank-decision `review_pending` block, progress counts, resume mid-review; existing compliance-format recipes updated to the structured format.
+
+Notes: Sprint 15 plans M10 (see SPRINT.md). Locked there: the validator is a **deterministic script** (`scripts/validate-review-artifact.sh`) with a thin agentic interpretation contract (`agents/review-validation.md`) — an agentic prose procedure was chosen first and flipped after discussion (owner decision: the ledger counts and the proceed/block verdict are the two things that must never be wrong, and LLM counting is the design's weakest point; strictness is a feature since `invalid` is a reported state and the companion writes canonical format; the grammar YAML stays the single source — the script reads its token lists from it; the agentic fallback is on the Deferred list if the script proves too rigid). The companion ships as a **Claude Code skill**, not a host command pair (owner decision: conversational activation wins over host parity; OpenCode parity is on the Deferred list). The roadmap was restructured to one milestone per sprint (owner decision), splitting the former monolithic M10 into M10–M13 and renumbering reverse ingestion to M14. Shipped in Sprint 15 as planned, with one addition found in verification: the validator detects a pre-M10 positional report (violation blocks with no anchors) as structurally invalid via per-family container-pattern keys in `review-grammars.yaml`, so an old-format report can never pass as zero-units/proceed.
+
+---
+
 ## Deferred
 
 - dispatcher-level staleness/review lift (M9.6) — surface stale/review blockers before
@@ -551,7 +573,23 @@ delivers M9.1–M9.5 and M9.7.
   compliance slice proves out (M10 ships it agent-run only)
 - agentic fallback for review-artifact validation — if the strict script proves too
   rigid against hand-edited artifacts in practice, front it with an agent-followed
-  procedure (Sprint 15 chose the script; owner decision)
+  procedure (Sprint 15 chose the script; owner decision). Note: the Sprint-16
+  AI-plus-human directive makes this less likely to be needed — the companion writes
+  canonical format, so hand-edit noise shrinks on the write path
+- companion-captured `Override:` blocks — the stale-override is a stated human
+  decision about artifact state, hand-written into the artifact today (the fix/apply
+  steps' Override sections; `agents/orchestrator.md`'s Artifact-state contract). Under
+  the AI-plus-human directive the companion is the natural capture surface; its write
+  surface currently excludes overrides. Revisit once M12–M13 land
+- strip the validator's inert artifact-bulk machinery and the always-0
+  `inherited-by-bulk` ledger row once M12–M13 confirm no family defines artifact-level
+  bulk (retired for anti-AI in Sprint 16; the machinery currently doubles as the
+  stray-`BULK:`-header rejection path, which must survive any cleanup)
+- compliance hand-edit-era residue — the blank `Decision-note:` slot emission and the
+  `### Summary` block's ledger-redundant `Review units emitted:` line (the
+  clean-block count and the pattern-level observation are *not* ledger-derivable and
+  stay). Cosmetic; fold into a later slice rather than churning the shipped M10
+  surface on its own
 - storyboard_review_fix apply step (after M6 proves out)
 - story-level reveals ledger with buildup (couples to continuity review; matters for book/series)
 - continuity review step
