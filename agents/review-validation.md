@@ -30,14 +30,20 @@ recorded.
 ## How to run it
 
 ```sh
-sh scripts/validate-review-artifact.sh <artifact-file> agents/review-grammars.yaml [<manifest-file>]
+sh scripts/validate-review-artifact.sh <artifact-file> agents/review-grammars.yaml [<manifest-file> [<effective-draft>]]
 ```
 
 From a consuming project the paths are
 `amanuensis/scripts/validate-review-artifact.sh` and
 `amanuensis/agents/review-grammars.yaml`. Always pass the manifest when one
 exists; without it the state layer reports `not checked` and staleness goes
-unexamined.
+unexamined. When the dispatcher passed a read-from draft, fix/apply steps
+pass that draft filename as the fourth argument — the effective draft, the
+resolved `<latest-draft>` for this invocation — and the state layer compares
+the artifact's stamp against it instead of the manifest's `Active-head:`
+(freshness is derived against the draft the run reads, per the Artifact-state
+contract; the mismatched `Active-head:` is noted, not blocking). Pass `-` as
+the manifest placeholder to give an effective draft without a manifest.
 
 ## Reading the output
 

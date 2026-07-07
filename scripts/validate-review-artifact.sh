@@ -4,7 +4,7 @@
 # rules are read from it, never hardcoded here).
 #
 # Usage:
-#   validate-review-artifact.sh <artifact-file> <grammar-yaml> [<manifest-file>]
+#   validate-review-artifact.sh <artifact-file> <grammar-yaml> [<manifest-file> [<effective-draft>]]
 #
 # Identifies the artifact's family by matching the artifact filename against
 # the grammar file's per-family `path_pattern`, parses the artifact into
@@ -13,10 +13,20 @@
 # four layers, reporting ALL of them — stale is reported alongside the other
 # layers, never instead of them:
 #
-#   state       only when <manifest-file> is given: the artifact's top-of-file
-#               `Reviewed-draft:` stamp must equal the manifest's
-#               `Active-head:` pointer.
-#   structural  every unit anchored, review-ids unique within the file,
+#   state       only when <manifest-file> and/or <effective-draft> is given.
+#               The artifact's top-of-file `Reviewed-draft:` stamp must equal
+#               the resolved `<latest-draft>` for this invocation: the
+#               manifest's `Active-head:` pointer by default, or
+#               <effective-draft> (a draft filename, e.g. draft-v01.md) when
+#               given — the read-from case, where a dispatcher override
+#               redefines `<latest-draft>` for one invocation and freshness
+#               is derived against the draft that run reads. Pass `-` as the
+#               manifest placeholder to give an effective draft without a
+#               manifest.
+#   structural  every unit anchored, review-ids unique within the file and
+#               matching the family's id shape (`id_item_pattern`,
+#               `id_min_locations`), each anchor immediately above its item
+#               line (`item_line_pattern`; an orphaned anchor is invalid),
 #               required fields present; where the family defines a
 #               `container_pattern`, a non-exempt container heading with zero
 #               anchored units is invalid (a positional/pre-migration report
@@ -60,20 +70,24 @@ err() {
 
 usage() {
     cat >&2 <<EOF
-Usage: $prog <artifact-file> <grammar-yaml> [<manifest-file>]
+Usage: $prog <artifact-file> <grammar-yaml> [<manifest-file> [<effective-draft>]]
 
   Validate a review artifact against the grammar file (normally
   agents/review-grammars.yaml; from a consuming project,
   amanuensis/agents/review-grammars.yaml). With a manifest file given,
   additionally compare the artifact's \`Reviewed-draft:\` stamp to the
-  manifest's \`Active-head:\` pointer (state layer).
+  manifest's \`Active-head:\` pointer (state layer). With <effective-draft>
+  given (a draft filename, e.g. draft-v01.md — the resolved <latest-draft>
+  for this invocation, such as a dispatcher read-from draft), the stamp is
+  compared against it instead; pass \`-\` as the manifest placeholder to
+  give an effective draft without a manifest.
 
   Exit codes: 0 proceed, 3 invalid-present, 4 pending-remain, 5 stale,
   1 input error, 2 usage error. Precedence: invalid > pending > stale.
 EOF
 }
 
-if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+if [ $# -lt 2 ] || [ $# -gt 4 ]; then
     usage
     exit 2
 fi
@@ -81,6 +95,10 @@ fi
 artifact_file=$1
 grammar_file=$2
 manifest_file=${3:-}
+effective_draft=${4:-}
+if [ "$manifest_file" = - ]; then
+    manifest_file=
+fi
 
 if [ ! -f "$artifact_file" ]; then
     err "artifact file not found: $artifact_file"
@@ -161,29 +179,51 @@ bulk_actions=$(yaml_get "$family" bulk_actions)
 bulk_payload_optional=$(yaml_get "$family" bulk_payload_optional)
 container_pattern=$(yaml_get "$family" container_pattern)
 container_exempt_suffix=$(yaml_get "$family" container_exempt_suffix)
+id_item_pattern=$(yaml_get "$family" id_item_pattern)
+id_min_locations=$(yaml_get "$family" id_min_locations)
+item_line_pattern=$(yaml_get "$family" item_line_pattern)
 
 if [ -z "$tokens" ]; then
     err "family \`$family\` defines no token list in $grammar_file"
     exit 1
 fi
 
-# State layer (only when a manifest is given).
+# State layer (only when a manifest and/or an effective draft is given). The
+# comparison target is the resolved <latest-draft> for this invocation: the
+# effective draft when given (the read-from case), else the manifest's
+# Active-head.
 stale=0
+active=
 if [ -n "$manifest_file" ]; then
-    stamp=$(awk '/^Reviewed-draft:/ { print $2; exit }' "$artifact_file")
     active=$(awk '/^Active-head:/ { print $2; exit }' "$manifest_file")
     if [ -z "$active" ]; then
         err "manifest $manifest_file carries no \`Active-head:\` pointer"
         exit 1
     fi
+fi
+if [ -n "$effective_draft" ] || [ -n "$manifest_file" ]; then
+    stamp=$(awk '/^Reviewed-draft:/ { print $2; exit }' "$artifact_file")
+    if [ -n "$effective_draft" ]; then
+        target=$effective_draft
+        target_desc="effective draft $effective_draft"
+    else
+        target=$active
+        target_desc="Active-head: $active"
+    fi
     if [ -z "$stamp" ]; then
         stale=1
-        state_line="STALE — artifact carries no \`Reviewed-draft:\` stamp (Active-head: $active)"
-    elif [ "$stamp" != "$active" ]; then
+        state_line="STALE — artifact carries no \`Reviewed-draft:\` stamp ($target_desc)"
+    elif [ "$stamp" != "$target" ]; then
         stale=1
-        state_line="STALE — Reviewed-draft: $stamp does not equal Active-head: $active"
+        state_line="STALE — Reviewed-draft: $stamp does not equal $target_desc"
+        if [ -n "$effective_draft" ] && [ -n "$active" ]; then
+            state_line="$state_line (manifest Active-head: $active)"
+        fi
     else
-        state_line="fresh (Reviewed-draft: $stamp equals Active-head: $active)"
+        state_line="fresh (Reviewed-draft: $stamp equals $target_desc)"
+        if [ -n "$effective_draft" ] && [ -n "$active" ] && [ "$active" != "$effective_draft" ]; then
+            state_line="fresh (Reviewed-draft: $stamp equals $target_desc; manifest Active-head: $active overridden by read-from)"
+        fi
     fi
 else
     state_line="not checked (no manifest file given)"
@@ -204,6 +244,9 @@ report=$(awk \
     -v bulk_payload_optional="$bulk_payload_optional" \
     -v container_pattern="$container_pattern" \
     -v container_exempt="$container_exempt_suffix" \
+    -v id_item_pattern="$id_item_pattern" \
+    -v id_min_locations="${id_min_locations:-0}" \
+    -v item_line_pattern="$item_line_pattern" \
 '
 function in_list(tok, list,    i, n, arr) {
     if (tok == "" || list == "") return 0
@@ -248,6 +291,18 @@ function close_unit(    key) {
     cur_id = ""; have_decision = 0; dec_blank = 0; dec_token = ""
     invalid_reason = ""; reason_line = 0
 }
+# Anchor adjacency (structural layer): the line immediately after an anchor
+# must be the unit item line per the family item_line_pattern — not another
+# anchor, not a Decision field, not a blank line. This rule runs before the
+# anchor rule, so an anchor directly following an anchor orphans the first.
+expect_item {
+    expect_item = 0
+    if (item_line_pattern != "" && invalid_reason == "" && \
+        ($0 ~ /^[[:space:]]*-[[:space:]]+Decision(-note)?:/ || $0 !~ item_line_pattern)) {
+        invalid_reason = "orphaned anchor `" cur_id "` — the line immediately after the anchor is not the unit item line"
+        reason_line = anchor_line
+    }
+}
 # Anchor line: opens a new review unit.
 /^[[:space:]]*<!--[[:space:]]*review-id:/ {
     close_unit()
@@ -256,6 +311,7 @@ function close_unit(    key) {
     sub(/[[:space:]]*-->[[:space:]]*$/, "", id)
     cur_id = id
     anchor_line = NR
+    expect_item = 1
     if (container_line > 0) container_units++
     if (id in seen) {
         invalid_reason = "duplicate review-id `" id "`"
@@ -263,6 +319,29 @@ function close_unit(    key) {
     } else if (index(id, family ":") != 1) {
         invalid_reason = "review-id `" id "` does not begin with `" family ":`"
         reason_line = NR
+    } else {
+        # id shape: <family>:<location...>:<item-id> — the item segment must
+        # match the family pattern, with at least id_min_locations location
+        # segments between the family prefix and the item-id, none empty.
+        nseg = split(id, seg, ":")
+        if (nseg < 2 || seg[nseg] == "") {
+            invalid_reason = "review-id `" id "` has no item-id segment"
+            reason_line = NR
+        } else if (id_item_pattern != "" && seg[nseg] !~ ("^(" id_item_pattern ")$")) {
+            invalid_reason = "review-id `" id "` item segment `" seg[nseg] "` does not match the family shape `" id_item_pattern "`"
+            reason_line = NR
+        } else if (nseg - 2 < id_min_locations + 0) {
+            invalid_reason = "review-id `" id "` has too few location segments (family requires at least " id_min_locations + 0 ")"
+            reason_line = NR
+        } else {
+            for (i = 2; i < nseg; i++) {
+                if (seg[i] == "") {
+                    invalid_reason = "review-id `" id "` has an empty location segment"
+                    reason_line = NR
+                    break
+                }
+            }
+        }
     }
     seen[id] = 1
     next
@@ -416,6 +495,10 @@ in_elig {
     next
 }
 END {
+    if (expect_item && cur_id != "" && invalid_reason == "") {
+        invalid_reason = "orphaned anchor `" cur_id "` — no item line follows the anchor"
+        reason_line = anchor_line
+    }
     close_unit()
     close_container()
     printf "#COUNTS %d %d %d %d %d %d\n", \

@@ -18,10 +18,22 @@
 # flat, single-line, and free of colons in their values:
 #   adoption, migrates_in, path_pattern, tokens, payload_optional,
 #   payload_required, payload_forbidden, bulk_supported, bulk_actions,
-#   bulk_payload_optional, container_pattern, container_exempt_suffix
+#   bulk_payload_optional, container_pattern, container_exempt_suffix,
+#   id_item_pattern, id_min_locations, item_line_pattern
 # Every other key is contract prose for agents and humans; the script never
 # reads it. Token lists are space-separated; the script reads them from here
 # and hardcodes nothing.
+#
+# Id-shape and anchor-adjacency enforcement. `id_item_pattern` is an ERE the
+# review-id's trailing item segment must match in full. `id_min_locations`
+# is the minimum number of location segments between the family prefix and
+# the item-id — the family's shortest legal (short_story) form: 0 for
+# prose_pass, whose short_story form is `prose_pass:finding-NN`; 1 for the
+# scene-sectioned families. `item_line_pattern` is an ERE the line
+# immediately after an anchor must match — the unit's own item line; an
+# anchor followed by anything else (another anchor, a Decision field, a
+# blank line, end of file) is an orphaned anchor and fails structural
+# validation.
 #
 # Container detection (optional per family). `container_pattern` is a heading
 # prefix identifying a section of the report that must hold anchored review
@@ -79,6 +91,9 @@ compliance:
   review_id_item: "block-<NNN>-v<KK> — the storyboard block number plus the violation's ordinal within that block's entry, both already in the report"
   review_id_book: "compliance:<book-id>:<chapter-id>:<scene-id>:block-<NNN>-v<KK> — e.g. compliance:book1:chapter02:02-03:block-050-v01"
   review_id_short_story: "compliance:<scene-id>:block-<NNN>-v<KK> — e.g. compliance:01-01:block-011-v01"
+  id_item_pattern: "block-[0-9][0-9][0-9]-v[0-9][0-9]"
+  id_min_locations: 1
+  item_line_pattern: "^- "
   container_pattern: "### Block "
   container_exempt_suffix: "— CLEAN"
   tokens: FIX SKIP ESCALATE
@@ -109,6 +124,9 @@ prose_pass:
   review_id_item: "finding-<NN> — the finding's emission ordinal within the report, counted over actionable findings only"
   review_id_book: "prose_pass:<book-id>:<chapter-id>:finding-<NN> — e.g. prose_pass:book1:chapter02:finding-01 (chapter-scoped report; no scene segment)"
   review_id_short_story: "prose_pass:finding-<NN> — e.g. prose_pass:finding-01"
+  id_item_pattern: "finding-[0-9][0-9]"
+  id_min_locations: 0
+  item_line_pattern: "^##### "
   tokens: FIX SKIP ESCALATE
   payload_optional: FIX
   payload_required:
@@ -137,6 +155,9 @@ anti_ai:
   review_id_item: "<category-slug>-<NN> — the category name lowercased and dash-joined, plus the instance's emission ordinal within that category and scene (e.g. em-dashes-03, negative-parallelism-01)"
   review_id_book: "anti_ai:<book-id>:<chapter-id>:<scene-id>:<category-slug>-<NN> — e.g. anti_ai:book1:chapter02:02-01:em-dashes-01"
   review_id_short_story: "anti_ai:<scene-id>:<category-slug>-<NN> — e.g. anti_ai:01-01:em-dashes-01"
+  id_item_pattern: "[a-z0-9-]+-[0-9][0-9]"
+  id_min_locations: 1
+  item_line_pattern: "^- "
   tokens: FIX SKIP ESCALATE
   payload_optional: FIX
   payload_required:
@@ -167,6 +188,9 @@ metaphor:
   review_id_item: "figure-<NN> — the entry's emission ordinal within its scene section"
   review_id_book: "metaphor:<book-id>:<chapter-id>:<scene-id>:figure-<NN> — e.g. metaphor:book1:chapter02:02-03:figure-04"
   review_id_short_story: "metaphor:<scene-id>:figure-<NN> — e.g. metaphor:01-02:figure-03"
+  id_item_pattern: "figure-[0-9][0-9]"
+  id_min_locations: 1
+  item_line_pattern: "^### "
   tokens: KEEP REJECT FLATTEN REPLACE WORKSHOP
   payload_optional:
   payload_required: REPLACE
