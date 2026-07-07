@@ -56,7 +56,9 @@ Expected against agents/review-grammars.yaml, no manifest given:
   findings, none
   total 6, pending 1, decided 3, inherited-by-bulk 0, skipped 1,
   escalated 1, invalid 0, stale 0
+  pending-review-ids: anti_ai:book1:chapter02:02-01:negative-parallelism-02
   verdict pending-remain, exit 4
-(negative-parallelism-02 is the pending unit; deciding it yields verdict
-proceed, exit 0.)
+(negative-parallelism-02 is the pending unit — the validator lists it under
+pending-review-ids: because pending is nonzero; deciding it yields verdict
+proceed, exit 0, and the pending-review-ids section disappears.)
 -->

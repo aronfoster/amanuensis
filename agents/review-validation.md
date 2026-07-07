@@ -57,6 +57,15 @@ bulk), `skipped`, `escalated`, `invalid` (illegal tokens, payload
 violations, duplicate or missing anchors, missing `Decision:` fields, illegal
 bulk headers), `stale` (0 or 1, artifact-level).
 
+When `pending` is nonzero the script additionally prints a
+`pending-review-ids:` section listing the review-id of every pending unit,
+one per line, in document order — the same units the `pending` count covers.
+This is the deterministic source a consumer uses to *name* the remaining
+units: a fix/apply step's `review_pending` blocker copies these ids rather
+than re-scanning the artifact for blank `Decision:` fields by eye, and the
+companion uses them as its pending queue. The section is absent when
+`pending` is 0 (a clean or purely-invalid artifact lists no pending ids).
+
 Exit codes, precedence `invalid > pending > stale > proceed`:
 
 | Exit | Verdict | Meaning |
@@ -76,12 +85,13 @@ both problems exist.
 
 - **Fix/apply steps** proceed only on exit 0 — for compliance: zero
   actionable-pending units and zero invalid units. Exit 4 blocks as
-  `review_pending`, naming the pending review-ids (or their count) in the
-  blocker; exit 3 blocks as invalid input, naming the findings; exit 5 blocks
-  as stale unless a recorded override applies (per the Artifact-state
-  section — an override lifts the stale axis only, never pending or
-  invalid). Each family's `proceed_state` line in the grammar file states its
-  instance of this rule.
+  `review_pending`, copying the script's `pending-review-ids:` list into the
+  blocker (or, when the list is long, their count with a few examples); exit
+  3 blocks as invalid input, naming the findings; exit 5 blocks as stale
+  unless a recorded override applies (per the Artifact-state section — an
+  override lifts the stale axis only, never pending or invalid). Each
+  family's `proceed_state` line in the grammar file states its instance of
+  this rule.
 - **The companion** treats exit 4 as its normal working state — the pending
   units are its queue. On exit 3 it surfaces the invalid findings before any
   review work; on exit 5 it surfaces staleness to the human before any review

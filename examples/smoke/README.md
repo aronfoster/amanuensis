@@ -286,8 +286,8 @@ Expected observable outcome — a clean blocked exit, not a dispatcher error:
 
 - The dispatcher's existence checks pass: both `required: true` preconditions resolve — `anti-ai.md` exists and `<latest-draft>` resolves to `draft-v02.md` — so the step body loads.
 - The step-start freshness check passes (the stamp names `draft-v02.md`, the active head), so staleness is not the blocker.
-- The step then runs the shared validator over the report, which reports `pending-remain` (exit 4): total 1, pending 1, everything else 0 — the single unit carries a blank `Decision:` and therefore no review evidence. The per-unit review-evidence gate is what fails: the report is `review_pending`. (No `draft-manifest.md` exists, so the validator's state layer is `not checked`; freshness was already confirmed at step start.)
-- The step appends the `review_pending` blocker to `open-questions.md`, naming the pending review-id `anti_ai:001:em-dashes-01`.
+- The step then runs the shared validator over the report, which reports `pending-remain` (exit 4): total 1, pending 1, everything else 0 — the single unit carries a blank `Decision:` and therefore no review evidence. Because pending is nonzero, the validator also prints a `pending-review-ids:` section naming `anti_ai:001:em-dashes-01`. The per-unit review-evidence gate is what fails: the report is `review_pending`. (No `draft-manifest.md` exists, so the validator's state layer is `not checked`; freshness was already confirmed at step start.)
+- The step appends the `review_pending` blocker to `open-questions.md`, copying the validator's `pending-review-ids:` list — here the single id `anti_ai:001:em-dashes-01`.
 - No `plot/drafts/attempt01/draft-v03.md` is written, and no `draft-manifest.md` is created.
 - No completion is recorded: the `anti_ai_fix` line stays `[ ]` and `pipeline-state.md` is untouched (`last_updated` unchanged).
 
@@ -409,8 +409,8 @@ Then:
 Expected observable outcome — a clean blocked exit, not a dispatcher error:
 
 - The dispatcher's existence checks pass and the step-start freshness check passes (the stamp names `draft-v02.md`, the active head), so staleness is not the blocker.
-- The step then runs the shared validator over the report, which reports `pending-remain` (exit 4): total 1, pending 1, everything else 0 — the single unit carries a blank `Decision:` and therefore no review evidence. The per-unit review-evidence gate is what fails: the report is `review_pending`.
-- The step appends the `review_pending` blocker to `open-questions.md`, naming the pending review-id `compliance:001:block-001-v01`.
+- The step then runs the shared validator over the report, which reports `pending-remain` (exit 4): total 1, pending 1, everything else 0 — the single unit carries a blank `Decision:` and therefore no review evidence, and the validator prints a `pending-review-ids:` section naming `compliance:001:block-001-v01`. The per-unit review-evidence gate is what fails: the report is `review_pending`.
+- The step appends the `review_pending` blocker to `open-questions.md`, copying the validator's `pending-review-ids:` list — here the single id `compliance:001:block-001-v01`.
 - No `plot/drafts/attempt01/draft-v03.md` is written and no `draft-manifest.md` is created.
 - No completion is recorded: the `compliance_fix` line stays `[ ]` and `pipeline-state.md` is untouched (`last_updated` unchanged).
 
@@ -446,7 +446,7 @@ Review the compliance report.
 
 Expected observable outcome:
 
-- The skill activates, identifies `plot/drafts/attempt01/reviewer-actions.md` as a compliance artifact (an `adopted` family), and runs the shared validator before presenting anything. It reports the ledger — total 1, pending 1, everything else 0 — and queues the single pending unit. (No `draft-manifest.md` exists, so the validator's state layer is `not checked`; the stamp names the fallback active head `draft-v02.md`, so nothing stale is surfaced.)
+- The skill activates, identifies `plot/drafts/attempt01/reviewer-actions.md` as a compliance artifact (an `adopted` family), and runs the shared validator before presenting anything. It reports the ledger — total 1, pending 1, everything else 0 — and queues the single pending unit named in the validator's `pending-review-ids:` list. (No `draft-manifest.md` exists, so the validator's state layer is `not checked`; the stamp names the fallback active head `draft-v02.md`, so nothing stale is surfaced.)
 - It presents unit `compliance:001:block-001-v01`, explains the legal decisions for the compliance family (per `agents/review-grammars.yaml`), and may recommend one without applying it. The human states the decision — e.g. "fix it: change 'The lamp went dark' to 'The lamp guttered out on its own'".
 - The skill writes the decision into the unit's `Decision:` field, located by review-id — the line now reads exactly as Recipe 9's hand-edit — preserving all surrounding markdown, then re-validates: decided 1, pending 0, verdict `proceed` (exit 0).
 - Nothing else changes: no prose file is written or modified, no draft is minted, and `pipeline-state.md`, the `Reviewed-draft:` stamp, and every checkbox are untouched.
@@ -512,8 +512,8 @@ First run the fix step:
 Expected observable outcome — a clean blocked exit, not a dispatcher error:
 
 - The existence checks pass and the step-start freshness check passes (the stamp names `draft-v02.md`, the active head).
-- The shared validator reports `pending-remain` (exit 4): total 4, pending 4, everything else 0 — every unit's `Decision:` is blank.
-- The step appends the `review_pending` blocker to `open-questions.md`, naming all four pending review-ids (`anti_ai:001:em-dashes-01` through `-03` and `anti_ai:001:negative-parallelism-01`).
+- The shared validator reports `pending-remain` (exit 4): total 4, pending 4, everything else 0 — every unit's `Decision:` is blank — and its `pending-review-ids:` section lists all four (`anti_ai:001:em-dashes-01` through `-03` and `anti_ai:001:negative-parallelism-01`).
+- The step appends the `review_pending` blocker to `open-questions.md`, copying that `pending-review-ids:` list — all four ids.
 - No draft is written, no `draft-manifest.md` is created, and no completion is recorded.
 
 Then run a companion session (Recipe 10's precedent — invoked conversationally, not through `/run-step`):
@@ -526,7 +526,7 @@ Review the anti-AI report.
 
 Expected observable outcome:
 
-- The skill activates, identifies `plot/drafts/attempt01/anti-ai.md` as an anti_ai artifact (an `adopted` family), and runs the shared validator before presenting anything. It reports the ledger — total 4, pending 4 — and presents the pending units as category queues within the scene: Em Dashes (3 pending), Negative Parallelism (1 pending).
+- The skill activates, identifies `plot/drafts/attempt01/anti-ai.md` as an anti_ai artifact (an `adopted` family), and runs the shared validator before presenting anything. It reports the ledger — total 4, pending 4 — and, from the validator's `pending-review-ids:` list, presents the pending units as category queues within the scene: Em Dashes (3 pending), Negative Parallelism (1 pending).
 - On the Em Dashes queue it may offer a category-level decision — em-dashes is named in the family's `fanout_categories` declaration — surfacing the grammar's recommended default (`FIX: rewrite`) without applying it. It never offers fan-out on Negative Parallelism, which the declaration does not name.
 - The human states the category decision plus one per-entry exception — e.g. "fix all em dashes — rewrite; but skip the clock one, the aside reads right there". The skill writes `Decision: SKIP` into `anti_ai:001:em-dashes-03` with a per-entry `Decision-note:` (e.g. `per-entry exception to the category decision; the aside reads right here`) and fans the stated decision into the two still-pending em-dash units — each `Decision:` reading `FIX: rewrite`, each `Decision-note:` marked as a category decision (e.g. `category decision — fix all em dashes, rewrite around them`). A fan-out is one human decision mechanically applied; the skill writes nothing the human did not state.
 - Re-validation after the write batch: total 4, pending 1, decided 2, skipped 1 — verdict `pending-remain` (exit 4). Only the non-eligible `anti_ai:001:negative-parallelism-01` is still pending; the human decides it per entry. Negative Parallelism has no bare-`FIX` rule, so on a bare "fix it" the skill says so and asks for the instruction — e.g. `FIX: collapse the two beats into "The quiet troubled him more than the dark."` The skill writes it and re-validates: total 4, pending 0, decided 3, skipped 1 — verdict `proceed` (exit 0).
@@ -574,7 +574,7 @@ Then:
 Expected observable outcome — a clean blocked exit, not a dispatcher error:
 
 - The existence checks pass and the step-start freshness check passes (the stamp names `draft-v02.md`, the active head).
-- The shared validator reports `invalid-present` (exit 3), its findings naming the header line: ``bulk header illegal: family `anti_ai` has no bulk support``. The ledger counts the defect: total 2, pending 1, invalid 1 — and `inherited-by-bulk` stays 0: the blank unit under the header stays pending, never inherited, because the artifact carries no bulk grammar of any kind. Invalid takes precedence over pending — the pending count is not trustworthy until the defect is fixed.
+- The shared validator reports `invalid-present` (exit 3), its findings naming the header line: ``bulk header illegal: family `anti_ai` has no bulk support``. The ledger counts the defect: total 2, pending 1, invalid 1 — and `inherited-by-bulk` stays 0: the blank unit under the header stays pending, never inherited, because the artifact carries no bulk grammar of any kind. Because pending is nonzero the validator still lists that one unit under `pending-review-ids:`, but invalid takes precedence over pending — the pending count is not trustworthy until the defect is fixed.
 - The step blocks as invalid input, appending the blocker to `open-questions.md` and naming the validator's finding.
 - No draft is written, no `draft-manifest.md` is created, and no completion is recorded.
 

@@ -50,7 +50,11 @@ agents/review-grammars.yaml, no manifest given:
   one finding, the illegal KEEP token on compliance:01-01:block-014-v03
   total 6, pending 1, decided 2, inherited-by-bulk 0, skipped 1,
   escalated 1, invalid 1, stale 0
+  pending-review-ids: compliance:01-01:block-014-v01
   verdict invalid-present, exit 3
+(pending is nonzero, so the validator lists the one pending unit under
+pending-review-ids: even though the verdict is invalid-present — invalid
+takes precedence, but the pending unit is still named.)
 Filling block-014-v01 and correcting block-014-v03 to a legal token yields
 verdict proceed, exit 0.
 -->

@@ -46,10 +46,13 @@ check the prose, never apply a fix, and never decide for the human.
 4. **Report the ledger counts** exactly as the script printed them — total,
    pending, decided, inherited-by-bulk, skipped, escalated, invalid, stale.
    Never assemble counts by prose-following.
-5. **Present pending units as a queue.** For families whose reports section
-   units by category (today: anti_ai's `### <Category>` subsections), group
-   the queue by category within scene, with a pending count per category —
-   see "Category queues and fan-out" below. For each unit:
+5. **Present pending units as a queue.** The queue is the validator's
+   `pending-review-ids:` list (printed whenever `pending` is nonzero) — take
+   the remaining units from there, not by re-scanning the artifact for blank
+   `Decision:` fields. For families whose reports section units by category
+   (today: anti_ai's `### <Category>` subsections), group the queue by
+   category within scene, with a pending count per category — see "Category
+   queues and fan-out" below. For each unit:
    - Show the unit — its anchor, its content, its current fields.
    - Explain the legal decisions for this artifact, read from the family's
      entry in `amanuensis/agents/review-grammars.yaml` (tokens, payload

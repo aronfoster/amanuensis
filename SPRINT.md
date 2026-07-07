@@ -168,3 +168,11 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 - **Dispatcher changes.** Still existence-only; M9.6 remains deferred; both `run-step`/`next-step` adapter sets untouched.
 - **Any change to the step set, `scripts/check-pipeline-state.sh`, either CI workflow, or either `pipeline-state.md`.** Byte-for-byte unchanged.
 - **Report quality, prose rewriting, or decision automation beyond what the grammar grants.** The companion captures decisions — a stated category fan-out included — but never fills one the human did not state.
+
+---
+
+## Post-sprint follow-up (M11 PR review)
+
+Recorded after the Sprint closed, from code review on the M11 PR. The Sprint's "byte-for-byte unchanged validator" requirement (Definition-of-done item 3, the Conventions "the whole validator is too" bullet, and the "Any validator change" out-of-scope bullet) held for everything the Sprint shipped. One deliberate improvement was made afterward and supersedes that constraint:
+
+- **`scripts/validate-review-artifact.sh` now prints a `pending-review-ids:` section** listing the review-id of every pending unit (in document order) whenever `pending` > 0. The `anti_ai_fix` / `compliance_fix` `review_pending` blockers and the `amanuensis-review` companion take the remaining set from that deterministic list instead of re-enumerating blank `Decision:` fields by eye — closing the one place the design still asked an LLM to enumerate what the script already knows (M10's own rationale for making the validator deterministic). Exit codes and every ledger count are unchanged; the section is additive and absent when `pending` is 0. `agents/review-validation.md`, both fix steps, both adopted fixtures' expectation comments, and the smoke recipes were updated to match; `examples/review/{prose-pass,metaphors}.md` (not-yet-adopted) are untouched.
