@@ -46,7 +46,13 @@ check the prose, never apply a fix, and never decide for the human.
 4. **Report the ledger counts** exactly as the script printed them — total,
    pending, decided, inherited-by-bulk, skipped, escalated, invalid, stale.
    Never assemble counts by prose-following.
-5. **Present pending units as a queue.** For each unit:
+5. **Present pending units as a queue.** The queue is the validator's
+   `pending-review-ids:` list (printed whenever `pending` is nonzero) — take
+   the remaining units from there, not by re-scanning the artifact for blank
+   `Decision:` fields. For families whose reports section units by category
+   (today: anti_ai's `### <Category>` subsections), group the queue by
+   category within scene, with a pending count per category — see "Category
+   queues and fan-out" below. For each unit:
    - Show the unit — its anchor, its content, its current fields.
    - Explain the legal decisions for this artifact, read from the family's
      entry in `amanuensis/agents/review-grammars.yaml` (tokens, payload
@@ -67,6 +73,55 @@ check the prose, never apply a fix, and never decide for the human.
    pending — so a later session resumes from accurate numbers rather than
    memory.
 
+## Category queues and fan-out
+
+Some families' reports section their units by category within each scene
+(today: anti_ai). For these families, present the pending queue grouped by
+category within scene, each category with its pending count, so the human
+can work a category at a time. Grouping is presentation only; every unit
+still needs its own filled `Decision:` field.
+
+### Fan-out capture
+
+Where the family's `fanout_categories` declaration in
+`amanuensis/agents/review-grammars.yaml` names a category, you may offer a
+category-level decision on entering that category's queue, surfacing the
+grammar's recommended default from its `fanout_rules` line. Match a category
+to the declaration by the slug in its units' review-ids — the
+`<category-slug>` segment before the trailing `-NN` (e.g. `em-dashes-03` →
+`em-dashes`) — not by normalizing the heading text, whose spacing does not
+always reduce cleanly to the slug (`### Superficial -ing Analysis` →
+`superficial-ing-analysis`). A fan-out is one human decision mechanically
+applied — never an agent-originated one:
+
+- When the human states a category-level decision, write it into **every
+  pending unit** of that category: fill each unit's `Decision:` field with
+  the stated decision and mark each `Decision-note:` as a category decision
+  (e.g. `category decision — <the human's words>`). Then re-validate and
+  report the updated counts, as after any write.
+- Per-entry exceptions are ordinary captures: a unit the human decides
+  individually — before or after the fan-out — keeps its own decision. A
+  fan-out covers pending units only; it never overwrites a filled field.
+- Never offer or perform fan-out on a category or family the declaration
+  does not name.
+- Never fan out a decision the human did not state. The grammar's
+  recommended default is a recommendation, not a decision; surfacing it is
+  presentation, and only the human's statement of it gets written.
+
+Fan-out writes land in per-unit `Decision:` / `Decision-note:` fields, like
+every other capture. The retired `BULK:` header grammar is invalid input in
+every artifact — the validator rejects it, and you never write one.
+
+### Payload prompting
+
+Some anti-AI categories have no bare-`FIX` rule at apply time; the category
+fix rules in `amanuensis/agents/steps/anti-ai-fix.md` say which. When the
+human states `FIX` — per unit or as a fan-out — on such a category, say so
+and ask for the instruction (`FIX: <instruction>`). If the human declines to
+give one, capture exactly what they stated, explaining the consequence: a
+bare `FIX` there falls back to `ESCALATE` at apply time. Never coerce a
+payload out of the human and never invent one.
+
 ## Pacing controls
 
 These are presentation controls only — they change what is shown, never what
@@ -80,6 +135,10 @@ is decided. Showing five units still requires five human decisions.
   (a presentation filter; escalating remains the human's decision).
 - `show category summary` — pending/decided counts grouped by the report's
   own categories.
+- `review category <category>` — enter the named category's pending queue.
+  Entering it may surface a fan-out offer, but only where the grammar
+  declares the category (see "Category queues and fan-out"); the offer is
+  presentation, and only a decision the human states gets written.
 - `go back` — return to the previous unit (its decision can be restated).
 - `stop and save` — end the session after a final re-validate and summary.
 - `summarize progress` — report the current ledger counts.
@@ -90,16 +149,23 @@ is decided. Showing five units still requires five human decisions.
   `Reviewed-draft:` stamps. Your writes are confined to `Decision:` /
   `Decision-note:` fields inside the review artifact.
 - Never fill a decision the human did not state. A recommendation is not a
-  decision.
-- No bulk anywhere the grammar or the report's own declarations do not grant
-  it — compliance grants none. The decision-automation forbidden list in
-  `amanuensis/agents/review-validation.md` binds this skill.
+  decision. A stated category-level decision states the decision for every
+  pending unit it covers — and nothing else: no other category, no other
+  family, no unit already decided.
+- No fan-out anywhere the grammar does not declare it: only a category named
+  in the family's `fanout_categories` declaration in
+  `amanuensis/agents/review-grammars.yaml` is eligible — compliance declares
+  none. No artifact carries a bulk grammar; a `BULK:` header is retired,
+  invalid input. The decision-automation rules in
+  `amanuensis/agents/review-validation.md` bind this skill.
 - This skill is not a pipeline step: it has no step_id, appears in no
   recipe, and never touches `pipeline-state.md`.
 
 ---
 
 Canonical contracts: `amanuensis/agents/review-grammars.yaml` (grammar,
-tokens, review-ids), `amanuensis/agents/review-validation.md` (when to run
-the validator, exit codes, decision automation),
-`amanuensis/scripts/validate-review-artifact.sh` (usage header).
+tokens, review-ids, fan-out declarations), `amanuensis/agents/review-validation.md`
+(when to run the validator, exit codes, decision automation),
+`amanuensis/agents/steps/anti-ai-fix.md` (category fix rules — which
+categories need a `FIX` payload), `amanuensis/scripts/validate-review-artifact.sh`
+(usage header).

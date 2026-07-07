@@ -20,6 +20,9 @@
 #   payload_required, payload_forbidden, bulk_supported, bulk_actions,
 #   bulk_payload_optional, container_pattern, container_exempt_suffix,
 #   id_item_pattern, id_min_locations, item_line_pattern
+# No adopted family sets bulk support; the bulk keys remain machine-read so
+# that a stray `BULK:` header in any artifact is rejected as invalid input
+# rather than silently ignored.
 # Every other key is contract prose for agents and humans; the script never
 # reads it. Token lists are space-separated; the script reads them from here
 # and hardcodes nothing.
@@ -37,14 +40,16 @@
 #
 # Container detection (optional per family). `container_pattern` is a heading
 # prefix identifying a section of the report that must hold anchored review
-# units when it holds violation content (compliance uses `### Block `). A
-# container heading ending in `container_exempt_suffix` (compliance: the
-# `— CLEAN` suffix) legitimately holds no units. Any other container with
-# zero anchored units fails structural validation as invalid — this is what
-# makes a positional/pre-migration report an invalid input rather than a
-# silently empty one. Families that leave these keys unset get no container
-# check; the pending families settle their container shapes when their
-# milestones retarget their report steps (M11-M13).
+# units when it holds violation content (compliance uses `### Block `;
+# anti_ai is settled with a plain `### ` and no exempt keys — every `### `
+# heading in its artifact is a category container). A container heading
+# ending in `container_exempt_suffix` (compliance: the `— CLEAN` suffix)
+# legitimately holds no units. Any other container with zero anchored units
+# fails structural validation as invalid — this is what makes a
+# positional/pre-migration report an invalid input rather than a silently
+# empty one. Families that leave these keys unset get no container check;
+# the two pending families settle their container shapes when their
+# milestones retarget their report steps (M12-M13).
 #
 # Shared review item shape (ROADMAP.md M10 shared-design principle 3):
 #
@@ -56,8 +61,8 @@
 #
 # `Decision:` carries the machine-readable what; `Decision-note:` the human
 # why. A blank `Decision:` means pending — no review evidence — for every
-# family; anti-AI bulk inheritance is the only exception. A payload follows
-# its token after a colon, e.g. `Decision: FIX: cut the clause`.
+# family, with no exceptions. A payload follows its token after a colon,
+# e.g. `Decision: FIX: cut the clause`.
 #
 # review-id grammar: `<artifact-family>:<location...>:<item-id>`.
 #   book / series : <family>:<book-id>:<chapter-id>[:<scene-id>]:<item-id>
@@ -141,36 +146,37 @@ prose_pass:
   fixture: examples/review/prose-pass.md
 
 anti_ai:
-  adoption: pending
+  adoption: adopted
   migrates_in: M11
   artifact: anti-ai.md
   path_pattern: anti-ai.md
   path: "<chapter-folder>/drafts/<latest-attempt>/anti-ai.md"
   producer: anti_ai_report
   consumer: anti_ai_fix
-  item_shape: "One review unit per flagged instance, listed under its `### <Category>` subsection inside a scene section. The anchor sits immediately above the flagged-quote line; `- Decision:` / `- Decision-note:` are nested one level below it. A scene section opens with the report's `BULK eligibility:` declaration block, and a category subsection may open with one `BULK:` header line (before any anchors) where that declaration permits."
+  item_shape: "One review unit per flagged instance, listed under its `### <Category>` subsection inside a scene section. The anchor sits immediately above the unit's single top-level `- ` entry line; auxiliary lines (e.g. Synonym Cycling's `- Cycled terms:`) and the `- Decision:` / `- Decision-note:` fields are nested one level below it. A scene with zero flags records its scene header plus a single `No flags.` line — no anchor, no fields, not a review unit. A non-empty `### ` category section with zero anchored units fails structural validation: a positional/pre-M11 report is an invalid input, never a silently empty one."
   required_fields: Decision
   optional_fields: Decision-note
-  anchor: "`<!-- review-id: ... -->` on its own line immediately above the flagged-quote line it addresses"
+  anchor: "`<!-- review-id: ... -->` on its own line immediately above the flagged instance's entry line"
   review_id_item: "<category-slug>-<NN> — the category name lowercased and dash-joined, plus the instance's emission ordinal within that category and scene (e.g. em-dashes-03, negative-parallelism-01)"
   review_id_book: "anti_ai:<book-id>:<chapter-id>:<scene-id>:<category-slug>-<NN> — e.g. anti_ai:book1:chapter02:02-01:em-dashes-01"
   review_id_short_story: "anti_ai:<scene-id>:<category-slug>-<NN> — e.g. anti_ai:01-01:em-dashes-01"
   id_item_pattern: "[a-z0-9-]+-[0-9][0-9]"
   id_min_locations: 1
   item_line_pattern: "^- "
+  container_pattern: "### "
   tokens: FIX SKIP ESCALATE
   payload_optional: FIX
   payload_required:
   payload_forbidden: SKIP ESCALATE
-  payload_meaning: "The FIX payload is the fix instruction (e.g. `FIX: comma`), passed to anti_ai_fix as today."
-  blank_means: "pending, unless the unit sits under a legal BULK header for its category — then it inherits the bulk default and counts as decided-inherited-by-bulk. This inheritance is the only blank-means-decided exception in any family."
-  bulk_supported: yes
-  bulk_actions: FIX SKIP
-  bulk_payload_optional: FIX
-  bulk_rules: "Two layers, both required. Static: this is the only family with bulk support. Dynamic: a BULK header is legal only on a category the report's per-scene `BULK eligibility:` block declares `BULK permitted`. Header grammar, one line at the head of the category subsection: `BULK: FIX[: <instruction>]` or `BULK: SKIP`. Per-entry decisions override the bulk default. A BULK header on an undeclared category (or in any other family) is invalid and never satisfies review evidence — the items under it stay pending absent per-entry decisions."
-  counting: "Review unit = one flagged instance, except that a category under a legal BULK header is adjudicated as one category-level unit: its blank items count as decided-inherited-by-bulk, never pending, and its explicitly decided items count in their own buckets as overrides."
-  review_evidence: "A filled `Decision:` field, or a blank `Decision:` covered by a legal BULK header for its category."
-  proceed_state: "anti_ai_fix proceeds only at zero pending units and zero invalid units (an illegal BULK header is invalid); staleness per the Artifact-state contract."
+  payload_meaning: "The FIX payload is the fix instruction, carried to anti_ai_fix in the unit's `Decision:` field (e.g. `Decision: FIX: comma`)."
+  blank_means: "pending — the unit carries no review evidence; there is no inheritance of any kind, and any flagged instance with a blank Decision blocks anti_ai_fix as review_pending (per-unit gate)"
+  bulk_supported: no
+  bulk_rules: "None — header bulk retired in Sprint 16 under the AI-plus-human review directive. The artifact carries no bulk grammar of any kind: a `BULK:` header is invalid input, never silently tolerated. Category-level review survives as companion fan-out per the fanout_categories / fanout_rules keys below — decisions land in per-unit `Decision:` fields, never in headers."
+  fanout_categories: em-dashes copula-avoidance superficial-ing-analysis transition-openers flagged-words
+  fanout_rules: "Companion capture behavior, not artifact grammar (contract prose; the validator never reads the fanout keys). Recommended defaults: em-dashes `FIX: rewrite`; the other eligible categories bare `FIX`. One human statement adjudicates the category's pending units: the companion writes the stated decision into each pending unit's `Decision:` field and marks each `Decision-note:` as a category decision — the audit record that the unit was decided at category level. Per-entry exceptions are stated per unit and kept as the unit's own decision."
+  counting: "Review unit = one flagged instance (one anchor). `No flags.` scenes contribute no units. Progress = decided + skipped + escalated over total."
+  review_evidence: "A filled `Decision:` field holding a legal token, with payload where given."
+  proceed_state: "anti_ai_fix proceeds only at zero pending units and zero invalid units; staleness per the Artifact-state contract."
   fixture: examples/review/anti-ai.md
 
 metaphor:

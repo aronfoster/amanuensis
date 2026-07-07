@@ -41,6 +41,11 @@
 #               decided-inherited-by-bulk / skipped / escalated / invalid,
 #               with printed counts: total / pending / decided /
 #               inherited-by-bulk / skipped / escalated / invalid / stale.
+#               When pending units remain, their review-ids are additionally
+#               listed under a `pending-review-ids:` section so a consumer
+#               (a fix/apply step's blocker, the review companion) names the
+#               exact remaining units from this deterministic list rather
+#               than re-enumerating blank `Decision:` fields by eye.
 #
 # Exit codes (verdict precedence when several conditions hold:
 # invalid > pending > stale > proceed — invalid units must be fixed before
@@ -231,8 +236,9 @@ fi
 
 # Structural + grammar + ledger layers: one line-oriented pass over the
 # artifact. The awk program prints findings (one per line, prefixed
-# "  line N:") followed by a final machine line:
+# "  line N:") followed by machine lines:
 #   #COUNTS pending decided inherited skipped escalated invalid
+#   #PENDING <review-id> <review-id> ...   (only when pending units remain)
 report=$(awk \
     -v family="$family" \
     -v tokens="$tokens" \
@@ -280,7 +286,7 @@ function close_unit(    key) {
     } else if (dec_blank) {
         key = scene SUBSEP cur_cat
         if (bulk_ok[key]) inherited++
-        else pending++
+        else { pending++; pending_list = pending_list (pending_list == "" ? "" : " ") cur_id }
     } else if (dec_token == "SKIP") {
         skipped++
     } else if (dec_token == "ESCALATE") {
@@ -503,11 +509,13 @@ END {
     close_container()
     printf "#COUNTS %d %d %d %d %d %d\n", \
         pending, decided, inherited, skipped, escalated, invalid + defects
+    if (pending_list != "") printf "#PENDING %s\n", pending_list
 }
 ' "$artifact_file")
 
 counts=$(printf '%s\n' "$report" | awk '/^#COUNTS/ { print; exit }')
-findings=$(printf '%s\n' "$report" | grep -v '^#COUNTS' || true)
+pending_ids=$(printf '%s\n' "$report" | awk '/^#PENDING/ { sub(/^#PENDING /, ""); print; exit }')
+findings=$(printf '%s\n' "$report" | grep -v '^#COUNTS' | grep -v '^#PENDING' || true)
 
 # shellcheck disable=SC2086 # word splitting of the counts line is intended
 set -- $counts
@@ -541,5 +549,11 @@ printf '  skipped: %d\n' "$skipped"
 printf '  escalated: %d\n' "$escalated"
 printf '  invalid: %d\n' "$invalid"
 printf '  stale: %d\n' "$stale"
+if [ "$pending" -gt 0 ]; then
+    printf 'pending-review-ids:\n'
+    for id in $pending_ids; do
+        printf '  %s\n' "$id"
+    done
+fi
 printf 'verdict: %s (exit %d)\n' "$verdict" "$code"
 exit "$code"

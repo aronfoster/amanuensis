@@ -64,7 +64,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 
 ### Task 1 — Contract: `anti_ai` grammar rewrite, fan-out declaration, interpretation update, fixture
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** `anti_ai` becomes an `adopted` family with pure per-unit semantics, a single-sourced fan-out declaration, and complete validator coverage — with zero changes to the validator itself. Closes **M11.3**.
 
@@ -82,7 +82,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 
 ### Task 2 — Retarget `anti_ai_report` to emit structured review items
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The report emits addressable, countable review units and stops emitting the retired human-ergonomics apparatus. Closes **M11.1**.
 
@@ -102,7 +102,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 
 ### Task 3 — Retarget `anti_ai_fix` to consume structured decisions
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The fix step consumes explicit per-unit `Decision:` fields through the shared validator — a pure compliance clone, simpler than what it replaces. Closes **M11.2**.
 
@@ -119,7 +119,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 
 ### Task 4 — Companion support: category queues, fan-out capture, payload prompting
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The companion makes category-scale anti-AI review one human decision where the grammar permits it — without ever deciding itself. Closes **M11.4**.
 
@@ -136,7 +136,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 
 ### Task 5 — Smoke recipes, verification sweep, ROADMAP / SPRINT check-off
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Runnable verification of the anti-AI round-trip including fan-out; close the milestone. Closes **M11.5** and the residual of **M11**.
 
@@ -168,3 +168,11 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, interpretatio
 - **Dispatcher changes.** Still existence-only; M9.6 remains deferred; both `run-step`/`next-step` adapter sets untouched.
 - **Any change to the step set, `scripts/check-pipeline-state.sh`, either CI workflow, or either `pipeline-state.md`.** Byte-for-byte unchanged.
 - **Report quality, prose rewriting, or decision automation beyond what the grammar grants.** The companion captures decisions — a stated category fan-out included — but never fills one the human did not state.
+
+---
+
+## Post-sprint follow-up (M11 PR review)
+
+Recorded after the Sprint closed, from code review on the M11 PR. The Sprint's "byte-for-byte unchanged validator" requirement (Definition-of-done item 3, the Conventions "the whole validator is too" bullet, and the "Any validator change" out-of-scope bullet) held for everything the Sprint shipped. One deliberate improvement was made afterward and supersedes that constraint:
+
+- **`scripts/validate-review-artifact.sh` now prints a `pending-review-ids:` section** listing the review-id of every pending unit (in document order) whenever `pending` > 0. The `anti_ai_fix` / `compliance_fix` `review_pending` blockers and the `amanuensis-review` companion take the remaining set from that deterministic list instead of re-enumerating blank `Decision:` fields by eye — closing the one place the design still asked an LLM to enumerate what the script already knows (M10's own rationale for making the validator deterministic). Exit codes and every ledger count are unchanged; the section is additive and absent when `pending` is 0. `agents/review-validation.md`, both fix steps, both adopted fixtures' expectation comments, and the smoke recipes were updated to match; `examples/review/{prose-pass,metaphors}.md` (not-yet-adopted) are untouched.

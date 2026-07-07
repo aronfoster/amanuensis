@@ -2,30 +2,20 @@ Reviewed-draft: draft-v03.md
 
 ## Anti-AI Report — Scene 02-01
 
-BULK eligibility:
-- Em Dashes: BULK permitted (recommended default: FIX: rewrite)
-- Flagged Words: BULK permitted (recommended default: FIX)
-- Negative Parallelism: BULK not permitted
-
 ### Em Dashes
-BULK: FIX: rewrite
 
 <!-- review-id: anti_ai:book1:chapter02:02-01:em-dashes-01 -->
 - "The kitchen was quiet — the kind of quiet that waited."
-  - Decision:
-  - Decision-note:
+  - Decision: FIX: rewrite
+  - Decision-note: category decision — fix all em dashes, rewrite around them
 <!-- review-id: anti_ai:book1:chapter02:02-01:em-dashes-02 -->
+- "She counted the chairs — four, as always — before she sat."
+  - Decision: FIX: rewrite
+  - Decision-note: category decision — fix all em dashes, rewrite around them
+<!-- review-id: anti_ai:book1:chapter02:02-01:em-dashes-03 -->
 - "He reached for the fork — slowly, as if it might object."
   - Decision: SKIP
-  - Decision-note: per-entry override under the bulk header; mid-gesture interruption reads right here
-
-### Flagged Words
-BULK: SKIP
-
-<!-- review-id: anti_ai:book1:chapter02:02-01:flagged-words-01 -->
-- "something *shifted* in the room" (shifted)
-  - Decision:
-  - Decision-note:
+  - Decision-note: per-entry exception to the category decision; the mid-gesture interruption reads right here
 
 ### Negative Parallelism
 
@@ -38,26 +28,37 @@ BULK: SKIP
   - Decision:
   - Decision-note:
 
-### Summary — Scene 02-01
+### Synonym Cycling
 
-- Em dashes: 2
-- Negative parallelism: 2 (two-beat: 1, three-beat: 1)
-- Flagged words: 1
-- Total flags: 5
+<!-- review-id: anti_ai:book1:chapter02:02-01:synonym-cycling-01 -->
+- Passage: paragraphs 4-6, the kitchen table
+  - Cycled terms: table, surface, expanse
+  - Decision: ESCALATE
+  - Decision-note: may be deliberate register drift; needs the author's call
+
+## Anti-AI Report — Scene 02-02
+
+No flags.
 
 <!-- Fixture expectation (see examples/review/README.md).
-Family anti_ai is `pending` until M11, so today the validator rejects this
-file, exit 1: not yet adopted, in-step grammar authoritative until M11.
-review-ids are book form. This fixture exercises: a bulk-permitted category
-under `BULK: FIX: rewrite` with a per-entry SKIP override beneath the
-header, a second permitted category under `BULK: SKIP`, and a
-`BULK not permitted` category decided per entry. Expected ledger once M11
-flips the adoption marker, no manifest given:
-  no findings
-  total 5, pending 1, decided 1, inherited-by-bulk 2, skipped 1,
-  escalated 0, invalid 0, stale 0
+This is an adopted family (M11), so the validator parses and counts it.
+review-ids are book form. The fixture exercises the fan-out era: Em Dashes
+is a fanout_categories category adjudicated by one human statement — the
+companion wrote the identical FIX: rewrite decisions with category-decision
+audit notes — plus one per-entry SKIP exception; Negative Parallelism is not
+fan-out eligible and is decided per entry, with one unit still blank;
+Synonym Cycling shows the single-top-level-entry-line unit shape (Cycled
+terms nested beneath the Passage line) and an ESCALATE; scene 02-02 is the
+No-flags audit record and contributes no units. There is no eligibility
+block, no BULK header, and no Summary tally — all retired in Sprint 16.
+Expected against agents/review-grammars.yaml, no manifest given:
+  state, not checked (no manifest file given)
+  findings, none
+  total 6, pending 1, decided 3, inherited-by-bulk 0, skipped 1,
+  escalated 1, invalid 0, stale 0
+  pending-review-ids: anti_ai:book1:chapter02:02-01:negative-parallelism-02
   verdict pending-remain, exit 4
-(em-dashes-01 and flagged-words-01 inherit their category bulk defaults;
-negative-parallelism-02 is the pending unit — its category grants no bulk
-cover.)
+(negative-parallelism-02 is the pending unit — the validator lists it under
+pending-review-ids: because pending is nonzero; deciding it yields verdict
+proceed, exit 0, and the pending-review-ids section disappears.)
 -->
