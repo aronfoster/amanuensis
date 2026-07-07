@@ -72,17 +72,22 @@ costs a minute; finding it out during closeout costs a re-diagnosis under
 pressure to ship. When a check's literal expectation fails later, first decide
 whether the check or the work is wrong before re-dispatching an agent.
 
-Resolve any open decisions the sprint flags. If a decision is genuinely the
-user's (a name, an approach with real trade-offs), ask before planning is
-final; if the sprint gives a default, take it and note that you did.
+Resolve any open decisions the sprint flags. If the sprint gives a default,
+take it and note that you did. If a decision is genuinely the user's (a name,
+an approach with real trade-offs) and you can get an answer, do; but in an
+autonomous run where none will come, take the most defensible option and
+record the choice and your reasoning rather than blocking on it.
 
-**Present the plan and wait for human approval before spawning anything.**
-Show the dependency table and the wave grouping. Do not start Wave 1 until the
-human approves. This is the gate worth having: spawning a wave fans real,
-code-changing work out across many agents — that's the expensive, hard-to-unwind
-action. Committing a wave you've already verified is cheap and reversible, so
-don't re-ask before each commit; the approval you need is here, before the
-fan-out.
+**Record the plan, then proceed — do not wait for approval.** Write out the
+dependency table and the wave grouping as your first output, so the plan is
+visible and survives a context reset, then start Wave 1 directly. Spawning a
+wave is still the expensive, hard-to-unwind action, but what protects against a
+bad fan-out is the per-wave discipline below — verify every agent's work
+yourself, commit only what you've verified, and never push until all waves pass
+— not a human gate before spawning. Make the plan one you'd stand behind before
+you spawn it; if a task's scope is genuinely ambiguous in a way the sprint
+doesn't resolve, handle it under open decisions above rather than deferring it
+to an approval step.
 
 ## Per wave
 
