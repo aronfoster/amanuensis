@@ -30,7 +30,7 @@ recorded.
 ## How to run it
 
 ```sh
-sh scripts/validate-review-artifact.sh <artifact-file> agents/review-grammars.yaml [<manifest-file> [<effective-draft>]]
+sh scripts/validate-review-artifact.sh [--round decision|selection] <artifact-file> agents/review-grammars.yaml [<manifest-file> [<effective-draft>]]
 ```
 
 From a consuming project the paths are
@@ -45,6 +45,21 @@ the artifact's stamp against it instead of the manifest's `Active-head:`
 contract; the mismatched `Active-head:` is noted, not blocking). Pass `-` as
 the manifest placeholder to give an effective draft without a manifest.
 
+### The `--round` selector (metaphor)
+
+The metaphor family is the one **two-evidence-layer** family: a single
+`metaphors.md` gates two consumers with different proceed conditions, so the
+consumer names which layer it gates. `metaphor_fix` passes `--round decision`
+(the default) and gates the **disposition** layer — the `Decision:` field;
+`metaphor_apply` passes `--round selection` and gates the **selection** layer
+— the `Selected:` field `metaphor_fix` appended on each actionable entry
+(`Decision:` in the family's `selection_tokens`). The companion drives both
+rounds. The default is `decision`, so the other three families and every
+existing invocation are unchanged; `--round selection` on a family without
+`selection_tokens` is an input error (exit 1) naming the mismatch. A still-blank
+`Decision:` is decision-pending and blocks **both** rounds — the selection
+layer is only meaningful once disposition is complete.
+
 ## Reading the output
 
 The script prints the family and its adoption marker, the state line, the
@@ -57,6 +72,14 @@ bulk), `skipped`, `escalated`, `invalid` (illegal tokens, payload
 violations, duplicate or missing anchors, missing `Decision:` fields, illegal
 bulk headers), `stale` (0 or 1, artifact-level).
 
+In the **selection round** (`--round selection`, metaphor only) the ledger
+adds two rows beneath `stale`: `selection-pending` (an actionable entry whose
+`Selected:` is blank) and `selected` (an actionable entry whose `Selected:`
+names one well-formed variant id), both counted over actionable entries only.
+Terminal `KEEP` / `REJECT` entries carry no selection and appear in neither.
+These rows never print in the decision round, so every other family's output
+is unchanged.
+
 When `pending` is nonzero the script additionally prints a
 `pending-review-ids:` section listing the review-id of every pending unit,
 one per line, in document order — the same units the `pending` count covers.
@@ -65,6 +88,11 @@ units: a fix/apply step's `review_pending` blocker copies these ids rather
 than re-scanning the artifact for blank `Decision:` fields by eye, and the
 companion uses them as its pending queue. The section is absent when
 `pending` is 0 (a clean or purely-invalid artifact lists no pending ids).
+In the selection round, a parallel `selection-pending-review-ids:` section
+prints whenever `selection-pending` is nonzero, naming each actionable entry
+still awaiting a `Selected:` — the deterministic selection queue, distinct
+from the decision-pending queue above (an entry can be in only one: a blank
+`Decision:` is decision-pending, never selection-pending).
 
 Exit codes, precedence `invalid > pending > stale > proceed`:
 
@@ -92,6 +120,19 @@ both problems exist.
   override lifts the stale axis only, never pending or invalid). Each
   family's `proceed_state` line in the grammar file states its instance of
   this rule.
+- **The metaphor family's two consumers gate two layers.** `metaphor_fix`
+  proceeds only on `--round decision` exit 0 (zero decision-pending, zero
+  invalid), then acts on `FLATTEN` / `REPLACE` / `WORKSHOP` entries only — an
+  all-`KEEP`/`REJECT` file is a clean no-op. `metaphor_apply` proceeds only on
+  `--round selection` exit 0 (zero decision-pending, zero **selection-pending**,
+  zero invalid), then applies the variant each actionable entry names in
+  `Selected:`, treating an all-`KEEP`/`REJECT` file as valid pass-through. Both
+  exit 4s block as `review_pending`; on the selection round the blocker copies
+  the `selection-pending-review-ids:` queue for entries awaiting a `Selected:`
+  and the `pending-review-ids:` queue for any entry still awaiting a
+  `Decision:`. A blank `Selected:` is never best-guessed — it is a block, and
+  the human resolves it by selecting a variant (an override lifts stale only,
+  never a pending or selection-pending unit).
 - **The companion** treats exit 4 as its normal working state — the pending
   units are its queue. On exit 3 it surfaces the invalid findings before any
   review work; on exit 5 it surfaces staleness to the human before any review
@@ -134,6 +175,11 @@ Forbidden:
   retired; the validator rejects a `BULK:` header as invalid input).
 - Auto-disposing metaphor entries from their `CLEAN` / `REVIEW` / `BROKEN`
   flags — those are producer recommendations, never decisions.
+- Auto-selecting a variant for a metaphor entry — the `Selected:` field is the
+  human's round-two decision, and a blank one is selection-pending, never an
+  agent's pick. `metaphor_apply` blocks on a blank `Selected:`; it never
+  best-guesses which variant the human meant (the retired delete-to-select
+  convention is what made guessing tempting — a structured field removes it).
 - Writing any decision the human did not state. A recommendation is not a
   decision; a fan-out is one human decision mechanically applied, never an
   agent-originated one.

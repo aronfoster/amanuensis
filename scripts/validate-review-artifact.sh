@@ -4,7 +4,7 @@
 # rules are read from it, never hardcoded here).
 #
 # Usage:
-#   validate-review-artifact.sh <artifact-file> <grammar-yaml> [<manifest-file> [<effective-draft>]]
+#   validate-review-artifact.sh [--round decision|selection] <artifact-file> <grammar-yaml> [<manifest-file> [<effective-draft>]]
 #
 # Identifies the artifact's family by matching the artifact filename against
 # the grammar file's per-family `path_pattern`, parses the artifact into
@@ -47,16 +47,39 @@
 #               exact remaining units from this deterministic list rather
 #               than re-enumerating blank `Decision:` fields by eye.
 #
+# Round selector. `--round decision` (the default) and `--round selection`
+# choose which evidence layer the ledger and verdict gate. The selection round
+# is valid only for a family declaring `selection_tokens` (metaphor); passing
+# it to a family without one is an input error naming the mismatch. In the
+# selection round the parser additionally reads `- Selected:` / `-
+# Selection-note:` fields and classifies each actionable entry (`Decision:` in
+# `selection_tokens`) as selection-pending (blank `Selected:`) or selected
+# (one well-formed variant id) — a `Selected:` on a terminal KEEP/REJECT
+# entry, or a malformed/multi-token value, is invalid; `Selection-note:` is
+# consumed and ignored. It prints two extra ledger rows (`selection-pending`,
+# `selected`) and, when selection-pending units remain, a
+# `selection-pending-review-ids:` section. A still-blank `Decision:` remains
+# decision-pending and blocks the selection round too. The decision round's
+# output is byte-for-byte unchanged for every family, and the two extra rows
+# and section never appear in it.
+#
+# Orphan-item structural check (additive). For a heading-item family (its
+# `item_line_pattern` is a heading — metaphor `^### `, prose_pass `^##### `), a
+# line matching that pattern with no anchor immediately above it is an invalid
+# orphaned item. Auto-scoped: a bullet family's `^- ` never matches a `#`
+# line, so compliance/anti_ai never misfire. Fires on no existing fixture.
+#
 # Exit codes (verdict precedence when several conditions hold:
 # invalid > pending > stale > proceed — invalid units must be fixed before
 # the pending count is trustworthy, and both before staleness is worth
 # adjudicating):
 #   0  proceed          no invalid, no pending, not stale
 #   3  invalid-present  at least one invalid unit or grammar defect
-#   4  pending-remain   no invalid, but pending units remain
+#   4  pending-remain   no invalid, but decision- or selection-pending units remain
 #   5  stale            no invalid, no pending, but the artifact is stale
 #   1  input error      missing/unreadable file, unrecognized artifact,
-#                       family not yet adopted, malformed grammar or manifest
+#                       family not yet adopted, `--round selection` on a family
+#                       without `selection_tokens`, malformed grammar or manifest
 #   2  usage error      wrong arguments
 #
 # A family whose adoption marker is `pending` in the grammar file is rejected
@@ -75,7 +98,7 @@ err() {
 
 usage() {
     cat >&2 <<EOF
-Usage: $prog <artifact-file> <grammar-yaml> [<manifest-file> [<effective-draft>]]
+Usage: $prog [--round decision|selection] <artifact-file> <grammar-yaml> [<manifest-file> [<effective-draft>]]
 
   Validate a review artifact against the grammar file (normally
   agents/review-grammars.yaml; from a consuming project,
@@ -87,10 +110,25 @@ Usage: $prog <artifact-file> <grammar-yaml> [<manifest-file> [<effective-draft>]
   compared against it instead; pass \`-\` as the manifest placeholder to
   give an effective draft without a manifest.
 
+  --round selects the evidence layer: \`decision\` (default) gates the
+  \`Decision:\` round; \`selection\` gates the \`Selected:\` round and is valid
+  only for a family declaring \`selection_tokens\` (metaphor).
+
   Exit codes: 0 proceed, 3 invalid-present, 4 pending-remain, 5 stale,
   1 input error, 2 usage error. Precedence: invalid > pending > stale.
 EOF
 }
+
+round=decision
+if [ "${1:-}" = "--round" ]; then
+    if [ $# -lt 2 ]; then usage; exit 2; fi
+    round=$2
+    case $round in
+        decision|selection) ;;
+        *) err "unknown round \`$round\` (expected \`decision\` or \`selection\`)"; usage; exit 2 ;;
+    esac
+    shift 2
+fi
 
 if [ $# -lt 2 ] || [ $# -gt 4 ]; then
     usage
@@ -187,9 +225,16 @@ container_exempt_suffix=$(yaml_get "$family" container_exempt_suffix)
 id_item_pattern=$(yaml_get "$family" id_item_pattern)
 id_min_locations=$(yaml_get "$family" id_min_locations)
 item_line_pattern=$(yaml_get "$family" item_line_pattern)
+selection_tokens=$(yaml_get "$family" selection_tokens)
 
 if [ -z "$tokens" ]; then
     err "family \`$family\` defines no token list in $grammar_file"
+    exit 1
+fi
+
+# The selection round is valid only for a family declaring `selection_tokens`.
+if [ "$round" = selection ] && [ -z "$selection_tokens" ]; then
+    err "family \`$family\` ($artifact_base) declares no \`selection_tokens\`: the \`--round selection\` layer is not valid for it (only a two-evidence-layer family such as metaphor has one)"
     exit 1
 fi
 
@@ -253,6 +298,8 @@ report=$(awk \
     -v id_item_pattern="$id_item_pattern" \
     -v id_min_locations="${id_min_locations:-0}" \
     -v item_line_pattern="$item_line_pattern" \
+    -v round="$round" \
+    -v selection_tokens="$selection_tokens" \
 '
 function in_list(tok, list,    i, n, arr) {
     if (tok == "" || list == "") return 0
@@ -275,14 +322,29 @@ function close_container() {
     container_line = 0; container_name = ""; container_units = 0
 }
 # Close the currently open review unit, classifying it into a ledger bucket.
-function close_unit(    key) {
+# In the selection round it additionally classifies each actionable entry
+# (`Decision:` in selection_tokens) as selection-pending or selected, and
+# rejects a `Selected:` on a terminal (non-actionable) entry as invalid.
+function close_unit(    key, actionable, was_invalid) {
     if (cur_id == "") return
+    # Determine actionability (a decided, legal, non-blank Decision that is a
+    # selection token) and the selection-round-specific defect: a `Selected:`
+    # on a terminal entry is invalid — only actionable entries carry one.
+    actionable = (have_decision && !dec_blank && in_list(dec_token, selection_tokens))
+    if (round == "selection" && invalid_reason == "" && have_decision && \
+        !dec_blank && !actionable && have_selected) {
+        invalid_reason = "`- Selected:` on a terminal `" dec_token "` entry `" cur_id "` — only " selection_tokens " entries carry a selection"
+        reason_line = sel_line
+    }
+    was_invalid = 0
     if (invalid_reason != "") {
         invalid++
         finding(reason_line, invalid_reason)
+        was_invalid = 1
     } else if (!have_decision) {
         invalid++
         finding(anchor_line, "unit `" cur_id "` has no `- Decision:` field (required)")
+        was_invalid = 1
     } else if (dec_blank) {
         key = scene SUBSEP cur_cat
         if (bulk_ok[key]) inherited++
@@ -294,8 +356,20 @@ function close_unit(    key) {
     } else {
         decided++
     }
+    # Selection-round classification, over actionable entries only. A blank or
+    # absent `Selected:` is selection-pending; one well-formed variant id is
+    # selected. Skipped when the unit is otherwise invalid.
+    if (round == "selection" && !was_invalid && actionable) {
+        if (!have_selected || sel_blank) {
+            selpending++
+            selpending_list = selpending_list (selpending_list == "" ? "" : " ") cur_id
+        } else {
+            selected++
+        }
+    }
     cur_id = ""; have_decision = 0; dec_blank = 0; dec_token = ""
     invalid_reason = ""; reason_line = 0
+    have_selected = 0; sel_blank = 0; sel_token = ""; sel_line = 0
 }
 # Anchor adjacency (structural layer): the line immediately after an anchor
 # must be the unit item line per the family item_line_pattern — not another
@@ -424,6 +498,17 @@ in_elig {
 /^#/ {
     if (cur_id != "" && NR != anchor_line + 1) close_unit()
     close_container()
+    # Orphan-item check (heading-item families only). A heading matching the
+    # family item_line_pattern with no anchor immediately above it is an
+    # orphaned item — a pre-migration or partially hand-migrated unit. Placed
+    # inside this heading rule, it is auto-scoped: a bullet family'\''s `^- `
+    # never matches a `#` line, so compliance/anti_ai never reach it.
+    if (item_line_pattern != "" && $0 ~ item_line_pattern && anchor_line != NR - 1) {
+        orphan_label = $0
+        sub(/[[:space:]]+$/, "", orphan_label)
+        finding(NR, "orphaned item `" orphan_label "` — matches the family item line but has no anchor immediately above it")
+        defects++
+    }
     if (container_pattern != "" && index($0, container_pattern) == 1) {
         line = $0
         sub(/[[:space:]]+$/, "", line)
@@ -500,6 +585,40 @@ in_elig {
     dec_token = tok
     next
 }
+# Selected field (selection round only). Structural check: blank (selection-
+# pending on an actionable unit) or a single well-formed variant-id token
+# (selected). A multi-token / malformed value is invalid; a `Selected:` on a
+# terminal entry is caught at close_unit. The id is not resolved to a variant
+# body here — that is metaphor_apply'\''s anchor-gated locate step.
+round == "selection" && /^[[:space:]]*-[[:space:]]+Selected:/ {
+    if (cur_id == "") {
+        finding(NR, "`- Selected:` field outside any anchored review unit")
+        defects++
+        next
+    }
+    if (have_selected) {
+        finding(NR, "second `- Selected:` field under review-id `" cur_id "`")
+        defects++
+        next
+    }
+    have_selected = 1
+    sel_line = NR
+    rest = $0
+    sub(/^[[:space:]]*-[[:space:]]+Selected:[[:space:]]*/, "", rest)
+    sub(/[[:space:]]+$/, "", rest)
+    if (rest == "") { sel_blank = 1; next }
+    if (rest ~ /^[A-Za-z0-9]+$/) {
+        sel_token = rest
+    } else {
+        invalid_reason = "malformed selection `" rest "` for `" cur_id "` (expected a single well-formed variant-id token)"
+        reason_line = NR
+    }
+    next
+}
+# Selection-note field (selection round only) — consumed and ignored.
+round == "selection" && /^[[:space:]]*-[[:space:]]+Selection-note:/ {
+    next
+}
 END {
     if (expect_item && cur_id != "" && invalid_reason == "") {
         invalid_reason = "orphaned anchor `" cur_id "` — no item line follows the anchor"
@@ -507,25 +626,31 @@ END {
     }
     close_unit()
     close_container()
-    printf "#COUNTS %d %d %d %d %d %d\n", \
-        pending, decided, inherited, skipped, escalated, invalid + defects
+    printf "#COUNTS %d %d %d %d %d %d %d %d\n", \
+        pending, decided, inherited, skipped, escalated, invalid + defects, \
+        selpending, selected
     if (pending_list != "") printf "#PENDING %s\n", pending_list
+    if (selpending_list != "") printf "#SELPENDING %s\n", selpending_list
 }
 ' "$artifact_file")
 
 counts=$(printf '%s\n' "$report" | awk '/^#COUNTS/ { print; exit }')
 pending_ids=$(printf '%s\n' "$report" | awk '/^#PENDING/ { sub(/^#PENDING /, ""); print; exit }')
-findings=$(printf '%s\n' "$report" | grep -v '^#COUNTS' | grep -v '^#PENDING' || true)
+selpending_ids=$(printf '%s\n' "$report" | awk '/^#SELPENDING/ { sub(/^#SELPENDING /, ""); print; exit }')
+findings=$(printf '%s\n' "$report" | grep -v '^#COUNTS' | grep -v '^#PENDING' | grep -v '^#SELPENDING' || true)
 
 # shellcheck disable=SC2086 # word splitting of the counts line is intended
 set -- $counts
-pending=$2 decided=$3 inherited=$4 skipped=$5 escalated=$6 invalid=$7
+pending=$2 decided=$3 inherited=$4 skipped=$5 escalated=$6 invalid=$7 selpending=$8 selected=$9
 total=$((pending + decided + inherited + skipped + escalated + invalid))
 
-# Verdict. Precedence: invalid > pending > stale > proceed.
+# Verdict. Precedence: invalid > pending > stale > proceed. In the selection
+# round a selection-pending unit blocks alongside a decision-pending one
+# (selpending is always 0 in the decision round, so the rule is unchanged
+# there).
 if [ "$invalid" -gt 0 ]; then
     verdict=invalid-present; code=3
-elif [ "$pending" -gt 0 ]; then
+elif [ "$pending" -gt 0 ] || [ "$selpending" -gt 0 ]; then
     verdict=pending-remain; code=4
 elif [ "$stale" -eq 1 ]; then
     verdict=stale; code=5
@@ -534,6 +659,9 @@ else
 fi
 
 printf '%s: %s — family: %s (%s)\n' "$prog" "$artifact_file" "$family" "$adoption"
+if [ "$round" = selection ]; then
+    printf 'round: selection\n'
+fi
 printf 'state: %s\n' "$state_line"
 if [ -n "$findings" ]; then
     printf 'findings:\n%s\n' "$findings"
@@ -549,9 +677,19 @@ printf '  skipped: %d\n' "$skipped"
 printf '  escalated: %d\n' "$escalated"
 printf '  invalid: %d\n' "$invalid"
 printf '  stale: %d\n' "$stale"
+if [ "$round" = selection ]; then
+    printf '  selection-pending: %d\n' "$selpending"
+    printf '  selected: %d\n' "$selected"
+fi
 if [ "$pending" -gt 0 ]; then
     printf 'pending-review-ids:\n'
     for id in $pending_ids; do
+        printf '  %s\n' "$id"
+    done
+fi
+if [ "$round" = selection ] && [ "$selpending" -gt 0 ]; then
+    printf 'selection-pending-review-ids:\n'
+    for id in $selpending_ids; do
         printf '  %s\n' "$id"
     done
 fi
