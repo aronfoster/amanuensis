@@ -74,7 +74,7 @@ For projects on the orchestrator, this file is produced by [`steps/metaphor-iden
 
 ## Workflow: Anti-AI pass
 
-Scan the line-pass output for AI-pattern flags and apply the human-annotated fixes. See [`steps/anti-ai-report.md`](steps/anti-ai-report.md) for the report phase (categories include em dashes, negative parallelism, significance inflation, copula avoidance, superficial -ing analysis, transition openers, synonym cycling, cadence tics, animacy projection, plus a flagged-words list) and [`steps/anti-ai-fix.md`](steps/anti-ai-fix.md) for the apply phase. The report supports both per-entry annotations (`FIX`/`SKIP`/`ESCALATE`) and per-category bulk headers; em dashes are typically handled in bulk.
+Scan the line-pass output for AI-pattern flags and apply the human-annotated fixes. See [`steps/anti-ai-report.md`](steps/anti-ai-report.md) for the report phase (categories include em dashes, negative parallelism, significance inflation, copula avoidance, superficial -ing analysis, transition openers, synonym cycling, cadence tics, animacy projection, plus a flagged-words list) and [`steps/anti-ai-fix.md`](steps/anti-ai-fix.md) for the apply phase. The report emits one anchored review unit per flagged instance, each with a `- Decision:` field (`FIX`/`SKIP`/`ESCALATE`); the human decides per entry, or — for a fan-out-eligible category such as em dashes — states one category decision the `amanuensis-review` companion writes into every pending unit of that category. The structured grammar is single-sourced in `agents/review-grammars.yaml`; per-category `BULK:` headers are retired and rejected as invalid input.
 
 ## Workflow: targeted revision
 
