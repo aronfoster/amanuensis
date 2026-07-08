@@ -42,14 +42,19 @@
 # prefix identifying a section of the report that must hold anchored review
 # units when it holds violation content (compliance uses `### Block `;
 # anti_ai is settled with a plain `### ` and no exempt keys — every `### `
-# heading in its artifact is a category container). A container heading
-# ending in `container_exempt_suffix` (compliance: the `— CLEAN` suffix)
-# legitimately holds no units. Any other container with zero anchored units
-# fails structural validation as invalid — this is what makes a
-# positional/pre-migration report an invalid input rather than a silently
-# empty one. Families that leave these keys unset get no container check;
-# the two pending families settle their container shapes when their
-# milestones retarget their report steps (M12-M13).
+# heading in its artifact is a category container; prose_pass is settled with
+# the single literal `#### Findings` heading and exempt suffix `— none`,
+# because its report carries sibling `#### ` / `### ` headings — `#### Top
+# priorities`, `### Chapter-level diagnosis` and its `#### ` subsections,
+# `#### Lines worth preserving` — that legitimately hold no anchored units, so
+# the container is one specific heading rather than a bare `#### `). A
+# container heading ending in `container_exempt_suffix` (compliance: `— CLEAN`;
+# prose_pass: `— none`) legitimately holds no units. Any other container with
+# zero anchored units fails structural validation as invalid — this is what
+# makes a positional/pre-migration report an invalid input rather than a
+# silently empty one. Families that leave these keys unset get no container
+# check; the one pending family (metaphor) settles its container shape when
+# M13 retargets its report step.
 #
 # Shared review item shape (ROADMAP.md M10 shared-design principle 3):
 #
@@ -115,32 +120,34 @@ compliance:
   fixture: examples/review/reviewer-actions.md
 
 prose_pass:
-  adoption: pending
+  adoption: adopted
   migrates_in: M12
   artifact: prose-pass.md
   path_pattern: prose-pass.md
   path: "<chapter-folder>/drafts/<latest-attempt>/prose-pass.md"
   producer: prose_pass
   consumer: prose_fix
-  item_shape: "One review unit per actionable finding — a finding whose `Action:` is anything other than KEEP. The anchor sits immediately above the finding's `##### [short label]` heading; `- Decision:` / `- Decision-note:` replace today's `Annotation:` line among the finding's fields. KEEP findings carry no anchor and no fields — like compliance CLEAN blocks they are not review units (this is the grammar's chosen KEEP handling; it preserves the locked M5 rule that KEEP findings are treated as SKIP by prose_fix)."
+  item_shape: "One review unit per finding — every finding, KEEP included. The anchor sits immediately above the finding's `##### [short label]` heading; `- Decision:` / `- Decision-note:` sit among the finding's fields, below the `Action:` line. A `#### Findings` section with zero anchored units fails structural validation: a positional/pre-M12 report is an invalid input, never a silently empty one. A report that found nothing records a single `#### Findings — none` heading plus a `No findings.` line — no anchor, no fields, not a review unit."
   required_fields: Decision
   optional_fields: Decision-note
   anchor: "`<!-- review-id: ... -->` on its own line immediately above the finding's `##### [short label]` heading"
-  review_id_item: "finding-<NN> — the finding's emission ordinal within the report, counted over actionable findings only"
+  review_id_item: "finding-<NN> — the finding's emission ordinal within the report, counted over every finding (KEEP included)"
   review_id_book: "prose_pass:<book-id>:<chapter-id>:finding-<NN> — e.g. prose_pass:book1:chapter02:finding-01 (chapter-scoped report; no scene segment)"
   review_id_short_story: "prose_pass:finding-<NN> — e.g. prose_pass:finding-01"
   id_item_pattern: "finding-[0-9][0-9]"
   id_min_locations: 0
   item_line_pattern: "^##### "
+  container_pattern: "#### Findings"
+  container_exempt_suffix: "— none"
   tokens: FIX SKIP ESCALATE
   payload_optional: FIX
   payload_required:
   payload_forbidden: SKIP ESCALATE
-  payload_meaning: "The FIX payload is the human's inline instruction, followed instead of (or in addition to) the finding's recommended Action."
-  blank_means: "pending — a non-KEEP finding with a blank Decision blocks prose_fix as review_pending"
+  payload_meaning: "The FIX payload is the human's inline instruction, followed instead of (or in addition to) the finding's recommended Action. On a KEEP finding — which carries no severity fix strategy — a bare FIX has no default and prose_fix treats it as ESCALATE; a `FIX: <instruction>` applies the instruction sentence-locally."
+  blank_means: "pending — any finding with a blank Decision blocks prose_fix as review_pending, KEEP findings included. A KEEP finding's explicit SKIP is the review evidence that the human confirmed the producer's keep; a blank on it is still pending."
   bulk_supported: no
-  bulk_rules: "None — locked M5 decision. The pass is selective (5-10 findings), so per-entry decisions are cheap and intent stays explicit. The validator rejects any BULK header in this artifact as invalid."
-  counting: "Review unit = one actionable (non-KEEP) finding. KEEP findings are not units."
+  bulk_rules: "None — no bulk and no fan-out anywhere in this family (locked M5, restated in the post-Sprint-16 vocabulary). The pass is selective (5-10 findings), so per-entry decisions are the point. The validator rejects any BULK header in this artifact as invalid; no fanout_categories are declared, so the companion offers no category grouping and no fan-out."
+  counting: "Review unit = one finding, KEEP included. A KEEP finding decided SKIP counts as skipped. A `#### Findings — none` report contributes no units. Progress = decided + skipped + escalated over total."
   review_evidence: "A filled `Decision:` field holding a legal token, with payload where given."
   proceed_state: "prose_fix proceeds only at zero pending units and zero invalid units; staleness per the Artifact-state contract."
   fixture: examples/review/prose-pass.md

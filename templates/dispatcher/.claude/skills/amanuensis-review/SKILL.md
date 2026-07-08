@@ -76,7 +76,11 @@ check the prose, never apply a fix, and never decide for the human.
 ## Category queues and fan-out
 
 Some families' reports section their units by category within each scene
-(today: anti_ai). For these families, present the pending queue grouped by
+(today: anti_ai). Flat families — compliance and prose_pass — do not: they
+carry no `### <Category>` subsections and declare no `fanout_categories`, so
+present their pending queue as a single list with no category grouping and no
+fan-out offer, exactly as the Procedure above already handles them. For the
+category-sectioned families, present the pending queue grouped by
 category within scene, each category with its pending count, so the human
 can work a category at a time. Grouping is presentation only; every unit
 still needs its own filled `Decision:` field.
@@ -154,8 +158,8 @@ is decided. Showing five units still requires five human decisions.
   family, no unit already decided.
 - No fan-out anywhere the grammar does not declare it: only a category named
   in the family's `fanout_categories` declaration in
-  `amanuensis/agents/review-grammars.yaml` is eligible — compliance declares
-  none. No artifact carries a bulk grammar; a `BULK:` header is retired,
+  `amanuensis/agents/review-grammars.yaml` is eligible — compliance and
+  prose_pass declare none. No artifact carries a bulk grammar; a `BULK:` header is retired,
   invalid input. The decision-automation rules in
   `amanuensis/agents/review-validation.md` bind this skill.
 - This skill is not a pipeline step: it has no step_id, appears in no

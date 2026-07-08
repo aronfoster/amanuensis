@@ -42,7 +42,7 @@ It does three things:
 
 This pass should be **selective**. It does not try to perfect every line. It identifies the places where prose is actively costing the chapter clarity, force, or pleasure.
 
-This step produces a report only — it does **not** write to the prose. The `KEEP / TIGHTEN / FLATTEN / REWRITE` recommendations it emits are advisory. The annotated report is consumed by `prose_fix`, the paired prose-advancing consumer: once the human fills in each finding's `Annotation:` line, `prose_fix` applies those per-entry annotations and mints `<next-draft>`. `prose_pass` itself does not mint a draft version — it reads `<latest-draft>` and emits an advisory report.
+This step produces a report only — it does **not** write to the prose. The `KEEP / TIGHTEN / FLATTEN / REWRITE` recommendations it emits are advisory. The report is the human review artifact consumed by `prose_fix`, the paired prose-advancing consumer: once the human records a decision in each finding's `Decision:` field, `prose_fix` applies those per-entry decisions and mints `<next-draft>`. `prose_pass` itself does not mint a draft version — it reads `<latest-draft>` and emits an advisory report.
 
 ---
 
@@ -74,7 +74,7 @@ Do **not** rewrite the whole chapter.
 Do **not** produce line edits for every issue.
 Do **not** praise at length.
 Do **not** fix spelling, punctuation, or grammar unless they materially affect rhythm or clarity.
-Do **not** modify the prose file. The recommendations are applied by `prose_fix`, the paired prose-advancing consumer, once the human annotates them.
+Do **not** modify the prose file. The recommendations are applied by `prose_fix`, the paired prose-advancing consumer, once the human records decisions on them.
 
 End with:
 - `Top priorities`
@@ -263,31 +263,28 @@ List the 5 to 10 highest-value prose problems in the chapter.
 
 #### Findings
 
-For each finding, use this template:
+Every finding is an anchored review unit — **every finding, `KEEP` included**. Use this template:
 
+<!-- review-id: prose_pass:<location...>:finding-<NN> -->
 ##### [short label]
 - Quote: "..."
 - Problem: ...
 - Why it matters: ...
 - Action: `KEEP | TIGHTEN | FLATTEN | REWRITE`
-- Annotation: `[FIX | FIX: <instruction> | SKIP | ESCALATE]`
+- Decision:
+- Decision-note:
 
 Keep explanations brief and concrete.
 
-The `Annotation:` line is the machine-readable per-entry contract between this pass and `prose_fix`. `prose_pass` emits it blank (or with the bracketed token set as a placeholder); the human fills it in on each finding before dispatching `prose_fix`, so that step has an unambiguous per-finding input. The tokens mean:
+**Review unit shape.** The `<!-- review-id: ... -->` anchor sits on its own line immediately above the finding's `##### [short label]` heading. `Quote / Problem / Why it matters / Action` are unchanged. The blank `- Decision:` / `- Decision-note:` fields — top-level `- ` lines, siblings of the other finding fields — come after the `Action:` line, in place of the old positional per-entry line. Emit them blank. **Every finding gets this shape, `KEEP` included**: a `KEEP` finding is a review unit now, not an anchorless note.
 
-- `FIX` — apply this finding's recommended `Action` as written.
-- `FIX: <instruction>` — apply the fix, but follow the human's inline instruction instead of (or in addition to) the recommendation.
-- `SKIP` — leave this line alone; do not touch it.
-- `ESCALATE` — the human wants this raised rather than silently applied; `prose_fix` surfaces it instead of editing.
+The review-id follows the `prose_pass` family segment grammar in `agents/review-grammars.yaml`. The item segment is `finding-<NN>` — the finding's emission ordinal within the report, counted over **every** finding, `KEEP` included. Short_story form `prose_pass:finding-<NN>`; book form `prose_pass:<book-id>:<chapter-id>:finding-<NN>` (chapter-scoped — no scene segment). The location segments are derivable from the artifact's resolved path. Emit `Decision:` / `Decision-note:` blank — they belong to the human, and a blank `Decision:` means the unit is pending review. On the append path, continue each report's `finding-<NN>` ordinals rather than restarting at `01` where a collision would result. The fixture `examples/review/prose-pass.md` shows the exact target shape.
 
-Rules `prose_fix` relies on:
+A report that found nothing to comment on records `#### Findings — none` (a single heading, real em dash) plus a single `No findings.` line — no anchor, no fields, not a review unit. This is the container-exempt heading (the analog of compliance's `— CLEAN` and anti-AI's `No flags.`); it is distinct from an all-`KEEP` report, which has anchored `KEEP` units.
 
-- `KEEP` findings need no annotation and are treated as `SKIP` by `prose_fix`; the `Annotation:` line may be omitted for `KEEP` entries.
-- A finding whose `Action:` is anything other than `KEEP` but whose `Annotation:` is missing or holds an unrecognized token is **not actionable** — `prose_fix` treats it as an unannotated blocker rather than guessing intent.
-- **No bulk-annotation headers are used.** There is no file-level "annotate all as FIX" shortcut; every actionable finding is annotated individually. This is a deliberate, locked convention: `prose_pass` is selective (5-10 findings), so per-entry annotation is cheap and keeps intent explicit. Do not reintroduce a bulk header.
+The human — companion-assisted, via the `amanuensis-review` skill — records a decision in each finding's `Decision:` field per the `prose_pass` family grammar in `agents/review-grammars.yaml` (the legal tokens, payload rules, and blank-means-pending semantics live there, not here). Every finding is a review unit, `KEEP` included; a `KEEP` finding's decision is typically `SKIP`, confirming the producer's keep. `Decision-note:` is optional free text for the human's why and is never machine-parsed. `prose_fix` then consumes the filled per-unit fields.
 
-This Findings section is the single canonical definition of the annotation grammar; `prose_fix` points here rather than restating the token set. The top-of-file `Reviewed-draft: draft-vNN.md` stamp is what lets `prose_fix` detect stale annotations — annotations written against a superseded draft — per the general freshness contract in `agents/orchestrator.md`'s Artifact-state section (whose `### Report→fix freshness invariant` subsection is the canonical worked instance), which is why that stamp is now load-bearing.
+There is no bulk and no fan-out in this family: the pass is selective, so every finding is decided individually. `Action:` (`KEEP/TIGHTEN/FLATTEN/REWRITE`) stays the producer's severity recommendation, distinct from the human's `Decision:`.
 
 ---
 
@@ -341,7 +338,15 @@ Be selective, concrete, and unsentimental.
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md` — the advisory report described above. Begins with a `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this pass reviewed (against a newer draft the report is `regenerated` — the file is overwritten with a fresh stamp and the prior findings `discarded`), then contains `Top priorities`, per-finding entries using the Findings template, a `Chapter-level diagnosis` section (with `What the prose is already doing well`, `Repeated failure modes`, `Best revision strategy`), and `Lines worth preserving`. The step does not modify the prose file; `prose_fix` consumes the annotated report and applies the fixes.
+- `<chapter-folder>/drafts/<latest-attempt>/prose-pass.md` — the human review artifact described above. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this pass reviewed — the draft this run actually read (against a newer draft the report is `regenerated`: the file is overwritten with a fresh stamp and the prior findings `discarded`; on the append path each report's `finding-<NN>` ordinals continue so ids never collide within the epoch). Then `#### Top priorities`, then a `#### Findings` section holding either a single `#### Findings — none` heading plus one `No findings.` line (no anchor, no fields, not a review unit) when nothing was found, or per-finding review units — each carrying its `<!-- review-id: ... -->` anchor immediately above its `##### [short label]` heading and blank `- Decision:` / `- Decision-note:` fields — then the `### Chapter-level diagnosis` subsections (`#### What the prose is already doing well`, `#### Repeated failure modes`, `#### Best revision strategy`) and `#### Lines worth preserving`. The file is the human review artifact: the human records decisions in each unit's `Decision:` field per the `prose_pass` family grammar in `agents/review-grammars.yaml` before `prose_fix` runs. The step does not modify the prose file.
+
+## Anti-Patterns
+
+**Filling decision fields.** `Decision:` and `Decision-note:` are emitted blank. They belong to the human; a report that pre-fills a decision — however obvious — has decided instead of reported, and a blank `Decision:` is the only honest signal that a finding is still pending.
+
+**Anchoring a `No findings.` line.** A report that found nothing is `#### Findings — none` plus one `No findings.` line — no anchor, no fields. An anchor turns it into a countable review unit.
+
+**Dropping the anchor on `KEEP` findings.** KEEP findings are review units now, not anchorless notes; every finding carries a `review-id` anchor and blank decision fields, `KEEP` included.
 
 ## Open questions handling
 
