@@ -6,7 +6,7 @@ This directory is a minimal `short_story` project committed inside the Amanuensi
 
 The goal of running the recipes below is to confirm that the dispatcher itself works: it locates `pipeline-state.md`, confirms the requested (or recommended-next) step_id appears in the recipe list, resolves the workflow file at `amanuensis/agents/steps/<step>.md`, verifies the step's `required: true` preconditions resolve to existing files, and follows the step body in the same session — the step body then either records its own completion or stops with a question. Validating the literary quality of the step bodies' output is **not** a goal here.
 
-Four recipes cover the four selective-execution behaviors: the default recipe run in order (Recipe 1), rerunning a completed step (Recipe 2), a fix step blocking on a stale report (Recipe 3), and a non-dependent step running out of recipe order (Recipe 4). A fifth recipe covers the draft-lineage branch surface: rerunning a fix step from an earlier draft with a read-from argument, which mints a new draft as the active head and stamps the displaced drafts superseded (Recipe 5). Three further recipes exercise the Artifact-state model (`agents/orchestrator.md`'s **Artifact state** section) on the `anti_ai_report → anti_ai_fix` pair: a pending (blank-`Decision:`) report blocking the fix step as `review_pending` (Recipe 6), regenerating a stale report against the active head so the fix step runs clean (Recipe 7), and a human-recorded override that lets a stale apply proceed (Recipe 8). Two further recipes exercise the M10 structured review contract on the `compliance_report → compliance_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` and the hand-filled decision letting it run clean (Recipe 9), and an `amanuensis-review` companion session recording the same decision by review-id (Recipe 10). Two final recipes exercise the M11 structured anti-AI contract: a companion fan-out session adjudicating a whole eligible category with one stated decision plus a per-entry `SKIP` exception (Recipe 11), and a stray legacy `BULK:` header blocking the fix step as invalid input (Recipe 12). Three more recipes exercise the M12 structured prose-pass contract on the `prose_pass → prose_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` then the hand-filled decision letting it run clean (Recipe 13), an all-`KEEP` report (every finding anchored, decided `SKIP`) validating clean so the fix step passes the draft through unchanged (Recipe 14), and an unanchored pre-M12 report rejected as invalid input (Recipe 15). See `agents/orchestrator.md` for the canonical contract the dispatcher follows.
+Four recipes cover the four selective-execution behaviors: the default recipe run in order (Recipe 1), rerunning a completed step (Recipe 2), a fix step blocking on a stale report (Recipe 3), and a non-dependent step running out of recipe order (Recipe 4). A fifth recipe covers the draft-lineage branch surface: rerunning a fix step from an earlier draft with a read-from argument, which mints a new draft as the active head and stamps the displaced drafts superseded (Recipe 5). Three further recipes exercise the Artifact-state model (`agents/orchestrator.md`'s **Artifact state** section) on the `anti_ai_report → anti_ai_fix` pair: a pending (blank-`Decision:`) report blocking the fix step as `review_pending` (Recipe 6), regenerating a stale report against the active head so the fix step runs clean (Recipe 7), and a human-recorded override that lets a stale apply proceed (Recipe 8). Two further recipes exercise the M10 structured review contract on the `compliance_report → compliance_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` and the hand-filled decision letting it run clean (Recipe 9), and an `amanuensis-review` companion session recording the same decision by review-id (Recipe 10). Two final recipes exercise the M11 structured anti-AI contract: a companion fan-out session adjudicating a whole eligible category with one stated decision plus a per-entry `SKIP` exception (Recipe 11), and a stray legacy `BULK:` header blocking the fix step as invalid input (Recipe 12). Three more recipes exercise the M12 structured prose-pass contract on the `prose_pass → prose_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` then the hand-filled decision letting it run clean (Recipe 13), an all-`KEEP` report (every finding anchored, decided `SKIP`) validating clean so the fix step passes the draft through unchanged (Recipe 14), and an unanchored pre-M12 report rejected as invalid input (Recipe 15). Five final recipes exercise the M13 two-evidence-layer metaphor contract on the `metaphor_fix → metaphor_apply` pair: a decision-pending report blocking `metaphor_fix` as `review_pending` alongside a non-destructive `REJECT` that does not block, then the filled decision running clean (Recipe 16); a bare-`REPLACE` report rejected as invalid input (Recipe 17); an all-`KEEP`/`REJECT` file as a `metaphor_fix` clean no-op and a `metaphor_apply` pass-through (Recipe 18); a selection-pending report blocking `metaphor_apply` then a filled `Selected:` running a deterministic apply (Recipe 19); and an ambiguous `Selected:` rejected as invalid input (Recipe 20). See `agents/orchestrator.md` for the canonical contract the dispatcher follows.
 
 ## Layout
 
@@ -26,7 +26,7 @@ Committed in this directory:
 - `.opencode/agents/run-step.md` and `.opencode/agents/next-step.md` — copied in by `install.sh`.
 - `amanuensis` — symlink to the Amanuensis repo root (this repo). Lets the dispatcher resolve `amanuensis/agents/steps/<step>.md` exactly as it would under a real submodule install.
 - `characters/` — written by `character_extraction` on a successful run (Recipes 1–2).
-- `plot/drafts/attempt01/` — hand-authored for Recipes 3–15 (filler drafts and a stamped report: a `reviewer-actions.md` for Recipes 3–5 and 9–10, an `anti-ai.md` for Recipes 6–8 and 11–12, a `prose-pass.md` for Recipes 13–15; Recipe 5 additionally hand-authors a `draft-manifest.md` carrying an `Active-head: draft-vNN.md` pointer and a three-entry lineage). On Recipe 4's success the fix step also writes `draft-v03.md` and `draft-manifest.md` here; on Recipe 5's success it writes the branch output `draft-v04.md` and updates the hand-authored manifest's pointer and `superseded_by` stamps; on Recipes 7–8's success `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md`, and in Recipe 7 `anti_ai_report` first overwrites `anti-ai.md` in place; on Recipe 9's success (and Recipe 10's follow-on) `compliance_fix` writes `draft-v03.md` and `draft-manifest.md` here as in Recipe 4; on Recipe 11's success (its second fix run, after the companion session fills the report's decision fields in place) `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md` as in Recipes 7–8; on Recipe 13's success (its second fix run, after the `Decision:` field is filled in place) `prose_fix` writes `draft-v03.md` and `draft-manifest.md` and appends an `Applied:` block to `prose-pass.md`; on Recipe 14's success `prose_fix` writes a verbatim pass-through `draft-v03.md` and `draft-manifest.md` (no `Applied:` blocks); Recipe 15 writes nothing (it blocks as invalid input).
+- `plot/drafts/attempt01/` — hand-authored for Recipes 3–20 (filler drafts and a stamped report: a `reviewer-actions.md` for Recipes 3–5 and 9–10, an `anti-ai.md` for Recipes 6–8 and 11–12, a `prose-pass.md` for Recipes 13–15, a `metaphors.md` for Recipes 16–20; Recipe 5 additionally hand-authors a `draft-manifest.md` carrying an `Active-head: draft-vNN.md` pointer and a three-entry lineage). On Recipe 4's success the fix step also writes `draft-v03.md` and `draft-manifest.md` here; on Recipe 5's success it writes the branch output `draft-v04.md` and updates the hand-authored manifest's pointer and `superseded_by` stamps; on Recipes 7–8's success `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md`, and in Recipe 7 `anti_ai_report` first overwrites `anti-ai.md` in place; on Recipe 9's success (and Recipe 10's follow-on) `compliance_fix` writes `draft-v03.md` and `draft-manifest.md` here as in Recipe 4; on Recipe 11's success (its second fix run, after the companion session fills the report's decision fields in place) `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md` as in Recipes 7–8; on Recipe 13's success (its second fix run, after the `Decision:` field is filled in place) `prose_fix` writes `draft-v03.md` and `draft-manifest.md` and appends an `Applied:` block to `prose-pass.md`; on Recipe 14's success `prose_fix` writes a verbatim pass-through `draft-v03.md` and `draft-manifest.md` (no `Applied:` blocks); Recipe 15 writes nothing (it blocks as invalid input). For the metaphor pair: on Recipe 16's filled rerun `metaphor_fix` appends a `#### Flatten Options` section and blank `Selected:` / `Selection-note:` fields to `metaphors.md` in place (minting no draft); on Recipe 18's success `metaphor_fix` is a clean no-op (writes nothing) and the follow-on `metaphor_apply` writes a verbatim pass-through `draft-v03.md` and `draft-manifest.md`; on Recipe 19's filled rerun `metaphor_apply` writes `draft-v03.md` and `draft-manifest.md`; Recipes 17 and 20 write nothing (they block as invalid input).
 
 ## Setup
 
@@ -732,7 +732,269 @@ Expected observable outcome — a clean blocked exit, not a dispatcher error:
 
 The resolution is fixing the artifact, **not** waiving it: regenerate/rewrite the report to the structured format by re-running `prose_pass`, then decide each finding. An override does not apply — a recorded override lifts the validator's exit-5 `stale` verdict only, never exit 3 (invalid input) or exit 4 (`review_pending`).
 
-### Recipes 3–15 touch only untracked files
+### M13.6 recipes — structured metaphor review (two layers)
+
+The final five recipes exercise the M13 two-evidence-layer metaphor contract on
+the `metaphor_fix → metaphor_apply` pair: `metaphor_fix` gates the **disposition**
+layer (`--round decision`, the `Decision:` field), `metaphor_apply` gates the
+**selection** layer (`--round selection`, the `Selected:` field). As in Recipes
+6–15, no `draft-manifest.md` is hand-authored (keeping `draft-v01.md` and
+`draft-v02.md` on disk makes `draft-v02.md` the active head), and because both
+steps run the shared validator after their freshness check the expected outcomes
+name its verdicts and ledger counts. To stay deterministic, the fixtures use
+`FLATTEN` / `REPLACE` entries with hand-authored `#### ` variant sections — no
+`WORKSHOP` generation, no storyboard or voice dependency (`metaphor_fix` passes
+those to `WORKSHOP` subagents only). `metaphor_fix`'s only `required: true`
+preconditions are `metaphors.md` and `<latest-draft>`; `metaphor_apply`'s are the
+same, so both run in the bare fixture. Decision- and selection-writing here is by
+hand-edit (Recipe 9's model); the shared drafts for all five recipes are:
+
+`plot/drafts/attempt01/draft-v01.md`:
+
+```markdown
+The lamp went dark and Rao climbed the stair like a man wading upstream.
+
+He told no one what he found at the top. The silence sat in his chest like a stone.
+```
+
+`plot/drafts/attempt01/draft-v02.md` — the active head; both figure-bearing
+paragraphs are verbatim identical to `draft-v01.md`'s and it differs only by a
+trailing paragraph, so both quoted anchors stay locatable here:
+
+```markdown
+The lamp went dark and Rao climbed the stair like a man wading upstream.
+
+He told no one what he found at the top. The silence sat in his chest like a stone.
+
+By morning he had talked himself out of telling anyone at all.
+```
+
+### Recipe 16 — decision-pending blocks `metaphor_fix`; a non-destructive `REJECT` does not block; filling it runs clean
+
+Reset the fixture and repeat Setup. Hand-author the two shared drafts above, plus
+`plot/drafts/attempt01/metaphors.md` — a fresh report stamped against the active
+head (`draft-v02.md`), carrying two anchored figures: one with a blank `Decision:`
+(pending) and one decided `REJECT` (a non-destructive rejection — the figure is
+noted rejected and **stays** in the file as the audit record; deletion is no
+longer a decision signal). Shape per the `metaphor:` block in
+`agents/review-grammars.yaml`; `examples/review/metaphors.md` is the reference
+fixture:
+
+```markdown
+Reviewed-draft: draft-v02.md
+
+## Metaphor Report — Scene 001
+
+<!-- review-id: metaphor:001:figure-01 -->
+### stair climbed like wading upstream
+- **Quote:** "Rao climbed the stair like a man wading upstream"
+- **Flag:** REVIEW
+- Decision:
+- Decision-note:
+
+<!-- review-id: metaphor:001:figure-02 -->
+### silence like a stone
+- **Quote:** "The silence sat in his chest like a stone"
+- **Flag:** REVIEW
+- Decision: REJECT
+- Decision-note: keep the plainness; noted rejected, retained as the audit record
+```
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step metaphor_fix
+```
+
+Expected observable outcome — a clean blocked exit, not a dispatcher error:
+
+- The dispatcher's existence checks pass (`metaphors.md` exists, `<latest-draft>` resolves to `draft-v02.md`), and the step-start freshness check passes (the stamp names `draft-v02.md`, the active head).
+- The step runs the shared validator with `--round decision`, which reports `pending-remain` (exit 4): total 2, pending 1, decided 1, everything else 0 — `metaphor:001:figure-01` carries a blank `Decision:` (no review evidence) and the validator's `pending-review-ids:` section names it; `metaphor:001:figure-02`'s `REJECT` is a decision and does not block. (No `draft-manifest.md` exists, so the state layer is `not checked`.)
+- The step appends the `review_pending` blocker to `open-questions.md`, copying the `pending-review-ids:` list — the single id `metaphor:001:figure-01`.
+- No variant sections are appended, no draft is written, no `draft-manifest.md` is created, and no completion is recorded: the `metaphor_fix` line stays `[ ]` and `pipeline-state.md` is untouched.
+
+As in Recipe 9, a `review_pending` block is not liftable by an override — the human resolves it by recording a decision. Fill `figure-01`'s `Decision:` field so its line reads `- Decision: FLATTEN`, then rerun the fix step:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step metaphor_fix
+```
+
+Expected observable outcome (clean fix):
+
+- The freshness check passes again, and the validator now reports `proceed` (exit 0): total 2, decided 2, pending 0, invalid 0. Only on that verdict does the step act on any entry.
+- The step acts only on the actionable `FLATTEN` entry (`figure-01`): it dispatches the flatten subagent (`agents/metaphor/metaphor-flatten.md`), which appends a `#### Flatten Options` section with stable variant ids (`A`/`B`/`C`) directly below the entry, and the coordinator inserts a blank `- Selected:` / `- Selection-note:` pair among `figure-01`'s fields (after `Decision-note:`, before the `#### ` heading). The terminal `REJECT` entry (`figure-02`) is left untouched. As in Recipe 1, the variant prose itself is subagent-generated and not asserted here; what the smoke run confirms is that the step proceeded past the gate and produced the structured output.
+- `metaphor_fix` mints no draft and preserves the `Reviewed-draft:` stamp. Its final action flips `[ ] metaphor_fix` to `[x] metaphor_fix` and updates `last_updated`, while every upstream line stays `[ ]`.
+
+### Recipe 17 — bare `REPLACE` rejected as invalid input
+
+Reset the fixture and repeat Setup. Hand-author the two shared drafts, plus this
+`plot/drafts/attempt01/metaphors.md` — a fresh report whose one figure carries a
+**bare** `REPLACE` (no target image), the pre-M13 shorthand the M10.1
+`replace_policy` makes invalid (the payload is required and is no longer
+normalized to `WORKSHOP`):
+
+```markdown
+Reviewed-draft: draft-v02.md
+
+## Metaphor Report — Scene 001
+
+<!-- review-id: metaphor:001:figure-01 -->
+### stair climbed like wading upstream
+- **Quote:** "Rao climbed the stair like a man wading upstream"
+- **Flag:** REVIEW
+- Decision: REPLACE
+- Decision-note:
+```
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step metaphor_fix
+```
+
+Expected observable outcome — a clean blocked exit, not a dispatcher error:
+
+- The existence checks pass and the step-start freshness check passes.
+- The validator (`--round decision`) reports `invalid-present` (exit 3), its finding naming the line: ``token `REPLACE` requires a non-empty payload (`REPLACE: <payload>`)``. Ledger: total 1, invalid 1, everything else 0.
+- The step blocks as invalid input, appending the blocker to `open-questions.md` and naming the validator's finding. No draft is written, no `draft-manifest.md` is created, and no completion is recorded.
+
+The resolution is fixing the artifact, **not** waiving it: supply the target image (`Decision: REPLACE: <image>`) or change the token — `WORKSHOP` is the ask-for-candidates path, `REPLACE` the integrate-this-image path. An override does not apply: a recorded override lifts the validator's exit-5 `stale` verdict only, never exit 3 (invalid input) or exit 4 (`review_pending`).
+
+### Recipe 18 — all-`KEEP`/`REJECT` file: `metaphor_fix` clean no-op, then `metaphor_apply` pass-through
+
+Reset the fixture and repeat Setup. Hand-author the two shared drafts, plus this
+`plot/drafts/attempt01/metaphors.md` — a fully-decided report with no actionable
+entries (one `KEEP`, one non-destructive `REJECT`), stamped fresh:
+
+```markdown
+Reviewed-draft: draft-v02.md
+
+## Metaphor Report — Scene 001
+
+<!-- review-id: metaphor:001:figure-01 -->
+### stair climbed like wading upstream
+- **Quote:** "Rao climbed the stair like a man wading upstream"
+- **Flag:** REVIEW
+- Decision: KEEP
+- Decision-note:
+
+<!-- review-id: metaphor:001:figure-02 -->
+### silence like a stone
+- **Quote:** "The silence sat in his chest like a stone"
+- **Flag:** REVIEW
+- Decision: REJECT
+- Decision-note: noted rejected, retained as the audit record
+```
+
+First run the fix step:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step metaphor_fix
+```
+
+Expected observable outcome (clean no-op):
+
+- The freshness check passes and the validator (`--round decision`) reports `proceed` (exit 0): total 2, decided 2, pending 0, invalid 0.
+- There are no `FLATTEN` / `REPLACE` / `WORKSHOP` entries, so the coordinator has nothing to generate: it dispatches no subagent, appends no variant section or `Selected:` field, and writes nothing to `metaphors.md`. This is a **clean no-op**, not a blocker. The step records completion — flips `[ ] metaphor_fix` to `[x] metaphor_fix` and updates `last_updated`. No draft is minted; the `Reviewed-draft:` stamp is preserved.
+
+Then run the apply step (the terminal file passes straight through):
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step metaphor_apply
+```
+
+Expected observable outcome (pass-through):
+
+- The freshness check passes and the validator (`--round selection`) reports `proceed` (exit 0): total 2, decided 2, selection-pending 0, selected 0, pending 0, invalid 0 — the terminal `KEEP` / `REJECT` entries carry no selection, so there is nothing selection-pending.
+- With no actionable entries, `metaphor_apply` substitutes nothing: it writes `plot/drafts/attempt01/draft-v03.md` as a verbatim pass-through of `draft-v02.md` (every paragraph copied through unchanged) with the apply-log block comment appended, and appends a `## draft-v03.md` entry to `plot/drafts/attempt01/draft-manifest.md` (created here) with `read_from: [draft-v02.md]`, `review_gate: false`, and `side_artifacts: [metaphors.md]`; the completion action points `Active-head: draft-v03.md` at the draft just written.
+- The step's final action flips `[ ] metaphor_apply` to `[x] metaphor_apply` and updates `last_updated`, while every upstream line stays `[ ]`.
+
+### Recipe 19 — selection-pending blocks `metaphor_apply`; filling `Selected:` runs a deterministic apply
+
+Reset the fixture and repeat Setup. Hand-author the two shared drafts, plus this
+`plot/drafts/attempt01/metaphors.md` — the post-`metaphor_fix` state: one
+actionable `FLATTEN` entry carrying a hand-authored `#### Flatten Options` section
+and a **blank** `- Selected:` field (the disposition layer is complete, so the
+decision round is clean, but the selection layer is not):
+
+```markdown
+Reviewed-draft: draft-v02.md
+
+## Metaphor Report — Scene 001
+
+<!-- review-id: metaphor:001:figure-01 -->
+### stair climbed like wading upstream
+- **Quote:** "Rao climbed the stair like a man wading upstream"
+- **Flag:** REVIEW
+- Decision: FLATTEN
+- Decision-note:
+- Selected:
+- Selection-note:
+
+#### Flatten Options
+- **Original:** "Rao climbed the stair like a man wading upstream"
+- **Variant A (plain):** "Rao climbed the stair slowly, forcing each step"
+- **Variant B (textured):** "Rao climbed the stair a step at a time, the risers steep under him"
+- **Variant C (rhythmic):** "Rao climbed the stair, and the climb took everything"
+```
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step metaphor_apply
+```
+
+Expected observable outcome — a clean blocked exit, not a dispatcher error:
+
+- The existence checks and step-start freshness check pass.
+- The validator (`--round selection`) reports `pending-remain` (exit 4): total 1, decided 1, selection-pending 1, selected 0 — the actionable `FLATTEN` entry has a blank `Selected:`, so it is selection-pending, and the validator's `selection-pending-review-ids:` section names `metaphor:001:figure-01`. (The decision round would report `proceed`; the block is on the selection layer alone.)
+- The step appends the `review_pending` blocker to `open-questions.md`, copying the `selection-pending-review-ids:` list. No draft is written, no `draft-manifest.md` is created, and no completion is recorded. A blank `Selected:` is **never** best-guessed — the human resolves it by recording a variant id, and an override does not apply.
+
+Fill the entry's `Selected:` field so its line reads `- Selected: A`, then rerun the apply step:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step metaphor_apply
+```
+
+Expected observable outcome (deterministic apply):
+
+- The freshness check passes and the validator (`--round selection`) now reports `proceed` (exit 0): total 1, decided 1, selected 1, selection-pending 0, invalid 0.
+- The step reads `Selected: A`, locates Variant A in the entry's `#### Flatten Options` section, finds the original sentence in `draft-v02.md` via the `Quote` anchor, and substitutes the paragraph — the opening line becomes "The lamp went dark and Rao climbed the stair slowly, forcing each step." Because the variant is hand-authored, the substitution is fully deterministic. It writes the full revised prose to `plot/drafts/attempt01/draft-v03.md` (the second paragraph copied through verbatim) with an apply-log block comment naming the applied variant id, and appends a `## draft-v03.md` entry to `plot/drafts/attempt01/draft-manifest.md` (created here) with `read_from: [draft-v02.md]`, `review_gate: false`, and `side_artifacts: [metaphors.md]`; the completion action points `Active-head: draft-v03.md` at the draft just written.
+- The step's final action flips `[ ] metaphor_apply` to `[x] metaphor_apply` and updates `last_updated`, while every upstream line stays `[ ]`.
+
+### Recipe 20 — ambiguous/malformed `Selected:` rejected as invalid input
+
+Reset the fixture and repeat Setup. Hand-author the two shared drafts, plus
+Recipe 19's `metaphors.md` with one change: the `Selected:` field carries a
+multi-token value rather than a single variant id, so its line reads:
+
+```markdown
+- Selected: A or B
+```
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step metaphor_apply
+```
+
+Expected observable outcome — a clean blocked exit, not a dispatcher error:
+
+- The existence checks and step-start freshness check pass.
+- The validator (`--round selection`) reports `invalid-present` (exit 3), its finding naming the line: ``malformed selection `A or B` for `metaphor:001:figure-01` (expected a single well-formed variant-id token)``. Ledger: total 1, invalid 1, selection-pending 0, selected 0. The validator checks `Selected:` structurally — a multi-token value is malformed; an ambiguous selection is invalid, never best-guessed.
+- The step blocks as invalid input, appending the blocker to `open-questions.md` and naming the validator's finding. No draft is written, no `draft-manifest.md` is created, and no completion is recorded.
+
+The resolution is fixing the artifact, **not** waiving it: record a single variant id in `Selected:` (an inline edit to the chosen variant goes in `Selection-note:`, which the validator never parses). An override does not apply — it lifts the exit-5 `stale` verdict only.
+
+### Recipes 3–20 touch only untracked files
 
 The hand-authored `plot/drafts/attempt01/` tree — the drafts, the stamped report (`reviewer-actions.md` for Recipes 3–5 and 9–10, `anti-ai.md` for Recipes 6–8 and 11–12, `prose-pass.md` for Recipes 13–15), and everything the report and fix steps write into it — lives entirely in untracked paths. Nothing new is committed under `examples/smoke/`, and the existing reset procedure below restores the committed baseline.
 
@@ -745,7 +1007,7 @@ The hand-authored `plot/drafts/attempt01/` tree — the drafts, the stamped repo
 # primary agent). For run-step, the step_id goes in the invoking message.
 ```
 
-The same recipes hold, with the `next-step` agent standing in for `/next-step` (Recipe 1) and the `run-step` agent standing in for `/run-step <step_id>` (Recipes 2–9, 11, 12, and 13–15); for Recipe 5, the read-from draft goes in the invoking message alongside the step_id (`compliance_fix from draft-v01`). The expected observable outcomes are identical to the Claude Code lists above. The OpenCode dispatcher sources are held to behavioral parity with the Claude Code ones; only host-specific frontmatter and invocation differ. Recipe 10 and Recipe 11's fan-out companion session are Claude Code-only: the companion ships as a Claude Code skill (OpenCode parity is on the ROADMAP's deferred list), so on OpenCode cover their decision-writing by hand-editing the `Decision:` / `Decision-note:` fields instead — Recipe 9's hand-edit is the model; for Recipe 11, hand-write the category decision into each covered em-dash unit's fields (including the category-decision notes) and the per-entry `SKIP` exception, then proceed with the fix runs as written. Recipes 13–15's decision-writing is by hand-edit on both hosts (Recipe 9's model); prose_pass is flat with no fan-out, so no dedicated companion recipe exists, matching the flat-family precedent of Recipe 10.
+The same recipes hold, with the `next-step` agent standing in for `/next-step` (Recipe 1) and the `run-step` agent standing in for `/run-step <step_id>` (Recipes 2–9, 11, 12, 13–15, and 16–20); for Recipe 5, the read-from draft goes in the invoking message alongside the step_id (`compliance_fix from draft-v01`). The expected observable outcomes are identical to the Claude Code lists above. The OpenCode dispatcher sources are held to behavioral parity with the Claude Code ones; only host-specific frontmatter and invocation differ. Recipe 10 and Recipe 11's fan-out companion session are Claude Code-only: the companion ships as a Claude Code skill (OpenCode parity is on the ROADMAP's deferred list), so on OpenCode cover their decision-writing by hand-editing the `Decision:` / `Decision-note:` fields instead — Recipe 9's hand-edit is the model; for Recipe 11, hand-write the category decision into each covered em-dash unit's fields (including the category-decision notes) and the per-entry `SKIP` exception, then proceed with the fix runs as written. Recipes 13–15's decision-writing is by hand-edit on both hosts (Recipe 9's model); prose_pass is flat with no fan-out, so no dedicated companion recipe exists, matching the flat-family precedent of Recipe 10. The metaphor recipes (16–20) are hand-edit on both hosts too — both the disposition (`Decision:`) and selection (`Selected:` / `Selection-note:`) writes; a companion session over metaphor is Claude Code-only and covered by the flat-family precedent (Recipe 10), so no dedicated metaphor companion recipe is added.
 
 ## Reset between runs
 
@@ -754,7 +1016,7 @@ git checkout examples/smoke/
 git clean -fd examples/smoke/
 ```
 
-`git checkout` restores `pipeline-state.md`, `open-questions.md`, and any other tracked file the run modified. `git clean -fd` removes the untracked install artifacts (`.claude/`, `.opencode/`), the `amanuensis` symlink, any `characters/` tree written by Recipes 1–2, and the entire hand-authored `plot/drafts/attempt01/` tree from Recipes 3–15 — including anything the report and fix steps wrote into it (`draft-v03.md` or `draft-v04.md`, `draft-manifest.md`, the appended or decision-edited `reviewer-actions.md`, and the regenerated, decision-edited, or appended `anti-ai.md`, and the appended or decision-edited `prose-pass.md`). After both commands the fixture is back to the committed baseline.
+`git checkout` restores `pipeline-state.md`, `open-questions.md`, and any other tracked file the run modified. `git clean -fd` removes the untracked install artifacts (`.claude/`, `.opencode/`), the `amanuensis` symlink, any `characters/` tree written by Recipes 1–2, and the entire hand-authored `plot/drafts/attempt01/` tree from Recipes 3–20 — including anything the report and fix steps wrote into it (`draft-v03.md` or `draft-v04.md`, `draft-manifest.md`, the appended or decision-edited `reviewer-actions.md`, the regenerated, decision-edited, or appended `anti-ai.md`, the appended or decision-edited `prose-pass.md`, and the decision/selection-edited or variant-appended `metaphors.md`). After both commands the fixture is back to the committed baseline.
 
 To rerun, repeat the **Setup** section.
 
@@ -763,6 +1025,6 @@ To rerun, repeat the **Setup** section.
 For each recipe: the dispatcher located `pipeline-state.md`, confirmed the step_id appears in the recipe list (selecting the first non-`[x]` step in `/next-step`'s case), resolved the step workflow file under `amanuensis/agents/steps/`, verified every `required: true` precondition resolves to an existing file, and started executing the step body in the same session. From there one of:
 
 - The step body completed, wrote its declared outputs, and as its final action marked its own step line `[x]` and updated `last_updated`. No other checkbox moved.
-- The step body decided it could not proceed (a `critical` blocker in Recipe 1's stop-and-ask outcome, the stale-report blocker in Recipe 3, the `review_pending` blockers in Recipes 6 and 9, Recipe 11's first run, and Recipe 13's first run, the invalid-input blocker in Recipes 12 and 15), appended the blocker to `open-questions.md`, and exited without recording completion — `pipeline-state.md` untouched.
+- The step body decided it could not proceed (a `critical` blocker in Recipe 1's stop-and-ask outcome, the stale-report blocker in Recipe 3, the `review_pending` blockers in Recipes 6 and 9, Recipe 11's first run, Recipe 13's first run, Recipe 16's first run, and Recipe 19's first run, the invalid-input blocker in Recipes 12, 15, 17, and 20), appended the blocker to `open-questions.md`, and exited without recording completion — `pipeline-state.md` untouched.
 
 Failure modes — a missing or malformed `pipeline-state.md`, a requested step_id that does not appear in the recipe list, a missing step workflow file, a `required: true` precondition that resolves to no existing file (the dispatcher names the missing files and stops), or `/next-step` finding every step `[x]` (recipe complete) — should print a clear human-readable message and exit without modifying any project file. Surfacing one of those where a recipe does not expect it would mean the fixture is misconfigured or the dispatcher/orchestrator work has a defect; report it.

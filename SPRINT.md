@@ -81,7 +81,7 @@ Wave order: **Task 1** settles the machine contract — grammar rewrite, the val
 
 ### Task 1 — Contract + validator: the metaphor grammar, the selection layer, the orphan-item check, the fixture
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** metaphor becomes an `adopted` two-layer family; the shared validator gains the `--round` selector, `Selected:`/`Selection-note:` parsing, selection-round ledgering, and the heading-item orphan check; `review-validation.md` documents the two-consumer proceed rule; the fixture exercises both rounds. Closes **M13.2** (and the M12-PR-review orphan-item follow-up).
 
@@ -99,7 +99,7 @@ Wave order: **Task 1** settles the machine contract — grammar rewrite, the val
 
 ### Task 2 — Retarget `metaphor_identify` to emit structured units
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The report emits anchored, countable disposition units and stops emitting the free-text `Human Assessment:` line and the count-only summary. Closes **M13.1**.
 
@@ -117,7 +117,7 @@ Wave order: **Task 1** settles the machine contract — grammar rewrite, the val
 
 ### Task 3 — Retarget `metaphor_fix` and the variant subagent contracts
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The coordinator consumes the decision layer through the validator, generates variants only for actionable entries, and appends each a stable-id variant set plus a blank selection field — with the subagent variant sections reshaped for the settled container. Closes **M13.3**.
 
@@ -135,7 +135,7 @@ Wave order: **Task 1** settles the machine contract — grammar rewrite, the val
 
 ### Task 4 — Retarget `metaphor_apply` to consume the selection layer
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The terminal step consumes explicit `Selected:` fields through the validator and never best-guesses a selection. Closes **M13.4**.
 
@@ -152,7 +152,7 @@ Wave order: **Task 1** settles the machine contract — grammar rewrite, the val
 
 ### Task 5 — Companion support: metaphor's two rounds
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The companion drives disposition and selection as two queues with a second write surface. Closes **M13.5**.
 
@@ -168,7 +168,7 @@ Wave order: **Task 1** settles the machine contract — grammar rewrite, the val
 
 ### Task 6 — Smoke recipes, verification sweep, ROADMAP / SPRINT check-off
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Runnable verification of the metaphor round-trip across both rounds; close the milestone. Closes **M13.6** and the residual of **M13**.
 

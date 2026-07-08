@@ -56,9 +56,18 @@ Begin each scene's section with:
 ## Metaphor Report — Scene xx-yy
 ```
 
-For each figure collected, produce one entry:
+A scene with no figures records its scene header plus a single `No figures.` line — no anchor, no fields, not a review unit. It is the audit record that the scene was scanned:
 
 ```markdown
+## Metaphor Report — Scene xx-yy
+
+No figures.
+```
+
+**Review unit shape.** Every figure collected is one review unit and shares one shape: a `<!-- review-id: ... -->` anchor on its own line immediately above the entry's `### [Short label]` heading, the identify fields (Quote / Tenor / Vehicle / Borrowed property / Uninvited properties / Implication / Register fit) and the `Flag` line unchanged, and blank `- Decision:` / `- Decision-note:` fields as the entry's final two fields — the human's disposition, replacing the free-text assessment line this step no longer emits:
+
+```markdown
+<!-- review-id: metaphor:<scene-id>:figure-<NN> -->
 ### [Short label — e.g. "fork bends like something living"]
 
 - **Quote:** "[exact prose quote]"
@@ -69,8 +78,11 @@ For each figure collected, produce one entry:
 - **Implication:** [what the reader is invited to feel or understand about the tenor as a result]
 - **Register fit:** [does the implication serve the scene's emotional register, or work against it?]
 - **Flag:** CLEAN | REVIEW | BROKEN
-- **Human Assessment:**
+- Decision:
+- Decision-note:
 ```
+
+The review-id follows the `metaphor` family segment grammar in `agents/review-grammars.yaml`; the item segment is `figure-<NN>`, the entry's emission ordinal within its scene section, and the short_story and book forms are defined there — do not restate them here. Emit `Decision:` and `Decision-note:` blank — they belong to the human, and a blank `Decision:` means the unit is pending review. The fixture `examples/review/metaphors.md` shows the exact target shape.
 
 **Flag definitions:**
 
@@ -80,22 +92,9 @@ For each figure collected, produce one entry:
 
 Do not editorialize in `Register fit` or `Implication`. State what the metaphor does, not whether you like it. The flag is where judgment lands.
 
-Leave the `Human Assessment` line empty. It will be completed by the human reviewer.
+### Decisions
 
-### At the end of each scene
-
-Append a summary:
-
-```markdown
-### Summary — Scene xx-yy
-
-- Figures collected: N
-- CLEAN: N
-- REVIEW: N
-- BROKEN: N
-```
-
-No pattern-level commentary. The summary is a count.
+After this step runs, the human — companion-assisted, via the `amanuensis-review` skill — records a disposition in each unit's `Decision:` field, per the `metaphor` family grammar in `agents/review-grammars.yaml` (the legal token set, the payload rule, and blank-means-pending semantics live there, not here). `Decision-note:` is optional free text for the human's why and is never machine-parsed. A blank `Decision:` means the unit is still pending review. The `Flag` this step emits is a producer recommendation only — it never disposes of an entry; the disposition lands in `Decision:`. `metaphor_fix` then consumes the filled per-unit fields. There is no per-scene count block: the validator's ledger is the count.
 
 ### Anti-Patterns
 
@@ -109,9 +108,15 @@ No pattern-level commentary. The summary is a count.
 
 **Skipping a figure because it seems intentional.** Intentionality is not the test. A broken metaphor the author chose deliberately is still broken. Report it; the human decides.
 
+**Pre-filling a decision field.** `Decision:` and `Decision-note:` are emitted blank. They belong to the human; a report that fills any `Decision:` — however obvious the flag — has decided instead of reported, and a blank `Decision:` is the only honest signal that a figure is still pending.
+
+**Anchoring a `No figures.` line.** A scene that collected no figures records `## Metaphor Report — Scene xx-yy` plus one `No figures.` line — no anchor, no fields. An anchor turns it into a countable review unit.
+
+**Dropping the anchor on a figure.** Every figure carries a `<!-- review-id: ... -->` anchor immediately above its `### ` heading. A figure without its anchor is an orphaned item the validator rejects.
+
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — one file per chapter; append across scenes with a scene header. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers. Subsequent runs against the same draft append below and preserve the stamp; against a newer draft (stale-report recovery path) the report is `regenerated` — the file is overwritten with a fresh stamp and the prior findings `discarded`. Each scene section contains one entry per figure (in the format above) and a per-scene summary count. The file is a working artifact the human will annotate before `metaphor_fix` runs; `metaphor_fix` and `metaphor_apply` read the reviewed-draft stamp to detect stale annotations.
+- `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — the human review artifact; one file per chapter, appended across scenes with a scene header. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers — the draft this run actually read. Subsequent runs against the same draft append below and preserve the stamp; on the append path each scene's `figure-<NN>` ordinals continue rather than restarting so review-ids never collide within the epoch. Against a newer draft (stale-report recovery path) the report is `regenerated` — the file is overwritten with a fresh stamp and the prior findings `discarded`. Each scene section holds either a single `No figures.` line (no anchor, no fields, not a review unit) or one review unit per figure — each carrying its `<!-- review-id: ... -->` anchor immediately above its `### [Short label]` heading, the identify fields, the `Flag`, and blank `- Decision:` / `- Decision-note:` fields. There is no per-scene summary count; the validator's ledger is the count. The human records a disposition in each unit's `Decision:` field per the `metaphor` family grammar in `agents/review-grammars.yaml` before `metaphor_fix` runs; `metaphor_fix` and `metaphor_apply` read the `Reviewed-draft` stamp to detect stale annotations.
 
 ## Open questions handling
 

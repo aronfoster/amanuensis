@@ -17,9 +17,16 @@
 # Machine-read keys — parsed by scripts/validate-review-artifact.sh; keep them
 # flat, single-line, and free of colons in their values:
 #   adoption, migrates_in, path_pattern, tokens, payload_optional,
-#   payload_required, payload_forbidden, bulk_supported, bulk_actions,
-#   bulk_payload_optional, container_pattern, container_exempt_suffix,
-#   id_item_pattern, id_min_locations, item_line_pattern
+#   payload_required, payload_forbidden, selection_tokens, bulk_supported,
+#   bulk_actions, bulk_payload_optional, container_pattern,
+#   container_exempt_suffix, id_item_pattern, id_min_locations,
+#   item_line_pattern
+# `selection_tokens` is the metaphor family's second-evidence-layer key: the
+# `Decision:` tokens that make an entry actionable and so require a filled
+# `Selected:` in the validator's `--round selection` pass. Only a family
+# declaring it has a selection layer; for every other family the round
+# selector, the `Selected:` / `Selection-note:` parsing, and the two extra
+# selection-round ledger rows never engage, so their output is unchanged.
 # No adopted family sets bulk support; the bulk keys remain machine-read so
 # that a stray `BULK:` header in any artifact is rejected as invalid input
 # rather than silently ignored.
@@ -53,8 +60,29 @@
 # zero anchored units fails structural validation as invalid — this is what
 # makes a positional/pre-migration report an invalid input rather than a
 # silently empty one. Families that leave these keys unset get no container
-# check; the one pending family (metaphor) settles its container shape when
-# M13 retargets its report step.
+# check.
+#
+# Heading-item orphan check (structural, additive). For a family whose
+# `item_line_pattern` is a heading (metaphor `^### `, prose_pass `^##### `),
+# the `container_pattern` check catches a fully unanchored section but not a
+# lone item-line heading carrying neither an anchor nor a decision field. The
+# validator closes that gap directly: inside its heading rule, a line matching
+# the family's `item_line_pattern` with no anchor on the line immediately
+# above it is an invalid orphaned item. It is auto-scoped to heading-item
+# families — a bullet-item family's `^- ` never matches a `#` line, so
+# compliance / anti_ai never misfire — and it fires on no existing fixture.
+#
+# All four families are now `adopted`; none is pending. metaphor is the one
+# family that settles its container as **no `container_pattern`**: with every
+# figure anchored and the orphan-item check live, a pre-migration report
+# (unanchored `### ` figures) is rejected per figure as an orphaned item, and
+# a no-figures scene records a single `No figures.` line (zero `### ` headings,
+# no orphan, valid). A scene-level `container_pattern: "## Metaphor Report"`
+# was rejected: it would flag the legitimate no-figures scene as an empty
+# container unless the scene heading carried a `— none`-style exempt suffix,
+# uglier than the `No figures.` marker the orphan check already permits.
+# metaphor's `#### ` variant sections (appended by metaphor_fix) sit a level
+# below `^### `, so they never read as a figure item line or a container.
 #
 # Shared review item shape (ROADMAP.md M10 shared-design principle 3):
 #
@@ -68,6 +96,15 @@
 # why. A blank `Decision:` means pending — no review evidence — for every
 # family, with no exceptions. A payload follows its token after a colon,
 # e.g. `Decision: FIX: cut the clause`.
+#
+# The metaphor family adds a second evidence layer on its actionable entries
+# (`Decision:` in `selection_tokens`): a `- Selected:` field holding one
+# machine-clean variant id and an optional `- Selection-note:` free-text
+# field — the same machine-what / human-note split as `Decision:` /
+# `Decision-note:` (`Selected:` the id chosen, `Selection-note:` the human's
+# inline edit to it, never machine-parsed). They are parsed only in the
+# validator's `--round selection` pass; see the metaphor family's
+# `selection_layer` / `selection_note` keys.
 #
 # review-id grammar: `<artifact-family>:<location...>:<item-id>`.
 #   book / series : <family>:<book-id>:<chapter-id>[:<scene-id>]:<item-id>
@@ -187,14 +224,14 @@ anti_ai:
   fixture: examples/review/anti-ai.md
 
 metaphor:
-  adoption: pending
+  adoption: adopted
   migrates_in: M13
   artifact: metaphors.md
   path_pattern: metaphors.md
   path: "<chapter-folder>/drafts/<latest-attempt>/metaphors.md"
   producer: metaphor_identify
   consumer: metaphor_fix metaphor_apply
-  item_shape: "One review unit per metaphor entry. The anchor sits immediately above the entry's `### [Short label]` heading; `- Decision:` / `- Decision-note:` replace the free-text `Human Assessment:` line among the entry's fields. Deletion is no longer a decision signal: a rejected figure carries `Decision: REJECT` and stays in the file as the audit record."
+  item_shape: "One review unit per figure. The anchor sits immediately above the entry's `### [Short label]` heading; `- Decision:` / `- Decision-note:` replace the free-text `Human Assessment:` line among the entry's fields. Deletion is not a decision signal: a rejected figure carries `Decision: REJECT` and stays in the file as the audit record. On an actionable entry (`Decision:` in `selection_tokens`) metaphor_fix inserts a blank `- Selected:` / `- Selection-note:` pair among the entry's fields — after `Decision-note:`, before the variant heading, so both sit inside the anchored unit — and appends a stable-id variant set as a `#### ` section (`#### Flatten Options` / `#### Replace Options` / `#### Workshop Candidates`) below the unit. Pre-migration rejection is by the heading-item orphan check, not a `container_pattern`: an unanchored `### ` figure is an invalid orphaned item, and a no-figures scene records `## Metaphor Report — Scene xx-yy` plus a single `No figures.` line (zero `### ` headings, no orphan, valid)."
   required_fields: Decision
   optional_fields: Decision-note
   anchor: "`<!-- review-id: ... -->` on its own line immediately above the entry's `### [Short label]` heading"
@@ -209,11 +246,14 @@ metaphor:
   payload_required: REPLACE
   payload_forbidden: KEEP REJECT FLATTEN WORKSHOP
   payload_meaning: "The REPLACE payload is the target image the human wants integrated (`REPLACE: <image>`)."
-  replace_policy: "Bare REPLACE is invalid — the payload is REQUIRED, and a bare REPLACE is not normalized to WORKSHOP (this supersedes the treat-as-WORKSHOP convenience in agents/steps/metaphor-fix.md when M13 retargets the metaphor steps). WORKSHOP is the ask-for-candidates path; REPLACE is the integrate-this-image path. Locked in M10 per ROADMAP M10.1."
-  blank_means: "pending — an entry with a blank Decision is unreviewed; the producer's CLEAN / REVIEW / BROKEN flag is a recommendation, never a disposition"
+  replace_policy: "Bare REPLACE is invalid — the payload is REQUIRED, and a bare REPLACE is not normalized to WORKSHOP (this supersedes the treat-as-WORKSHOP convenience retired from agents/steps/metaphor-fix.md in M13). WORKSHOP is the ask-for-candidates path; REPLACE is the integrate-this-image path. Locked in M10 per ROADMAP M10.1."
+  selection_tokens: FLATTEN REPLACE WORKSHOP
+  selection_layer: "The second evidence layer, metaphor-only, gating metaphor_apply through the validator's `--round selection` pass. The `Decision:` tokens in `selection_tokens` (FLATTEN / REPLACE / WORKSHOP) make an entry actionable — metaphor_fix generates variants for it and it requires a filled `Selected:` in the selection round; KEEP / REJECT are terminal and carry no selection. `Selected:` holds exactly one variant id (the per-variant label the fix subagents assign — A / B / C for flatten and replace, A–H for workshop), machine-clean and validated structurally as a single well-formed token; a blank `Selected:` on an actionable entry is selection-pending, and a `Selected:` on a KEEP / REJECT entry, or a multi-token / malformed value, is invalid. The validator checks `Selected:` structurally only — it does not confirm the id names an appended variant; metaphor_apply resolves the id to prose under its existing anchor-gate and blocks / skips, never guesses, if it cannot."
+  selection_note: "`Selection-note:` is optional free text the validator never parses — the human's inline edit to the chosen variant, read by metaphor_apply as the target form. The same machine-field / human-note split as `Decision:` / `Decision-note:`: `Decision-note:` carries round-one corrections, `Selection-note:` carries round-two edits."
+  blank_means: "pending — an entry with a blank Decision is unreviewed; the producer's CLEAN / REVIEW / BROKEN flag is a recommendation, never a disposition. Selection layer: a blank `Selected:` on an actionable entry is selection-pending — counted only in the selection round, over actionable entries."
   bulk_supported: no
-  bulk_rules: "None. Every figure is decided per entry; no auto-disposition from CLEAN / REVIEW / BROKEN flags."
-  counting: "Review unit = one metaphor entry. All five tokens are decisions: a file of all KEEP / REJECT is fully reviewed and is a valid pass-through for metaphor_apply, not a nothing-to-do failure."
-  review_evidence: "A filled `Decision:` field holding a legal token, with the image payload on REPLACE."
-  proceed_state: "metaphor_fix proceeds only at zero pending units and zero invalid units, then acts only on FLATTEN / REPLACE / WORKSHOP entries; metaphor_apply additionally treats an all-KEEP/REJECT file as valid pass-through. Staleness per the Artifact-state contract."
+  bulk_rules: "None. Every figure is decided per entry; no auto-disposition from CLEAN / REVIEW / BROKEN flags, and no auto-selection of a variant."
+  counting: "Review unit = one figure. All five tokens are decisions (metaphor has no SKIP / ESCALATE), so a file of all KEEP / REJECT is fully decided. The selection layer counts selection-pending / selected over actionable entries only (`Decision:` in selection_tokens); terminal KEEP / REJECT entries carry no selection and are pass-through."
+  review_evidence: "Round one: a filled `Decision:` field holding a legal token, with the image payload on REPLACE. Round two (actionable entries only): a filled `Selected:` naming one variant id, with any inline edit in `Selection-note:`."
+  proceed_state: "Two consumers, two layers. metaphor_fix (`--round decision`) proceeds only at zero decision-pending units and zero invalid units, then acts only on FLATTEN / REPLACE / WORKSHOP entries — an all-KEEP/REJECT file is a clean no-op. metaphor_apply (`--round selection`) proceeds only at zero decision-pending units, zero selection-pending units, and zero invalid units, treating an all-KEEP/REJECT file as valid pass-through. Staleness per the Artifact-state contract: metaphor_apply's recorded override lifts stale only, never pending, selection-pending, or invalid; metaphor_fix mints no draft and carries no override branch."
   fixture: examples/review/metaphors.md

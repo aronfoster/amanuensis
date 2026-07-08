@@ -17,10 +17,10 @@ Do not read storyboard blocks, canon files, or the selected voice file or profil
 
 ## Output
 
-Append integration versions directly below the REPLACE entry in the working metaphors file:
+Append integration versions directly below the REPLACE entry in the working metaphors file, as a `#### ` section (a level below the figure's `### ` heading, inside the anchored unit):
 
 ```markdown
-### Replace Options
+#### Replace Options
 - **Original:** "[original quote]"
 - **Target image:** "[human-supplied image]"
 - **Version A (minimal):** "[paragraph with rewritten sentence]"
@@ -30,7 +30,9 @@ Append integration versions directly below the REPLACE entry in the working meta
 
 Each version is the full paragraph with the rewrite in place, so the human can assess the change in context. The substitution is sentence-level — keep collateral edits to surrounding sentences to the minimum the rewrite demands. Note any such adjustment in brackets.
 
-Do not write to the draft. Do not select a version. The human deletes the versions not wanted and leaves one.
+The per-version labels `A` / `B` / `C` are the stable variant ids: the human records the chosen one in the entry's `- Selected:` field, so keep them exactly as shown and do not renumber.
+
+Do not write to the draft. Do not select a version. The human records the chosen variant id in the entry's `- Selected:` field; the unchosen versions stay in the file as the audit record.
 
 ---
 
@@ -40,7 +42,7 @@ For each REPLACE entry in the working file:
 
 **Step 1: Read the entry.**
 
-Read the identify fields: tenor, implication, register fit. If the human has added corrections or notes below the action word, those take precedence over the original field values. Use the corrected understanding, not the original.
+Read the identify fields: tenor, implication, register fit. If the human has recorded corrections or notes in the entry's `- Decision-note:`, those take precedence over the original field values. Use the corrected understanding, not the original.
 
 The human has also supplied a target image. Your job is to make that image fit the sentence, paragraph, and register — not to evaluate whether it is the right choice.
 
@@ -77,7 +79,7 @@ Show each version inside the full paragraph so the human can assess the integrat
 
 ## Anti-Patterns
 
-**Ignoring human corrections.** If the human has written a correction below the action word, it overrides the original field. Do not revert to the original assessment.
+**Ignoring human corrections.** If the human recorded a correction in the entry's `- Decision-note:`, it overrides the original field. Do not revert to the original assessment.
 
 **Improving the supplied image.** The human chose it. Integrate it as given.
 

@@ -17,10 +17,10 @@ Do not read storyboard blocks, canon files, or the selected voice file or profil
 
 ## Output
 
-Append variants directly below the FLATTEN entry in the working metaphors file:
+Append variants directly below the FLATTEN entry in the working metaphors file, as a `#### ` section (a level below the figure's `### ` heading, inside the anchored unit):
 
 ```markdown
-### Flatten Options
+#### Flatten Options
 - **Original:** "[original quote]"
 - **Variant A (plain):** "[paragraph with rewritten sentence]"
 - **Variant B (textured):** "[paragraph with rewritten sentence]"
@@ -29,7 +29,9 @@ Append variants directly below the FLATTEN entry in the working metaphors file:
 
 Each variant is the full paragraph with the rewrite in place, so the human can assess the change in context. The substitution is sentence-level — keep collateral edits to surrounding sentences to the minimum the rewrite demands (pronoun continuity, a conjunction that no longer scans). Note any such adjustment in brackets.
 
-Do not write to the draft. Do not select a variant. The human deletes the variants not wanted and leaves one.
+The per-variant labels `A` / `B` / `C` are the stable variant ids: the human records the chosen one in the entry's `- Selected:` field, so keep them exactly as shown and do not renumber.
+
+Do not write to the draft. Do not select a variant. The human records the chosen variant id in the entry's `- Selected:` field; the unchosen variants stay in the file as the audit record.
 
 ---
 
@@ -39,7 +41,7 @@ For each FLATTEN entry in the working file:
 
 **Step 1: Read the entry.**
 
-Read the identify fields: tenor, implication, register fit. If the human has added corrections or notes below the action word, those take precedence over the original field values. Use the corrected understanding, not the original.
+Read the identify fields: tenor, implication, register fit. If the human has recorded corrections or notes in the entry's `- Decision-note:`, those take precedence over the original field values. Use the corrected understanding, not the original.
 
 Then read the surrounding paragraph supplied by the coordinator and locate the flagged sentence within it.
 
@@ -79,7 +81,7 @@ Show each variant inside the full paragraph it belongs to so the human can asses
 
 ## Anti-Patterns
 
-**Ignoring human corrections.** If the human has written a correction below the action word, it overrides the original field. Do not revert to the original assessment.
+**Ignoring human corrections.** If the human recorded a correction in the entry's `- Decision-note:`, it overrides the original field. Do not revert to the original assessment.
 
 **Replacing one metaphor with another.** Variants must be figuratively inert. If a variant contains a comparison, rewrite it.
 

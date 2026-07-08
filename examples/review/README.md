@@ -19,13 +19,13 @@ sh scripts/validate-review-artifact.sh examples/review/<fixture> agents/review-g
 | `reviewer-actions.md` | `compliance` (adopted) | short_story | CLEAN block vs violations; blank (pending), `FIX`, `FIX: <instruction>`, `SKIP`, `ESCALATE`; one deliberately illegal token | ledger total 6, pending 1, decided 2, skipped 1, escalated 1, invalid 1 — verdict `invalid-present`, exit 3 |
 | `anti-ai.md` | `anti_ai` (adopted) | book | fan-out-era cases: a fan-out-eligible category with fanned-out identical decisions carrying category-decision audit notes plus a per-entry `SKIP` exception; a non-eligible category with a decided unit and a blank pending unit; an `ESCALATE` on a nested-auxiliary-line unit; a `No flags.` scene (not a review unit) | ledger total 6, pending 1, decided 3, skipped 1, escalated 1, invalid 0 — verdict `pending-remain`, exit 4 |
 | `prose-pass.md` | `prose_pass` (adopted) | book (no scene segment) | every finding an anchored unit, KEEP included: a KEEP finding confirmed with `SKIP`, a decided `FIX`, a blank pending finding, an `ESCALATE`; the `#### Findings` container; no bulk or fan-out anywhere | ledger total 4, pending 1, decided 1, skipped 1, escalated 1, invalid 0 — verdict `pending-remain`, exit 4 |
-| `metaphors.md` | `metaphor` (pending until M13) | short_story | all five tokens, including `REPLACE: <image>` with its required payload and a non-destructive `REJECT`; one pending entry | not-yet-adopted error, exit 1 |
+| `metaphors.md` | `metaphor` (adopted) | short_story | two evidence layers: all five `Decision:` tokens incl. `REPLACE: <image>` with its required payload and a non-destructive `REJECT`; actionable entries carry a `#### ` variant set with a `Selected:` id (one filled `REPLACE`, one filled `FLATTEN` + `Selection-note:` edit, one blank `WORKSHOP` = selection-pending); one blank-`Decision:` pending figure | decision round: total 6, pending 1, decided 5, invalid 0 — `pending-remain`, exit 4; selection round (`--round selection`): same, plus selection-pending 1, selected 2 — `pending-remain`, exit 4 |
 
-The one remaining `pending`-family fixture (`metaphors.md`) also documents,
-in its trailing expectation comment, the ledger the validator must produce
-once M13 flips its adoption marker (verify by pointing the script at a scratch
-copy of the grammar file with the marker flipped — never by editing
-`agents/review-grammars.yaml` in place). The compliance fixture is
+All four families are now `adopted`; none remains pending. The `metaphors.md`
+fixture is the one two-evidence-layer specimen: its trailing expectation
+comment documents **both** round ledgers — the decision round (`metaphor_fix`'s
+gate) and the selection round (`metaphor_apply`'s gate, via `--round
+selection`) — and their exit codes. The compliance fixture is
 deliberately mid-review with one invalid unit; its comment also states the
 proceed outcome once the pending unit is filled and the illegal token
 corrected. The anti-AI and prose-pass fixtures are each deliberately mid-review

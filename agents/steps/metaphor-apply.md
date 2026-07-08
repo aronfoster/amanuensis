@@ -25,36 +25,46 @@ See `agents/orchestrator.md` for the step workflow contract.
 
 ## Purpose
 
-Substitutes the surviving variants from the working metaphors file into the draft. Produces a new draft file. The terminal step of the metaphor pipeline: it integrates the variants the human selected after `metaphor_fix` ran, without re-evaluating them.
+Substitutes the human-selected variants from the working metaphors file into the draft. Produces a new draft file. The terminal step of the metaphor pipeline: it integrates the variant each actionable entry names in its `Selected:` field after `metaphor_fix` ran, without re-evaluating them.
 
 ## Inputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — the working file after human selection. Each surviving entry carries the variant the human kept. Unlike the annotation-grammar reports, `metaphor_apply` has no `FIX`/`SKIP`/`ESCALATE` gate; under the general contract (`agents/orchestrator.md`'s **Artifact state** section, review surfaced not enforced) its review evidence is the human's selection here — a surviving variant per entry. A `metaphors.md` with no surviving variant carries no such evidence and is handled by the existing missing/ambiguous-input blocker, not a manufactured unannotated-report gate. Variants may be FLATTEN paragraphs, REPLACE paragraphs, or WORKSHOP sentences. Note: since `metaphor_fix`'s workshop subagent no longer runs an integration phase (the integration phase was removed; integration now happens here), surviving WORKSHOP entries arrive as bare individual sentences rather than fully-integrated paragraphs. Step 3 of Behavior already handles this through its "sentence variant" branch — no behavior change is required, but you should not be surprised to see workshop variants as one-line candidates.
+- `<chapter-folder>/drafts/<latest-attempt>/metaphors.md` — the working file after human selection. Each actionable entry (`Decision:` in the selection tokens, per `agents/review-grammars.yaml`) carries a `Selected:` field naming the one variant id the human chose, and an optional `Selection-note:` inline edit to it; terminal `KEEP`/`REJECT` entries carry no selection. Unlike the annotation-grammar reports, `metaphor_apply` has no `FIX`/`SKIP`/`ESCALATE` gate; under the general contract (`agents/orchestrator.md`'s **Artifact state** section, review surfaced not enforced) its review evidence is the human's selection here — a filled `Selected:` on each actionable entry. An actionable entry with a blank `Selected:` is selection-pending and carries no such evidence; the validator (below) catches it as exit 4 and the step blocks, not a manufactured unannotated-report gate. The variant a `Selected:` id names may be a FLATTEN paragraph, a REPLACE paragraph, or a WORKSHOP sentence. Note: since `metaphor_fix`'s workshop subagent no longer runs an integration phase (the integration phase was removed; integration now happens here), the workshop variants a `Selected:` id can name arrive as bare individual sentences rather than fully-integrated paragraphs. Step 3 of Behavior already handles this through its "sentence variant" branch — no behavior change is required, but you should not be surprised to see workshop variants as one-line candidates.
 
   At step start, before substituting any variant, read the `Reviewed-draft: draft-vNN.md` header at the top of `metaphors.md` and confirm it equals `<latest-draft>`. This is the consumption-time check of the general freshness contract stated in `agents/orchestrator.md`'s **Artifact state** section: `metaphors.md` is `fresh` iff its stamp equals the current `<latest-draft>` (the manifest's active head) and `stale` otherwise — a predicate derived here at step start, never stored. If the stamp does not match, the input is `stale`; see "Open questions handling" below for the stale-report blocker (the report→fix freshness invariant is that contract's named worked instance), unless the human recorded an override — see "Overrides" below.
+
+  After the freshness check, and before substituting any variant, run the shared validator over the working file in the selection round:
+
+  ```sh
+  sh amanuensis/scripts/validate-review-artifact.sh --round selection <chapter-folder>/drafts/<latest-attempt>/metaphors.md amanuensis/agents/review-grammars.yaml <chapter-folder>/drafts/<latest-attempt>/draft-manifest.md
+  ```
+
+  (paths as seen from a consuming project, per `agents/review-validation.md`). `--round selection` gates this step on the selection evidence layer — the metaphor family declares `selection_tokens`, so the validator additionally reads each actionable entry's `- Selected:` / `- Selection-note:` fields (per `agents/review-grammars.yaml`). Pass the attempt's `draft-manifest.md` when it exists so the script's state layer runs; if none exists yet, omit it — freshness is already established at step start. When the dispatcher passed a read-from draft, additionally pass that draft filename as the validator's fourth argument (the effective draft): freshness is derived against the draft this run reads, per the freshness check above, so the state layer compares the stamp against the read-from draft rather than the manifest's `Active-head:`. Interpret the ledger and exit code per `agents/review-validation.md`: proceed only on exit 0 — the grammar's proceed state, zero decision-pending units, zero selection-pending units, and zero invalid units. Exit 4 (pending-remain) blocks as `review_pending`, copying the validator's `pending-review-ids:` and `selection-pending-review-ids:` lists into the blocker (the deterministic set of remaining units — do not re-enumerate blank `Decision:` or `Selected:` fields by eye); exit 3 (invalid-present) blocks as invalid input, naming the validator's findings (a `Selected:` on a terminal `KEEP`/`REJECT` entry, or a malformed/multi-token value, is invalid here); exit 5 (stale) blocks as `stale` unless a recorded override applies — an override lifts the stale axis only, never pending, selection-pending, or invalid (see "Overrides"). See "Open questions handling" below for the blockers.
 - `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the current prose (the latest prose-revising step's output before this one). Resolved at step start via the manifest's `Active-head:` pointer (the active head), or via the read-from override the dispatcher passed, per `agents/project-layouts.md` — not by highest-numbered draft.
 
 Do not read the storyboard, canon files, or the selected voice file or profile. The variants have already been generated and chosen under those constraints. Apply locates each change in the draft and integrates it; it does not re-evaluate the rewrite.
 
 ## Behavior
 
-For each entry in `metaphors.md` that carries a surviving variant:
+Terminal `KEEP`/`REJECT` entries carry no selection and are skipped. An all-`KEEP`/`REJECT` file has no actionable entries and is a valid pass-through: write `<next-draft>` with no substitutions (prose bit-identical to `<latest-draft>`, with the apply-log block comment appended) and record the manifest entry, exactly as a run with actionable entries does.
 
-**Step 1: Identify the surviving variant.**
+For each actionable entry in `metaphors.md` (`Decision:` in the selection tokens, per `agents/review-grammars.yaml`):
 
-Find what the human left beneath the entry's flag. After human selection there is normally a single variant. The variant may take any of the forms the upstream steps produce:
+**Step 1: Read the entry's `Selected:` and locate the named variant.**
+
+The validator has already run (see Inputs), so every actionable entry holds a well-formed `Selected:` naming exactly one variant id — the per-variant label the fix subagents assigned (`A`/`B`/`C` for flatten and replace, `A`–`H` for workshop). Read the `Selected:` field and find the variant carrying that id in the entry's appended `#### ` variant section (`#### Flatten Options` / `#### Replace Options` / `#### Workshop Candidates`); that variant is the target. If `Selection-note:` carries an inline edit to the chosen variant, the edited form is the target — read `Selection-note:` as the target the way the fix steps read `Decision-note:` as context. The located variant may take any of the forms the upstream steps produce:
 
 - A FLATTEN variant — typically a paragraph with a rewritten sentence in place
 - A REPLACE version — typically a paragraph with the new image integrated
 - A WORKSHOP candidate — a single sentence (the workshop subagent no longer integrates the candidate into a paragraph; that integration is this step's job)
 
-If the entry is ambiguous — multiple variants left in, or none — use your best understanding of what the human meant. If the human edited a variant inline, that edited form is the target. If multiple variants remain but one is clearly more recent or annotated as chosen, use it. If the entry has been deleted entirely, skip it. Note the call you made in the apply log.
+Do not best-guess a selection. A blank `Selected:` on an actionable entry is selection-pending and blocked the step at validation (exit 4); an ambiguous or malformed `Selected:` is invalid and blocked it (exit 3) — neither reaches this step. A well-formed `Selected:` naming a variant id this step cannot resolve to an appended variant is skipped and noted per the anchor-gate below (Step 2), never guessed. Note the applied variant id in the apply log.
 
 **Step 2: Locate the change in the draft.**
 
 Find the original sentence in `<latest-draft>` using the entry's `Quote` field. Treat the quote as a guide, not a string to match. Minor differences — punctuation, smart vs. straight quotes, whitespace, a typo on either side, an em-dash that became a comma — should not stop you. Find the sentence the entry is clearly about and proceed.
 
-If the surviving variant is a paragraph, identify the corresponding paragraph in the draft (the one containing the original sentence) as the substitution target.
+If the selected variant is a paragraph, identify the corresponding paragraph in the draft (the one containing the original sentence) as the substitution target.
 
 If you genuinely cannot identify the target — the prose has shifted enough that no candidate is clearly the right one — note it in the apply log and move on. Do not guess wildly.
 
@@ -76,8 +86,8 @@ At the end of `<next-draft>`, append a block comment:
 Apply log
 
 - [entry label]: applied [variant ID]; [collateral note, or "no collateral change"]
-- [entry label]: applied [variant ID]; resolved ambiguity by [reason]
-- [entry label]: skipped — entry deleted / no surviving variant
+- [entry label]: applied [variant ID] as edited by Selection-note; [collateral note]
+- [entry label]: skipped — terminal entry (KEEP / REJECT)
 - [entry label]: skipped — could not locate target in draft
 - Override applied: metaphors.md — condition overridden: stale — report stamped draft-vNN.md, applied against draft-vMM.md; authorized by human-recorded Override block (emitted only when proceeding under a recorded override; see "Overrides")
 -->
@@ -102,7 +112,7 @@ The log records every entry and every judgment call. It is the audit trail for t
 
 **Silently dropping an entry.** Every entry must appear in the apply log: applied (with any judgment calls noted), or skipped (with the reason).
 
-**Treating the variant as a draft.** The surviving variant is the chosen line. Apply it as written, except where bracketed notes from the upstream step direct an adjustment.
+**Treating the variant as a draft.** The variant named in `Selected:` is the chosen line. Apply it as written, except where bracketed notes from the upstream step direct an adjustment.
 
 **Modifying the working file.** Apply reads from `metaphors.md`. It does not write to it.
 
@@ -124,7 +134,7 @@ The log records every entry and every judgment call. It is the audit trail for t
 
 ## Overrides
 
-The freshness check above blocks by default: a `stale` `metaphors.md` is sent to "Open questions handling" and no prose is written. A human may authorize proceeding against a `stale` input by recording an override, per `agents/orchestrator.md`'s **Artifact state** section. An override authorizes consuming an artifact despite a known *state* problem (staleness); it does **not** supply missing editorial intent. This is the only path by which this step applies against a `stale` input, and it never happens silently. `metaphor_apply` has no annotation-grammar report, so on the review axis its evidence is the human's selection in `metaphors.md`; a `metaphors.md` with no surviving variant is its `review_pending` analog — there is nothing to substitute, so an override does not apply to it either. It is handled as a missing/ambiguous input above, resolved by the human selecting a variant rather than by an override.
+The freshness check above blocks by default: a `stale` `metaphors.md` is sent to "Open questions handling" and no prose is written. A human may authorize proceeding against a `stale` input by recording an override, per `agents/orchestrator.md`'s **Artifact state** section. An override authorizes consuming an artifact despite a known *state* problem (staleness); it does **not** supply missing editorial intent. This is the only path by which this step applies against a `stale` input, and it never happens silently. `metaphor_apply` has no annotation-grammar report, so on the review axis its evidence is the human's selection in `metaphors.md`; an actionable entry with a blank `Selected:` is its `review_pending` analog — selection-pending, with nothing to substitute, so an override does not apply to it either. The validator catches it (exit 4) and the step blocks; it is resolved by the human selecting a variant rather than by an override.
 
 **Where the human records it.** A human-authored `Override:` block placed in `metaphors.md` — the side artifact this step already reads at step start — naming the specific artifact and the condition overridden. It is not a new frontmatter or manifest field. Shape, for a stale input:
 
@@ -134,7 +144,7 @@ Override: proceed despite stale — metaphors.md stamped draft-vNN.md, current <
 
 The override must name the specific artifact and the draft mismatch.
 
-**Recognition at step start.** After computing freshness, if `metaphors.md` is `stale`, look for a matching `Override:` block naming `metaphors.md` and the draft mismatch. If a matching block is present, proceed with the substitution; if none is present, block to `open-questions.md` exactly as today. A `metaphors.md` with no surviving variant is unaffected by overrides — the human resolves it by selecting a variant.
+**Recognition at step start.** After computing freshness, if `metaphors.md` is `stale`, look for a matching `Override:` block naming `metaphors.md` and the draft mismatch. If a matching block is present, proceed with the substitution; if none is present, block to `open-questions.md` exactly as today. An actionable entry with a blank `Selected:` (selection-pending) is unaffected by overrides — the human resolves it by selecting a variant.
 
 **Overriding staleness is still anchor-gated.** The override waives the freshness *block*, not the requirement that each variant land on a real target. The variants were selected against an older draft, so an entry's `Quote` anchor may no longer match `<latest-draft>`; the step still locates each target under its normal guidance, and an entry whose target cannot be identified is noted in the apply log and skipped, not guessed.
 
@@ -150,7 +160,7 @@ The step applies against a `stale` `metaphors.md` only via a recorded override, 
 
 Named blocker conditions:
 
-- **Missing or ambiguous inputs.** `metaphors.md` is missing, contains no surviving variants, or `<latest-draft>` cannot be resolved. A `metaphors.md` with no surviving variant is the review-evidence (`review_pending`) analog for this step, whose review evidence is the human's selection; absent a recorded override (see "Overrides"), it blocks here.
+- **Missing or ambiguous inputs.** `metaphors.md` is missing, or `<latest-draft>` cannot be resolved. Selection evidence is gated by the validator (see Inputs): an actionable entry with a blank `Selected:` is selection-pending — the review-evidence (`review_pending`) analog for this step, whose review evidence is the human's selection — and blocks as `review_pending` (validator exit 4); a malformed or multi-token `Selected:`, or a `Selected:` on a terminal `KEEP`/`REJECT` entry, blocks as invalid input (exit 3). An override supplies no editorial intent and lifts neither; the human resolves a selection-pending entry by selecting a variant.
 - **Stale report (`stale`).** The `Reviewed-draft:` header at the top of `metaphors.md` names a draft other than `<latest-draft>`. The general freshness contract requires that the metaphor pipeline (`metaphor_identify` + `metaphor_fix`) ran against the same draft this step is applying to; if a prose-advancing step slipped in between, the recorded variants target the wrong sentences. Only the human can decide whether to rerun the metaphor pipeline against the current draft or to roll back. See `agents/orchestrator.md`'s **Artifact state** section for the general freshness contract (the report→fix freshness invariant is its named worked instance). Absent a recorded override (see "Overrides"), the step blocks.
 
 In any of these, append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write partial outputs. The next dispatcher invocation will re-run this step after the human resolves the blocker. On a successful run, the step's final action is to repoint the manifest's `Active-head:` to the `<next-draft>` it just wrote — and, on a branch (the draft read was not the old active head), stamp each displaced draft `superseded_by: draft-vNN.md` naming `<next-draft>`, per the algorithm in `agents/project-layouts.md` — then mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
