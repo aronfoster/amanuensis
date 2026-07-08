@@ -6,7 +6,7 @@ This directory is a minimal `short_story` project committed inside the Amanuensi
 
 The goal of running the recipes below is to confirm that the dispatcher itself works: it locates `pipeline-state.md`, confirms the requested (or recommended-next) step_id appears in the recipe list, resolves the workflow file at `amanuensis/agents/steps/<step>.md`, verifies the step's `required: true` preconditions resolve to existing files, and follows the step body in the same session — the step body then either records its own completion or stops with a question. Validating the literary quality of the step bodies' output is **not** a goal here.
 
-Four recipes cover the four selective-execution behaviors: the default recipe run in order (Recipe 1), rerunning a completed step (Recipe 2), a fix step blocking on a stale report (Recipe 3), and a non-dependent step running out of recipe order (Recipe 4). A fifth recipe covers the draft-lineage branch surface: rerunning a fix step from an earlier draft with a read-from argument, which mints a new draft as the active head and stamps the displaced drafts superseded (Recipe 5). Three further recipes exercise the Artifact-state model (`agents/orchestrator.md`'s **Artifact state** section) on the `anti_ai_report → anti_ai_fix` pair: a pending (blank-`Decision:`) report blocking the fix step as `review_pending` (Recipe 6), regenerating a stale report against the active head so the fix step runs clean (Recipe 7), and a human-recorded override that lets a stale apply proceed (Recipe 8). Two further recipes exercise the M10 structured review contract on the `compliance_report → compliance_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` and the hand-filled decision letting it run clean (Recipe 9), and an `amanuensis-review` companion session recording the same decision by review-id (Recipe 10). Two final recipes exercise the M11 structured anti-AI contract: a companion fan-out session adjudicating a whole eligible category with one stated decision plus a per-entry `SKIP` exception (Recipe 11), and a stray legacy `BULK:` header blocking the fix step as invalid input (Recipe 12). See `agents/orchestrator.md` for the canonical contract the dispatcher follows.
+Four recipes cover the four selective-execution behaviors: the default recipe run in order (Recipe 1), rerunning a completed step (Recipe 2), a fix step blocking on a stale report (Recipe 3), and a non-dependent step running out of recipe order (Recipe 4). A fifth recipe covers the draft-lineage branch surface: rerunning a fix step from an earlier draft with a read-from argument, which mints a new draft as the active head and stamps the displaced drafts superseded (Recipe 5). Three further recipes exercise the Artifact-state model (`agents/orchestrator.md`'s **Artifact state** section) on the `anti_ai_report → anti_ai_fix` pair: a pending (blank-`Decision:`) report blocking the fix step as `review_pending` (Recipe 6), regenerating a stale report against the active head so the fix step runs clean (Recipe 7), and a human-recorded override that lets a stale apply proceed (Recipe 8). Two further recipes exercise the M10 structured review contract on the `compliance_report → compliance_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` and the hand-filled decision letting it run clean (Recipe 9), and an `amanuensis-review` companion session recording the same decision by review-id (Recipe 10). Two final recipes exercise the M11 structured anti-AI contract: a companion fan-out session adjudicating a whole eligible category with one stated decision plus a per-entry `SKIP` exception (Recipe 11), and a stray legacy `BULK:` header blocking the fix step as invalid input (Recipe 12). Three more recipes exercise the M12 structured prose-pass contract on the `prose_pass → prose_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` then the hand-filled decision letting it run clean (Recipe 13), an all-`KEEP` report (every finding anchored, decided `SKIP`) validating clean so the fix step passes the draft through unchanged (Recipe 14), and an unanchored pre-M12 report rejected as invalid input (Recipe 15). See `agents/orchestrator.md` for the canonical contract the dispatcher follows.
 
 ## Layout
 
@@ -26,7 +26,7 @@ Committed in this directory:
 - `.opencode/agents/run-step.md` and `.opencode/agents/next-step.md` — copied in by `install.sh`.
 - `amanuensis` — symlink to the Amanuensis repo root (this repo). Lets the dispatcher resolve `amanuensis/agents/steps/<step>.md` exactly as it would under a real submodule install.
 - `characters/` — written by `character_extraction` on a successful run (Recipes 1–2).
-- `plot/drafts/attempt01/` — hand-authored for Recipes 3–12 (filler drafts and a stamped report: a `reviewer-actions.md` for Recipes 3–5 and 9–10, an `anti-ai.md` for Recipes 6–8 and 11–12; Recipe 5 additionally hand-authors a `draft-manifest.md` carrying an `Active-head: draft-vNN.md` pointer and a three-entry lineage). On Recipe 4's success the fix step also writes `draft-v03.md` and `draft-manifest.md` here; on Recipe 5's success it writes the branch output `draft-v04.md` and updates the hand-authored manifest's pointer and `superseded_by` stamps; on Recipes 7–8's success `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md`, and in Recipe 7 `anti_ai_report` first overwrites `anti-ai.md` in place; on Recipe 9's success (and Recipe 10's follow-on) `compliance_fix` writes `draft-v03.md` and `draft-manifest.md` here as in Recipe 4; on Recipe 11's success (its second fix run, after the companion session fills the report's decision fields in place) `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md` as in Recipes 7–8.
+- `plot/drafts/attempt01/` — hand-authored for Recipes 3–15 (filler drafts and a stamped report: a `reviewer-actions.md` for Recipes 3–5 and 9–10, an `anti-ai.md` for Recipes 6–8 and 11–12, a `prose-pass.md` for Recipes 13–15; Recipe 5 additionally hand-authors a `draft-manifest.md` carrying an `Active-head: draft-vNN.md` pointer and a three-entry lineage). On Recipe 4's success the fix step also writes `draft-v03.md` and `draft-manifest.md` here; on Recipe 5's success it writes the branch output `draft-v04.md` and updates the hand-authored manifest's pointer and `superseded_by` stamps; on Recipes 7–8's success `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md`, and in Recipe 7 `anti_ai_report` first overwrites `anti-ai.md` in place; on Recipe 9's success (and Recipe 10's follow-on) `compliance_fix` writes `draft-v03.md` and `draft-manifest.md` here as in Recipe 4; on Recipe 11's success (its second fix run, after the companion session fills the report's decision fields in place) `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md` as in Recipes 7–8; on Recipe 13's success (its second fix run, after the `Decision:` field is filled in place) `prose_fix` writes `draft-v03.md` and `draft-manifest.md` and appends an `Applied:` block to `prose-pass.md`; on Recipe 14's success `prose_fix` writes a verbatim pass-through `draft-v03.md` and `draft-manifest.md` (no `Applied:` blocks); Recipe 15 writes nothing (it blocks as invalid input).
 
 ## Setup
 
@@ -580,9 +580,161 @@ Expected observable outcome — a clean blocked exit, not a dispatcher error:
 
 The resolution is fixing the artifact, **not** waiving it: delete the `BULK: FIX` line, then decide the unit per entry — by hand-edit or companion; for an eligible category, a companion fan-out (Recipe 11) is the category-level path. An override does not apply: a recorded override lifts the validator's exit-5 `stale` verdict only, never exit 3 (invalid input) or exit 4 (`review_pending`).
 
-### Recipes 3–12 touch only untracked files
+### M12.5 recipes — structured prose-pass review
 
-The hand-authored `plot/drafts/attempt01/` tree — the drafts, the stamped report (`reviewer-actions.md` for Recipes 3–5 and 9–10, `anti-ai.md` for Recipes 6–8 and 11–12), and everything the report and fix steps write into it — lives entirely in untracked paths. Nothing new is committed under `examples/smoke/`, and the existing reset procedure below restores the committed baseline.
+The final three recipes exercise the M12 structured prose-pass contract on the `prose_pass → prose_fix` pair: every finding is an anchored review unit the human decides — `KEEP` included — so a blank `Decision:` blocks the fix step per unit, an all-`KEEP` report decided `SKIP` validates clean, and an unanchored pre-M12 report is invalid input. As in Recipes 6–12, no `draft-manifest.md` is hand-authored (keeping `draft-v01.md` and `draft-v02.md` on disk makes `draft-v02.md` the active head), and because `prose_fix` runs the shared validator after its freshness check — exactly as `compliance_fix` does in Recipes 9–10 — the expected outcomes name the validator's verdicts and ledger counts. Decision-writing here is by hand-edit (Recipe 9's model); prose_pass is a flat family with no fan-out, so a companion session over it is identical in shape to Recipe 10 (compliance) and no dedicated companion recipe is added.
+
+### Recipe 13 — blank `Decision:` blocks the fix step; filling it runs clean
+
+Reset the fixture and repeat Setup. Hand-author the same `draft-v01.md` and `draft-v02.md` as Recipe 3 — no `draft-manifest.md` is hand-authored, so `<latest-draft>` falls back to the highest-numbered draft and `draft-v02.md` is the active head — plus `plot/drafts/attempt01/prose-pass.md`, a fresh prose-pass report stamped against the active head (`draft-v02.md`, so it is *fresh*), carrying one anchored `TIGHTEN` finding whose `Decision:` field is blank, exactly as `prose_pass` emits it (shape per the `prose_pass:` block in `agents/review-grammars.yaml`; `examples/review/prose-pass.md` is the reference fixture; a blank `Decision:` is the pending-review signal — the decision belongs to the human):
+
+```markdown
+Reviewed-draft: draft-v02.md
+
+# Prose Pass — Scene 001
+
+#### Top priorities
+
+1. The opening sentence buries the lamp failure under a flat compound.
+
+#### Findings
+
+<!-- review-id: prose_pass:finding-01 -->
+##### opening compound drags
+- Quote: "The lamp went dark and Rao climbed the stair without a light."
+- Problem: two clauses joined by a flat "and"; the lamp failure and the climb both lose emphasis
+- Why it matters: the first sentence sets the scene's tension
+- Action: TIGHTEN
+- Decision:
+- Decision-note:
+```
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step prose_fix
+```
+
+Expected observable outcome — a clean blocked exit, not a dispatcher error:
+
+- The dispatcher's existence checks pass (`prose-pass.md` exists and `<latest-draft>` resolves to `draft-v02.md`), and the step-start freshness check passes (the stamp names `draft-v02.md`, the active head), so staleness is not the blocker.
+- The step then runs the shared validator over the report, which reports `pending-remain` (exit 4): total 1, pending 1, everything else 0 — the single finding carries a blank `Decision:` and therefore no review evidence, and the validator prints a `pending-review-ids:` section naming `prose_pass:finding-01`. The per-unit review-evidence gate is what fails: the report is `review_pending`. (No `draft-manifest.md` exists, so the validator's state layer is `not checked`; freshness was already confirmed at step start.)
+- The step appends the `review_pending` blocker to `open-questions.md`, copying the validator's `pending-review-ids:` list — here the single id `prose_pass:finding-01`.
+- No `plot/drafts/attempt01/draft-v03.md` is written and no `draft-manifest.md` is created. No completion is recorded: the `prose_fix` line stays `[ ]` and `pipeline-state.md` is untouched (`last_updated` unchanged).
+
+As in Recipe 9, a `review_pending` block is not liftable by an override — the human resolves it by recording a decision. Fill the finding's `Decision:` field so its line reads:
+
+```markdown
+- Decision: FIX: split the compound into two sentences
+```
+
+and rerun the fix step:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step prose_fix
+```
+
+Expected observable outcome (clean fix):
+
+- The freshness check passes again, and the validator now reports `proceed` (exit 0): total 1, decided 1, pending 0, invalid 0. Only on that verdict does the step act on any finding.
+- The step applies the finding's `FIX: <instruction>` decision, following the instruction carried in its `Decision:` payload, and writes the full revised prose to `plot/drafts/attempt01/draft-v03.md` (the first sentence becomes two — e.g. "The lamp went dark. Rao climbed the stair without a light."; the second paragraph is copied through verbatim).
+- An `#### Applied:` block naming the finding's review-id is appended to `prose-pass.md`, and a `## draft-v03.md` entry is appended to `plot/drafts/attempt01/draft-manifest.md` (created here, since the hand-authored fixture has none) with `read_from: [draft-v02.md]`, `review_gate: false`, and `side_artifacts: [prose-pass.md]`; the completion action points `Active-head: draft-v03.md` at the draft just written.
+- The step's final action flips `[ ] prose_fix` to `[x] prose_fix` and updates `last_updated`, while every upstream line stays `[ ]`.
+
+### Recipe 14 — all-`KEEP` report validates clean; the fix passes the draft through
+
+Reset the fixture and repeat Setup. Hand-author the same `draft-v01.md` and `draft-v02.md` as Recipe 3 (again no `draft-manifest.md`, so `draft-v02.md` is the active head), plus this fresh-stamped `plot/drafts/attempt01/prose-pass.md` — two `KEEP` findings, each anchored and decided `SKIP` (a `KEEP` finding's explicit `SKIP` is the review evidence that the human confirmed the producer's keep):
+
+```markdown
+Reviewed-draft: draft-v02.md
+
+# Prose Pass — Scene 001
+
+#### Top priorities
+
+None — the scene is holding.
+
+#### Findings
+
+<!-- review-id: prose_pass:finding-01 -->
+##### the dark climb
+- Quote: "The lamp went dark and Rao climbed the stair without a light."
+- Problem: none — the plainness matches the moment
+- Why it matters: sets the scene's restraint
+- Action: KEEP
+- Decision: SKIP
+- Decision-note: agreed
+
+<!-- review-id: prose_pass:finding-02 -->
+##### the withheld discovery
+- Quote: "He told no one what he found at the top, and by morning he had talked himself out of telling anyone at all."
+- Problem: none — the withholding earns the scene's unease
+- Why it matters: the concealment is the scene's engine
+- Action: KEEP
+- Decision: SKIP
+- Decision-note: agreed
+```
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step prose_fix
+```
+
+Expected observable outcome:
+
+- The existence checks pass, and the step-start freshness check passes (the stamp names `draft-v02.md`, the active head).
+- The shared validator reports `proceed` (exit 0): total 2, skipped 2, pending 0, decided 0, invalid 0 — every finding (both `KEEP`) is an anchored unit the human decided `SKIP`. An all-`KEEP` report holds anchored units, so it validates as a normal decided report, not a zero-findings one. (No `draft-manifest.md` exists, so the validator's state layer is `not checked`.)
+- The step acts on the decisions: both are `SKIP`, so it applies nothing and appends no `Applied:` blocks. It writes `plot/drafts/attempt01/draft-v03.md` as a verbatim pass-through of `draft-v02.md` (every paragraph copied through unchanged), and appends a `## draft-v03.md` entry to `plot/drafts/attempt01/draft-manifest.md` (created here, since the fixture has none) with `read_from: [draft-v02.md]`, `review_gate: false`, and `side_artifacts: [prose-pass.md]`; the completion action points `Active-head: draft-v03.md` at the draft just written.
+- The step's final action flips `[ ] prose_fix` to `[x] prose_fix` and updates `last_updated`, while every upstream line stays `[ ]`.
+
+A report that found nothing *at all* — no problems and no notable keeps — instead records `#### Findings — none` plus a single `No findings.` line, holding no anchored units, and also validates `proceed` (exit 0, total 0). That all-clean case is distinct from this all-`KEEP` report, which holds anchored `KEEP` units the human decided `SKIP`.
+
+### Recipe 15 — unanchored pre-M12 report rejected as invalid input
+
+Reset the fixture and repeat Setup. Hand-author the same `draft-v01.md` and `draft-v02.md` as Recipe 3 (no `draft-manifest.md`, so `draft-v02.md` is the active head), plus this `plot/drafts/attempt01/prose-pass.md` in the **old positional format** — unanchored `##### ` findings under `#### Findings`, carrying the retired `Annotation:` line and **no** `<!-- review-id: ... -->` anchors, the pre-M12 shape a hand-migrated report might still carry:
+
+```markdown
+Reviewed-draft: draft-v02.md
+
+# Prose Pass — Scene 001
+
+#### Top priorities
+
+1. The opening compound drags.
+
+#### Findings
+
+##### opening compound drags
+- Quote: "The lamp went dark and Rao climbed the stair without a light."
+- Problem: two clauses joined by a flat "and"
+- Why it matters: the first sentence sets the scene's tension
+- Action: TIGHTEN
+- Annotation: FIX
+```
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step prose_fix
+```
+
+Expected observable outcome — a clean blocked exit, not a dispatcher error:
+
+- The existence checks pass and the step-start freshness check passes (the stamp names `draft-v02.md`, the active head).
+- The shared validator reports `invalid-present` (exit 3), its finding naming the container line: ``unanchored violation block `#### Findings` — positional/pre-M10 format or missing anchors``. The `#### Findings` container holds zero anchored units because the pre-M12 report's findings carry no `review-id` anchors. Ledger: total 1, invalid 1, everything else 0.
+- The step blocks as invalid input, appending the blocker to `open-questions.md` and naming the validator's finding.
+- No draft is written, no `draft-manifest.md` is created, and no completion is recorded.
+
+The resolution is fixing the artifact, **not** waiving it: regenerate/rewrite the report to the structured format by re-running `prose_pass`, then decide each finding. An override does not apply — a recorded override lifts the validator's exit-5 `stale` verdict only, never exit 3 (invalid input) or exit 4 (`review_pending`).
+
+### Recipes 3–15 touch only untracked files
+
+The hand-authored `plot/drafts/attempt01/` tree — the drafts, the stamped report (`reviewer-actions.md` for Recipes 3–5 and 9–10, `anti-ai.md` for Recipes 6–8 and 11–12, `prose-pass.md` for Recipes 13–15), and everything the report and fix steps write into it — lives entirely in untracked paths. Nothing new is committed under `examples/smoke/`, and the existing reset procedure below restores the committed baseline.
 
 ## Run — OpenCode
 
@@ -593,7 +745,7 @@ The hand-authored `plot/drafts/attempt01/` tree — the drafts, the stamped repo
 # primary agent). For run-step, the step_id goes in the invoking message.
 ```
 
-The same recipes hold, with the `next-step` agent standing in for `/next-step` (Recipe 1) and the `run-step` agent standing in for `/run-step <step_id>` (Recipes 2–9, 11, and 12); for Recipe 5, the read-from draft goes in the invoking message alongside the step_id (`compliance_fix from draft-v01`). The expected observable outcomes are identical to the Claude Code lists above. The OpenCode dispatcher sources are held to behavioral parity with the Claude Code ones; only host-specific frontmatter and invocation differ. Recipe 10 and Recipe 11's fan-out companion session are Claude Code-only: the companion ships as a Claude Code skill (OpenCode parity is on the ROADMAP's deferred list), so on OpenCode cover their decision-writing by hand-editing the `Decision:` / `Decision-note:` fields instead — Recipe 9's hand-edit is the model; for Recipe 11, hand-write the category decision into each covered em-dash unit's fields (including the category-decision notes) and the per-entry `SKIP` exception, then proceed with the fix runs as written.
+The same recipes hold, with the `next-step` agent standing in for `/next-step` (Recipe 1) and the `run-step` agent standing in for `/run-step <step_id>` (Recipes 2–9, 11, 12, and 13–15); for Recipe 5, the read-from draft goes in the invoking message alongside the step_id (`compliance_fix from draft-v01`). The expected observable outcomes are identical to the Claude Code lists above. The OpenCode dispatcher sources are held to behavioral parity with the Claude Code ones; only host-specific frontmatter and invocation differ. Recipe 10 and Recipe 11's fan-out companion session are Claude Code-only: the companion ships as a Claude Code skill (OpenCode parity is on the ROADMAP's deferred list), so on OpenCode cover their decision-writing by hand-editing the `Decision:` / `Decision-note:` fields instead — Recipe 9's hand-edit is the model; for Recipe 11, hand-write the category decision into each covered em-dash unit's fields (including the category-decision notes) and the per-entry `SKIP` exception, then proceed with the fix runs as written. Recipes 13–15's decision-writing is by hand-edit on both hosts (Recipe 9's model); prose_pass is flat with no fan-out, so no dedicated companion recipe exists, matching the flat-family precedent of Recipe 10.
 
 ## Reset between runs
 
@@ -602,7 +754,7 @@ git checkout examples/smoke/
 git clean -fd examples/smoke/
 ```
 
-`git checkout` restores `pipeline-state.md`, `open-questions.md`, and any other tracked file the run modified. `git clean -fd` removes the untracked install artifacts (`.claude/`, `.opencode/`), the `amanuensis` symlink, any `characters/` tree written by Recipes 1–2, and the entire hand-authored `plot/drafts/attempt01/` tree from Recipes 3–12 — including anything the report and fix steps wrote into it (`draft-v03.md` or `draft-v04.md`, `draft-manifest.md`, the appended or decision-edited `reviewer-actions.md`, and the regenerated, decision-edited, or appended `anti-ai.md`). After both commands the fixture is back to the committed baseline.
+`git checkout` restores `pipeline-state.md`, `open-questions.md`, and any other tracked file the run modified. `git clean -fd` removes the untracked install artifacts (`.claude/`, `.opencode/`), the `amanuensis` symlink, any `characters/` tree written by Recipes 1–2, and the entire hand-authored `plot/drafts/attempt01/` tree from Recipes 3–15 — including anything the report and fix steps wrote into it (`draft-v03.md` or `draft-v04.md`, `draft-manifest.md`, the appended or decision-edited `reviewer-actions.md`, and the regenerated, decision-edited, or appended `anti-ai.md`, and the appended or decision-edited `prose-pass.md`). After both commands the fixture is back to the committed baseline.
 
 To rerun, repeat the **Setup** section.
 
@@ -611,6 +763,6 @@ To rerun, repeat the **Setup** section.
 For each recipe: the dispatcher located `pipeline-state.md`, confirmed the step_id appears in the recipe list (selecting the first non-`[x]` step in `/next-step`'s case), resolved the step workflow file under `amanuensis/agents/steps/`, verified every `required: true` precondition resolves to an existing file, and started executing the step body in the same session. From there one of:
 
 - The step body completed, wrote its declared outputs, and as its final action marked its own step line `[x]` and updated `last_updated`. No other checkbox moved.
-- The step body decided it could not proceed (a `critical` blocker in Recipe 1's stop-and-ask outcome, the stale-report blocker in Recipe 3, the `review_pending` blockers in Recipes 6 and 9 and Recipe 11's first run, the invalid-input blocker in Recipe 12), appended the blocker to `open-questions.md`, and exited without recording completion — `pipeline-state.md` untouched.
+- The step body decided it could not proceed (a `critical` blocker in Recipe 1's stop-and-ask outcome, the stale-report blocker in Recipe 3, the `review_pending` blockers in Recipes 6 and 9, Recipe 11's first run, and Recipe 13's first run, the invalid-input blocker in Recipes 12 and 15), appended the blocker to `open-questions.md`, and exited without recording completion — `pipeline-state.md` untouched.
 
 Failure modes — a missing or malformed `pipeline-state.md`, a requested step_id that does not appear in the recipe list, a missing step workflow file, a `required: true` precondition that resolves to no existing file (the dispatcher names the missing files and stops), or `/next-step` finding every step `[x]` (recipe complete) — should print a clear human-readable message and exit without modifying any project file. Surfacing one of those where a recipe does not expect it would mean the fixture is misconfigured or the dispatcher/orchestrator work has a defect; report it.

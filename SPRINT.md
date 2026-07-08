@@ -67,7 +67,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, header-commen
 
 ### Task 1 — Contract: `prose_pass` grammar rewrite, container settlement, fixture
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** `prose_pass` becomes an `adopted` family with pure per-unit semantics where **every finding is a unit**, a settled `#### Findings` container, and complete validator coverage — with zero changes to the validator itself. Closes **M12.3**.
 
@@ -85,7 +85,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, header-commen
 
 ### Task 2 — Retarget `prose_pass` to emit structured review items
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The report emits addressable, countable review units on every finding and stops emitting the positional annotation apparatus. Closes **M12.1**.
 
@@ -104,7 +104,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, header-commen
 
 ### Task 3 — Retarget `prose_fix` to consume structured decisions
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The fix step consumes explicit per-unit `Decision:` fields through the shared validator — a compliance clone, simpler than what it replaces. Closes **M12.2**.
 
@@ -121,7 +121,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, header-commen
 
 ### Task 4 — Companion support: prose_pass flat queue
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** The companion drives prose_pass review through its existing flat-family path, with no category grouping or fan-out. Closes **M12.4**.
 
@@ -136,7 +136,7 @@ Wave order: **Task 1** settles the contract side (grammar rewrite, header-commen
 
 ### Task 5 — Smoke recipes, verification sweep, ROADMAP / SPRINT check-off
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Runnable verification of the prose-pass round-trip including the KEEP-as-unit and pre-M12-rejection behaviors; close the milestone. Closes **M12.5** and the residual of **M12**.
 
