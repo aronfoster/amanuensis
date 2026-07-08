@@ -19,7 +19,7 @@ Workshop goes back to primary sources because candidate generation depends on co
 
 ## Output
 
-All output is appended directly below the WORKSHOP entry in the working metaphors file. Nothing is written to the draft at any stage. Candidates are bare sentences, not paragraph-integrated rewrites; integration of the selected candidate is `metaphor_apply`'s job.
+All output is appended directly below the WORKSHOP entry in the working metaphors file, under a `#### Workshop Candidates` heading (a level below the figure's `### ` heading, inside the anchored unit). Nothing is written to the draft at any stage. Candidates are bare sentences, not paragraph-integrated rewrites; integration of the selected candidate is `metaphor_apply`'s job. The per-candidate labels `A`–`H` are the stable variant ids: the human records the chosen one in the entry's `- Selected:` field, so keep them exactly as shown and do not renumber.
 
 ---
 
@@ -29,7 +29,7 @@ All output is appended directly below the WORKSHOP entry in the working metaphor
 
 Read the entry's full identify record. Then read the surrounding paragraph supplied by the coordinator, locating the flagged sentence within it, and the storyboard block for the entry's beat.
 
-If the human has added corrections or notes below the action word, those take precedence over the original identify fields. Apply them before doing any other analysis.
+If the human has recorded corrections or notes in the entry's `- Decision-note:`, those take precedence over the original identify fields. Apply them before doing any other analysis.
 
 Establish internally, without outputting:
 
@@ -46,7 +46,7 @@ On the last point: scan the chapter for recurring image families before generati
 Produce candidates in three groups. Append them below the WORKSHOP entry:
 
 ```markdown
-### Workshop Candidates
+#### Workshop Candidates
 
 **Group 1 — Restrained (3 candidates)**
 Each candidate imports the borrowed property the original was after, without the uninvited properties that caused the flag. Short. Close to the original sentence's length.
@@ -105,7 +105,7 @@ Do not recommend a candidate. Do not signal preference.
 
 ### Stop.
 
-After candidates are appended, stop. Do not write integration versions, do not select among candidates, and do not write to the draft. Human selection happens after `metaphor_fix` exits; integration of the selected candidate happens in `metaphor_apply`.
+After candidates are appended, stop. Do not write integration versions, do not select among candidates, and do not write to the draft. Human selection happens after `metaphor_fix` exits: the human records the chosen candidate's variant id in the entry's `- Selected:` field, and the unchosen candidates stay in the file as the audit record. Integration of the selected candidate happens in `metaphor_apply`.
 
 ---
 
@@ -121,7 +121,7 @@ After candidates are appended, stop. Do not write integration versions, do not s
 
 ## Anti-Patterns
 
-**Ignoring human corrections.** Corrections below the action word override the original identify fields. Apply them before generating candidates.
+**Ignoring human corrections.** Corrections recorded in the entry's `- Decision-note:` override the original identify fields. Apply them before generating candidates.
 
 **Signaling a preferred candidate.** Present all candidates neutrally.
 

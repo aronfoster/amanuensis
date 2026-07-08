@@ -52,7 +52,10 @@ check the prose, never apply a fix, and never decide for the human.
    `Decision:` fields. For families whose reports section units by category
    (today: anti_ai's `### <Category>` subsections), group the queue by
    category within scene, with a pending count per category — see "Category
-   queues and fan-out" below. For each unit:
+   queues and fan-out" below. For a family that declares `selection_tokens`
+   in the grammar (today: metaphor), the companion drives two rounds — a
+   disposition queue and a selection queue — and reports progress across
+   both; see "Two-round families (metaphor)" below. For each unit:
    - Show the unit — its anchor, its content, its current fields.
    - Explain the legal decisions for this artifact, read from the family's
      entry in `amanuensis/agents/review-grammars.yaml` (tokens, payload
@@ -126,6 +129,46 @@ give one, capture exactly what they stated, explaining the consequence: a
 bare `FIX` there falls back to `ESCALATE` at apply time. Never coerce a
 payload out of the human and never invent one.
 
+### Two-round families (metaphor)
+
+A family that declares `selection_tokens` in
+`amanuensis/agents/review-grammars.yaml` (today: metaphor) carries two
+evidence layers, so the companion drives it as two queues across two
+validator rounds. metaphor declares no `fanout_categories`, so the fan-out
+machinery above is never engaged or offered for it — each figure is decided,
+and each actionable figure's variant selected, per entry.
+
+- **Disposition queue — round one (`--round decision`, the default).** The
+  queue is the blank-`Decision:` figures from the validator's
+  `pending-review-ids:` list — ordinary decision capture (step 5): show the
+  figure, explain its legal decisions read from the `metaphor` block in
+  `amanuensis/agents/review-grammars.yaml`, and write the decision the human
+  states into `Decision:` / `Decision-note:`. When the human states
+  `REPLACE`, the payload is required — prompt for the target image and
+  capture `Decision: REPLACE: <image>`, never a bare `REPLACE`.
+- **Selection queue — round two (`--round selection`).** Once disposition is
+  complete, validate the selection round. Its queue is the actionable entries
+  (those whose `Decision:` is in the family's `selection_tokens`) whose
+  `Selected:` is still blank — the validator's `selection-pending-review-ids:`
+  list, a queue distinct from the decision-pending one. For each, show the
+  entry's appended variant set, capture the human's pick in `Selected:`, and
+  capture any inline edit they make to that variant in `Selection-note:`.
+  Terminal entries (a `Decision:` not in `selection_tokens`) carry no
+  selection and are pass-through. A blank `Decision:` is decision-pending and
+  blocks both rounds, so the selection queue is only meaningful once round one
+  is clear.
+- **Progress across both rounds.** Report the round-one ledger (the
+  disposition counts) and, once disposition is complete, the selection round's
+  `selection-pending` / `selected` rows — counted over actionable entries
+  only. A figure is fully handled when it is disposed and, if actionable, has
+  a `Selected:`.
+- **Flags are a presentation signal only.** A figure's producer flag
+  (`CLEAN` / `REVIEW` / `BROKEN`) is a recommendation, not a disposition; you
+  may order the disposition queue by it — e.g. surface `BROKEN` first — as
+  presentation, but never auto-dispose a figure from its flag and never
+  auto-select a variant. The decision-automation rules in
+  `amanuensis/agents/review-validation.md` bind this skill.
+
 ## Pacing controls
 
 These are presentation controls only — they change what is shown, never what
@@ -150,8 +193,13 @@ is decided. Showing five units still requires five human decisions.
 ## Hard rules
 
 - Never edit prose, storyboards, canon, `pipeline-state.md`, or
-  `Reviewed-draft:` stamps. Your writes are confined to `Decision:` /
-  `Decision-note:` fields inside the review artifact.
+  `Reviewed-draft:` stamps. Your writes are confined to the review artifact's
+  decision fields — `Decision:` / `Decision-note:` for every family, plus
+  `Selected:` / `Selection-note:` on the actionable entries of a family that
+  declares `selection_tokens` (today: metaphor's selection round). No other
+  field, and never prose, storyboard, canon, `pipeline-state.md`, or
+  `Reviewed-draft:` stamps — that confinement is unchanged for compliance,
+  anti_ai, and prose_pass.
 - Never fill a decision the human did not state. A recommendation is not a
   decision. A stated category-level decision states the decision for every
   pending unit it covers — and nothing else: no other category, no other
