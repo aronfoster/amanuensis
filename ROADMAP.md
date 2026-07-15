@@ -8,23 +8,78 @@ are sequenced, not parallel, so it is never edited by two at once.
 
 ---
 
-## M14 — Reverse ingestion: existing prose into Amanuensis
+## M14 — Temporal character state
 
-Ingest a finished work into Amanuensis artifacts (characters, scene-list, storyboards,
-overview), chunked to fit context. Design-gated.
+Evolve the existing character knowledge, relationship, and timeline system so Amanuensis can determine a character's state at any point in a story, rather than only describing the character's latest known state.
 
-Done when: a single existing chapter or short story ingests into a valid project
-structure that the forward pipeline's downstream steps can consume.
+The existing Markdown character folders remain the authoritative home for character-relative state. This milestone must preserve the distinction between stable profile information and evolving story state while adding enough temporal structure to support chapter-, book-, and series-scale review.
 
-* [ ] M14.1 Design note (blocking): split reverse ingestion into smaller milestones.
-  Candidate areas: prose chunking and source maps; character/entity extraction from
-  prose; scene reconstruction; storyboard reconstruction; overview synthesis; canon
-  reconciliation; reverse-to-forward bridge.
-* [ ] M14.2+ Implementation tasks opened from the approved design note.
+Done when: Amanuensis can determine what a character knew, suspected, believed incorrectly, remembered, and was prohibited from knowing at a specified story position; can trace changes back to the scenes that caused them; and does not erase prior state when later events revise it.
 
-Notes: Formerly M8, then M11 (renumbered when the review milestones split into
-M10–M13). This is intentionally tabled until selective execution and artifact
-lineage are stable enough to support reverse-generated artifacts.
+* [ ] M14.1 Define the temporal character-state model across `knowledge/`, `timeline.md`, and `relationships.md`, including how state changes are ordered and attributed to story positions.
+* [ ] M14.2 Define durable identity and provenance rules for character-state entries so later review steps can refer to the same fact, belief, relationship, or transition consistently.
+* [ ] M14.3 Distinguish current character state, historical transitions, and prospective reveal constraints. A later update must not destroy the ability to reconstruct an earlier state.
+* [ ] M14.4 Update character templates and guidance so the temporal model remains human-readable Markdown and does not introduce a parallel authoritative character-state system.
+* [ ] M14.5 Update the scene knowledge workflow so accepted prose produces reviewable character-state changes rather than silently rewriting accumulated knowledge.
+* [ ] M14.6 Define freshness and correction behavior when an accepted draft is superseded or earlier prose changes the basis of downstream character state.
+* [ ] M14.7 Demonstrate point-in-time reconstruction for a character whose knowledge changes more than once, including suspicion, incorrect belief, correction, and an active reveal constraint.
+
+Notes: Character files describe character-relative truth: what a character knows, believes, suspects, remembers, and feels about others. They are not the authoritative source for objective facts about what actually happened. Existing character folders should be evolved rather than replaced by generic state files.
+
+---
+
+## M15 — Objective continuity state and evidence
+
+Establish a bounded, authoritative representation of objective story continuity that complements the character-state system.
+
+The continuity model must cover facts that exist independently of any character's understanding, including chronology, event staging, location, possession, physical condition, roles, unresolved causal threads, and other persistent facts capable of producing reader-visible contradictions. It must remain traceable to accepted planning or prose artifacts and usable without rereading the full corpus.
+
+Done when: Amanuensis can answer a material objective continuity question at a specified story position, identify the accepted evidence supporting the answer, distinguish objective truth from character belief, and detect when the maintained continuity state is stale or unsupported.
+
+* [ ] M15.1 Define the boundary between objective continuity, character-relative state, canon, storyboards, and prose evidence so each class of fact has one clear authority.
+* [ ] M15.2 Define which continuity facts are load-bearing enough to maintain and which details should remain only in prose.
+* [ ] M15.3 Define temporal and provenance requirements for objective continuity so earlier story state remains reconstructable and every maintained fact points to supporting evidence.
+* [ ] M15.4 Define how characters' knowledge and beliefs refer to objective facts and events without duplicating or silently overriding them.
+* [ ] M15.5 Add a reviewable continuity-update workflow that reconciles accepted chapter prose with prior continuity state and surfaces conflicts rather than silently choosing a version.
+* [ ] M15.6 Define freshness, invalidation, and rebuilding behavior when an accepted draft, storyboard, canon source, or earlier continuity entry changes.
+* [ ] M15.7 Demonstrate objective continuity across multiple chapters, including chronology, event staging, possession or role state, and a character who holds an incorrect belief about one of those facts.
+
+Notes: The maintained continuity representation is a bounded aid for reasoning, not a substitute for source prose. Source references must allow later steps to retrieve the original evidence when a summary is insufficient or disputed. The milestone should preserve Amanuensis's filesystem-only, host-agnostic design and human-readable artifacts.
+
+---
+
+## M16 — Bounded relational review
+
+Make continuity, reveal-timing, character-knowledge, recap-fidelity, and other relational reviews operate correctly when the full prose corpus cannot fit in one model context.
+
+Review scope must be determined by the defect being checked. Local prose-quality checks may remain block- or scene-local; chapter-wide checks may read the current chapter; cross-chapter and cross-book checks must use maintained temporal state plus targeted retrieval of relevant source evidence. Merely widening declared inputs or splitting relational checks into scene-blind parallel runs is not sufficient.
+
+Done when: a review of a bounded prose unit can detect contradictions whose evidence lies elsewhere in the chapter, an earlier chapter, or an earlier book; each finding identifies the conflicting evidence and the context consulted; and the process does not require loading the complete series.
+
+* [ ] M16.1 Classify existing review responsibilities as local, bounded-window, or relational, and define the minimum valid context strategy for each class.
+* [ ] M16.2 Audit pipeline steps whose responsibilities include continuity, canon, reveal timing, character knowledge, chronology, recollection, quotation, summary, or recap fidelity.
+* [ ] M16.3 Remove instructions and evaluation partitioning that make relational defects structurally invisible, including block-isolated or scene-blind review where broader comparison is required.
+* [ ] M16.4 Define how a review identifies relevant characters, events, facts, constraints, and back-references, then obtains only the maintained state and source evidence needed to evaluate them.
+* [ ] M16.5 Establish precedence and conflict handling among the current storyboard, maintained character state, objective continuity state, canon, and raw prose. Broader context must supplement local intent without silently overriding it.
+* [ ] M16.6 Require relational findings to identify both the reviewed prose location and the conflicting or supporting referent, and require reports to declare the material context actually consulted.
+* [ ] M16.7 Distinguish prose defects from storyboard, state, canon, and missing-context defects so remediation is directed at the authoritative artifact.
+* [ ] M16.8 Define graceful behavior for project scale and project type: short stories may use whole-work context where practical, books may use whole-chapter context plus prior state, and series must not depend on full-corpus rereads.
+* [ ] M16.9 Demonstrate the model against representative failures involving cross-scene chronology, character knowledge, reveal timing, recalled event staging, and recap fidelity.
+
+Notes: Findings remain attached to stable per-block review units where the existing review grammar requires it. Their relational nature is represented by cited referents and declared context, not by abandoning the existing review-unit scheme. Parallel execution is acceptable only where it preserves the relationships needed by the check.
+
+---
+
+## M17 — Reverse ingestion: existing prose into Amanuensis
+
+Ingest a finished work into Amanuensis artifacts (characters, scene-list, storyboards, overview, temporal character state, and objective continuity state), chunked to fit context. Design-gated.
+
+Done when: a single existing chapter or short story ingests into a valid project structure that the forward pipeline's downstream steps can consume, including the temporal-state and bounded-review systems established by M14–M16.
+
+* [ ] M17.1 Design note (blocking): split reverse ingestion into smaller milestones. Candidate areas: prose chunking and source maps; character/entity extraction from prose; scene reconstruction; storyboard reconstruction; overview synthesis; canon reconciliation; temporal-state reconstruction; continuity reconciliation; reverse-to-forward bridge.
+* [ ] M17.2+ Implementation tasks opened from the approved design note.
+
+Notes: Formerly M14. This remains intentionally tabled until selective execution, artifact lineage, temporal state, and bounded relational review are stable enough to support reverse-generated artifacts.
 
 ---
 
