@@ -1,196 +1,495 @@
-# Sprint 18 — Milestone 13: Agent-addressable review — metaphor slice
+# Sprint 19 — Milestone 14: Temporal character state
 
-This Sprint migrates the **metaphor family** onto the shared review contract M10 landed — the **last** of the four one-milestone-per-sprint slices (M10–M13 in ROADMAP.md; the shared design lives in the completed M10 section there). It follows the same AI-plus-human review directive that reshaped M11–M12 (recorded in the M11 Notes): the `amanuensis-review` companion captures and writes, the human decides, and conventions that existed only to make hand-editing markdown cheap are retired where retiring them makes agent review simpler or more reliable.
+This Sprint gives Amanuensis a **temporal model of character-relative state** — what a
+character knew, suspected, believed incorrectly, remembered, and was prohibited from
+knowing at any story position — and stops the one place the pipeline silently loses that
+history: character knowledge. Today the `knowledge/` templates already carry most of the
+right *shape* (current state, historical transitions, prospective reveal constraints) but
+lack durable identity, draft provenance, and a canonical story-position reference, and —
+more sharply — **nothing in the running pipeline ever fills them.** `character_extraction`
+scaffolds empty `knowledge/book-N.md` files (`agents/steps/character-extraction.md:54`,
+`:88`) that "the deferred scene-knowledge-update step" is supposed to populate, but that
+step does not exist: the scene-knowledge-update is a documented workflow
+(`agents/workflows.md:62-68`), not an orchestrator step, and the scaffolds stay empty.
 
-Metaphor is the **deepest** slice: the family has **two human-decision rounds**, both hand-edit conventions today — **disposition** (which figures to act on) and **variant selection** (which rewrite to apply) — and it is the **first slice that changes the validator**. M11 and M12 shipped `scripts/validate-review-artifact.sh` byte-for-byte unchanged; M13 extends it. Concretely: `metaphor_identify` emits structured review units — a `<!-- review-id: ... -->` anchor plus blank `- Decision:` / `- Decision-note:` fields — replacing the free-text `Human Assessment:` line and the count-only `### Summary` block; `metaphor_fix` consumes the **decision** layer through the shared validator, generates variants only for `FLATTEN` / `REPLACE` / `WORKSHOP`, and appends each actionable entry a stable-id variant set plus a blank `Selected:` / `Selection-note:` pair; `metaphor_apply` consumes the **selection** layer through the same validator; and the family flips to `adopted` in `agents/review-grammars.yaml`. Deletion stops being a decision signal at both rounds — a rejected figure carries `Decision: REJECT` and stays in the file as the audit record — and no step guesses a human decision. Big-bang, as with the prior three families: after this Sprint the old free-text/delete-to-select format is invalid input to `metaphor_fix` and `metaphor_apply`, and no compatibility path is kept.
+The milestone does three things. It **defines the temporal character-state model** across
+`knowledge/`, `timeline.md`, and `relationships.md` — ordering and attribution by a single
+canonical story-position reference, a durable per-entry id, a draft-provenance stamp, an
+explicit current / historical-transition / prospective-constraint distinction, and a hard
+**non-destruction invariant** (a later update never erases the ability to reconstruct an
+earlier state) — and keeps it all human-readable Markdown, adding **no** parallel
+authoritative state system. It **builds and wires a running `scene_knowledge_update`
+step** — the sole writer of `knowledge/` — that reads the scene's storyboard knowledge
+deltas, confirms them against the accepted draft, and **reconciles** them into the
+knowledge files: appending new entries and recording corrections as transitions, never
+overwriting accumulated knowledge. And it **demonstrates** point-in-time reconstruction
+for a character whose knowledge changes more than once (suspicion → incorrect belief →
+correction, under an active reveal constraint), plus a runnable smoke recipe.
 
-The two rounds share one artifact but gate two different consumers, so the validator gains an **explicit round selector** (`--round decision` | `--round selection`): `metaphor_fix` gates the decision layer, `metaphor_apply` gates the selection layer, and the companion drives both. M13 also folds in the **heading-item orphan check** the M12 PR review surfaced (ROADMAP M13 Notes): a `### ` figure heading with no anchor immediately above it is now an invalid orphaned item, closing a gap where a partially hand-migrated report slips through as `proceed`.
+Two owner decisions from planning shape the step (both starred in Conventions). The step is
+**capture-style but not human-gated**: it writes knowledge directly, `review_required:
+false`, the way the capture subsystem writes provenance-stamped inventions
+(`agents/capture/capture-agent.md`) — "reviewable" here means *legible, provenance-stamped,
+and non-destructive* (a human **can** audit it and reconstruct history), **not** that a
+human must approve each write before the pipeline proceeds. And the reviewable-change format
+is deliberately kept **off** the review-grammar / validator machinery
+(`agents/review-grammars.yaml`, `scripts/validate-review-artifact.sh`): agent-addressable,
+countable review of character-state changes is M16's job (Bounded relational review), not
+M14's. This Sprint touches none of the four review families, the validator, or the review
+companion.
 
 ## Background — what is and isn't wrong today
 
-Established by inspection during planning (verified with the stock validator where noted); tasks should not re-derive this.
+Established by inspection during planning, with file:line cites; tasks should not re-derive
+this.
 
-- **The metaphor grammar block already exists but is `pending`, and models only round one.** `agents/review-grammars.yaml:189-219` defines the family from M10.1: `item_line_pattern: "^### "` (the figure's `### [Short label]` heading is its item line, anchor immediately above it), `id_item_pattern: "figure-[0-9][0-9]"`, `id_min_locations: 1` (scene-sectioned), `tokens: KEEP REJECT FLATTEN REPLACE WORKSHOP`, `payload_required: REPLACE`, `payload_forbidden: KEEP REJECT FLATTEN WORKSHOP`, and a `replace_policy` locking bare `REPLACE` as invalid (M10.1). It is marked `adoption: pending` / `migrates_in: M13`, carries **no `container_pattern`**, and its `item_shape` / `proceed_state` describe only the disposition round — the `Selected:` selection layer is not modeled. The round-one machine-read keys are already correct; the selection layer, the adoption flip, and the container settlement are the gaps.
-- **★ The disposition round already validates with the stock validator — verified at planning.** With a scratch grammar copy flipped to `adoption: adopted` (round-one keys unchanged) and the current `examples/review/metaphors.md`, the stock script reports total 6, pending 1 (`metaphor:01-02:figure-06`), decided 5, invalid 0 — verdict `pending-remain`, exit 4. All five tokens (`KEEP`/`REJECT`/`FLATTEN`/`REPLACE`/`WORKSHOP`) count as `decided`; metaphor has no `SKIP`/`ESCALATE`. So the **decision layer needs no validator logic beyond the adoption flip** — the new validator work is entirely the selection layer, the round selector, and the orphan-item check.
-- **Disposition is free-text-plus-deletion today.** `metaphor_identify` writes a `- **Human Assessment:**` line left blank for the human (`agents/steps/metaphor-identify.md:72`, `:83`) and a count-only `### Summary — Scene xx-yy` block (`:87-98`). `metaphor_fix` reads the human's action word "below the flag line," treats an entry with **no action word** as accepted, and treats **deleted** entries as rejected (`agents/steps/metaphor-fix.md:40`, `:49`). Under the contract: the `Human Assessment:` line becomes `- Decision:` / `- Decision-note:` on an anchored unit, the `### Summary` block is retired (the validator's ledger is the count), rejection becomes `Decision: REJECT` (the entry stays), and "no action word = accepted" disappears (blank `Decision:` is pending).
-- **Selection is delete-and-guess today.** `metaphor_fix`'s subagents append variant sections and "the human deletes the variants they do not want, leaving exactly one variant per entry" (`agents/steps/metaphor-fix.md:60`). `metaphor_apply` then reads "the surviving variant"; when the entry is ambiguous — "multiple variants left in, or none — use your best understanding of what the human meant" (`agents/steps/metaphor-apply.md:51`). Its review evidence is defined *outside* the M10 model as "a surviving variant per entry" (`:32`, `:127`, `:153`). Under the contract: `metaphor_fix` appends a stable-id variant set and a blank `- Selected:` field per actionable entry; the human records the chosen variant id in `Selected:`; rejected variants stay as the audit record; and `metaphor_apply` consumes `Selected:` via the validator — an ambiguous or missing selection is invalid or pending, **never best-guessed** (the "use your best understanding" instruction is removed).
-- **The variant sections are `### ` headings today — they collide with the figure item line.** `metaphor_fix`'s subagents append `### Flatten Options` (`agents/metaphor/metaphor-flatten.md:22-28`), `### Replace Options` (`agents/metaphor/metaphor-replace.md:22-29`), and `### Workshop Candidates` (`agents/metaphor/metaphor-workshop.md:48-102`) — the same heading level as the figure entry (`### [Short label]`, `item_line_pattern: "^### "`). Under the settled container/orphan shape these must be **demoted to `#### `** so they never read as a figure item line (and so the new orphan-item check does not fire on them).
-- **★ The heading-item orphan gap, demonstrated at planning.** The M12 PR review flagged (ROADMAP M13 Notes) that for heading-item families the `container_pattern` check catches a *fully* unanchored section but not a lone item-line heading carrying neither an anchor nor a `Decision:` field. Confirmed with the stock validator against a scratch metaphor artifact — one properly anchored `KEEP` figure plus one legacy `### the pantry breathes` heading with a `Human Assessment:` line and **no** anchor and **no** `Decision:` field: the script reported **total 1, decided 1, verdict `proceed`, exit 0**, silently dropping the orphan. The container check did not fire (the scene had one anchored unit, so it is "not entirely anchorless") and no `- Decision:` line tripped the "field outside any unit" defect. M13 closes this: a line matching `item_line_pattern` (`^### `) with no anchor immediately above (`anchor_line != NR - 1`) is an orphaned item. Placed inside the validator's `/^#/` heading rule, testing `$0 ~ item_line_pattern`, it is auto-scoped to heading-item families — a bullet-item family's `^- ` pattern never matches a `#` line, so `compliance`/`anti_ai` (whose `^- ` also matches `- Decision:` and auxiliary lines) never misfire.
-- **The container role is filled by the orphan-item check, not a `container_pattern`.** With every figure anchored and the orphan-item check live, an old-format report (unanchored `### figure` items) is rejected per figure as an orphaned item (invalid), and a no-figures scene (`## Metaphor Report — Scene xx-yy` plus a single `No figures.` line, zero `### ` headings) has no orphan and validates clean — with **no** `container_pattern` and **no** exempt suffix on the scene heading. A scene-level `container_pattern: "## Metaphor Report"` was considered and rejected: it would flag the legitimate no-figures scene as an empty container unless the scene heading carried a `— none`-style exempt suffix, which is uglier than the `No figures.` marker the orphan-item check already permits. This is why metaphor is the one family whose container settles as "no `container_pattern`."
-- **The validator is a single-decision-layer, single-verdict script.** `scripts/validate-review-artifact.sh` parses one `- Decision:` field per unit (`:451-502`), classifies each unit pending/decided/skipped/escalated/invalid (`:277-299`), and returns one exit code (`:525-534`, precedence `invalid > pending > stale > proceed`). It reads token lists and structural keys from the grammar, hardcoding nothing (`:177-189`); the `Decision`/`Decision-note` field names are the only hardcoded regexes (`:307`, `:452`). It takes `[--? not yet] <artifact> <grammar> [<manifest> [<effective-draft>]]` (`:76-106`). M13 adds: a `--round` selector; parsing of hardcoded `- Selected:` / `- Selection-note:` fields; selection-round classification; two new ledger rows and a `selection-pending-review-ids:` section printed only in the selection round; and the orphan-item check. The decision-round behavior of every family stays unchanged (the round defaults to `decision`, and the orphan-item check is additive and fires on no existing fixture).
-- **`metaphor_fix` has a bespoke "nothing to do" blocker.** If `metaphors.md` "contains no annotated entries," `metaphor_fix` blocks to `open-questions.md` (`agents/steps/metaphor-fix.md:83`), and a bare `REPLACE` is normalized to `WORKSHOP` (`:69`). Under the contract: `metaphor_fix` runs the validator (`--round decision`), acts only on `FLATTEN`/`REPLACE`/`WORKSHOP` entries, and an **all-`KEEP`/`REJECT` file is a clean no-op** (it writes nothing and records completion) rather than a nothing-to-do blocker; bare `REPLACE` is **invalid input** (the validator rejects it via `payload_required: REPLACE`), the treat-as-`WORKSHOP` convenience removed.
-- **`metaphor_apply`'s freshness, override, and apply-log mechanics are the M9 model and stay.** The stale block, the human-recorded `Override:` block in `metaphors.md` (override lifts stale only, anchor-gated), and the apply-log block comment (`agents/steps/metaphor-apply.md:70-86`, `:125-147`) are unchanged in mechanics. Only the review-evidence axis changes: from "a surviving variant per entry" to a filled `Selected:` per actionable entry; the Override prose that names the "unselected variant set" as the `review_pending` analog is reworded to the structured `Selected:`-blank case.
-- **compliance, anti_ai, and prose_pass are the models for the step retargets.** `compliance_fix`'s validator invocation and per-unit gates (`agents/steps/compliance-fix.md:41-47`, `:141-142`) and `Decision-note:`-as-context note (`:60`); `anti_ai_fix`'s validator run, "validator has already run" behavior note, and `review_pending`/invalid blockers (`agents/steps/anti-ai-fix.md:38-44`, `:51`, `:191-192`); `anti_ai_report`'s review-unit-shape statement and the "Decisions" section that replaced the old "Annotation grammar" (`agents/steps/anti-ai-report.md:57-66`, `:315-327`); `compliance_report`'s append-path ordinal continuation (`agents/steps/compliance-report.md:41`).
-- **`review-validation.md` needs a metaphor extension — the first since M10.** Unlike M11 (fan-out) and M12 (unchanged), M13 adds a genuinely new interpretation surface: the two-layer / two-consumer proceed rule, the `--round` selector, and selection-pending distinct from decision-pending. Its per-consumer proceed rule (`agents/review-validation.md:84-100`), ledger-fields description (`:49-58`), and Decision-automation section (`:113-140`, whose metaphor bullet `:135-136` already forbids auto-disposition from `CLEAN`/`REVIEW`/`BROKEN` flags) are extended; the "no auto-disposition" bullet gains a "no auto-selection of a variant" sibling.
-- **The companion gains a second write surface — a bigger touch than M11/M12.** `templates/dispatcher/.claude/skills/amanuensis-review/SKILL.md`'s core procedure (`:24-74`) drives any adopted flat/scene-sectioned family through a single `Decision:` write surface. Metaphor needs **two queues** (disposition and selection) and a **second write surface** (`Selected:` / `Selection-note:`), which the hard rule confining writes to `Decision:`/`Decision-note:` (`:151-166`) must widen for this family; plus `CLEAN`/`REVIEW`/`BROKEN` flag-based queue prioritization and payload capture (a `REPLACE` image; a selection with an inline edit). Metaphor declares no `fanout_categories`, so the fan-out machinery (`:76-127`) stays untouched and unoffered.
-- **metaphor has no smoke coverage today.** `examples/smoke/README.md` exercises compliance (Recipes 9–10), anti_ai (Recipes 6–8, 11–12), and prose_pass (Recipes 13–15); no metaphor recipe exists. M13 adds recipes the way M12 added prose recipes — hand-authored `metaphors.md` fixtures run through `metaphor_fix` / `metaphor_apply`. To keep recipes deterministic, use `FLATTEN`/`REPLACE` entries and hand-authored variant sections (no `WORKSHOP` subagent generation, no storyboard/voice dependency): `metaphor_fix` reads `metaphors.md` + `<latest-draft>` (+ storyboards/voice only for `WORKSHOP`), and `metaphor_apply` reads `metaphors.md` + `<latest-draft>` and does a deterministic substitution.
-- **The step set is unchanged, and most cross-cutting docs stay byte-for-byte.** No step is added or removed and no `step_id` changes, so `scripts/check-pipeline-state.sh`, both CI workflow ymls, both `pipeline-state.md` files, and `install.sh` stay unchanged. `agents/orchestrator.md:28` ("a selected variant" as review evidence) and `:158` ("unselected variant set" as the `review_pending` analog), and `AGENTS.md:72-74`/`:92`, describe metaphor with generic "annotated"/"selected variant" wording — the same generic cross-family phrasing M11/M12 left untouched for anti_ai/prose_pass. M13 leaves `orchestrator.md`, `AGENTS.md`, and `agents/chapters.md` byte-for-byte, and confirms by cross-read that the generic wording still reads true under the structured `Selected:` field (the "selected variant" *is* the filled `Selected:` field; the concept is unchanged).
+- **The knowledge template already has the right three-way shape, but no identity or
+  provenance.** `templates/knowledge-book.md` sections are `## Knows` / `## Suspects` /
+  `## Believes incorrectly` (current state, `:9-42`), `## Must not know yet` (prospective
+  reveal constraints, `:46-51`), and `## Lost or superseded` (historical transitions,
+  `:54-62`). So M14.3's current / historical / prospective distinction is *substantially
+  present already*. What is missing: a **durable per-entry id** (entries are keyed only by a
+  human `### [Short label]` heading, which is not stable under rewording), a **draft
+  provenance stamp** (entries cite a scene via `learned:`/`basis:` but never the draft that
+  committed the fact), a **basis type** to represent "remembered" vs "was told" (the
+  done-when names "remembered" as a first-class axis; the template has no way to say a fact
+  is held by direct experience of a prior scene), and a canonical story-position format
+  (below).
+- **The story-position reference is inconsistent across the repo.** The knowledge template
+  uses `learned: [xx-yy]`, documented as "book-chapter, scene number"
+  (`templates/knowledge-book.md:4`, `:15`, `:27`, `:39`, `:60`) — the numeric-prefix style
+  (`01-01`) that `agents/project-layouts.md:11` **explicitly deprecated** in favor of folder
+  structure. The scene-knowledge-delta already uses the folder-style form
+  `[from <book-id>/<chapter-id>/<scene-id>]` (`agents/workflows.md:42-46`). Storyboards key
+  scenes by `scene_ref` path (`agents/storyboard-schema.md:38`). Three formats, no single
+  canonical one; the temporal model needs exactly one.
+- **`timeline.md` and `relationships.md` are freeform and have no template.** `agents/characters.md:29-45`
+  describes them as a "chronological record" and "relationship dynamics" in prose bullets;
+  `templates/` ships `profile.md` and `knowledge-book.md` only — no `timeline.md`, no
+  `relationships.md`. M14.1 requires the temporal model to span all three files; two of the
+  three have no structured home for it yet.
+- **The scene-knowledge-update is a documented workflow, not a step — so the scaffolds are
+  never filled.** `agents/workflows.md:62-68` ("Workflow: scene knowledge update") describes
+  reading the storyboard deltas and applying them to `characters/<name>/knowledge/book_n.md`,
+  but there is **no** `scene_knowledge_update` in `templates/pipeline-state.md:16-30` and no
+  file under `agents/steps/`. `character_extraction` creates `knowledge/book-N.md` as "empty
+  scaffolds ... Filled later by the scene knowledge update workflow"
+  (`agents/steps/character-extraction.md:54`, `:88`), and `agents/characters.md:61` states
+  knowledge items are written "only ... during the **scene knowledge update** workflow" —
+  which nothing runs. The capture docs name it "**the deferred scene-knowledge-update
+  step**" (`agents/capture/capture-agent.md:46`, `:84`; `agents/capture/README.md:31`). Net:
+  in the live pipeline, character knowledge acquired during the story has no writer.
+- **`knowledge/` is reserved for this step; capture must never write it.** The capture
+  subsystem writes character `timeline.md` events and `profile.md` identity and
+  `canon/generated/` world facts, and is **hard-barred from `knowledge/`**
+  (`agents/capture/capture-agent.md:46`, `:84`, `:102`; `agents/capture/README.md:31`) —
+  precisely because knowledge is reveal-timing-load-bearing and belongs to the
+  scene-knowledge-update step. This Sprint fills that reserved slot; it does not widen
+  capture.
+- **short_story has no per-book knowledge file today.** `character_extraction` creates only
+  `knowledge/baseline.md` for `short_story` and no `book-N.md`
+  (`agents/steps/character-extraction.md:80`; layout `agents/project-layouts.md:100-138`).
+  So for a short story, story-acquired knowledge currently has *nowhere structured to land*.
+  The new step needs a project-type-aware target that includes `short_story`.
+- **Two strong precedents already exist for provenance and freshness — reuse them, don't
+  reinvent.** (1) Capture stamps every write with source **scene + beat + attempt** and an
+  **`invented, unreviewed`** marker so a human can find and confirm it
+  (`agents/capture/capture-agent.md:54-59`). (2) The Artifact-state contract models a
+  prose-derived side artifact's freshness as a **derived predicate**: a `Reviewed-draft:
+  draft-vNN.md` stamp is `fresh` iff it equals the active head, `stale` otherwise, computed
+  O(1) from two facts on disk, never stored or swept (`agents/orchestrator.md:150-181`).
+  NOTES.md's open questions for this milestone explicitly ask to keep character state "the
+  same freshness class as the `Reviewed-draft:` stamps" (`NOTES.md:119-123`). M14.2 and
+  M14.6 are these two precedents applied to character knowledge.
+- **Durable review-ids exist, but only in the review-artifact system.** The `<!-- review-id:
+  ... -->` anchor convention lives in `agents/review-grammars.yaml` and the four report/fix
+  step families; it is **not** used in character files. M14.2's durable id is therefore a
+  new, character-local identity scheme, not an extension of review-ids (which this Sprint
+  leaves untouched — see Out of scope).
+- **Adding a step has three hard consistency surfaces.** (a) `scripts/check-pipeline-state.sh`
+  runs in resolvable mode (every listed step resolves to a file) and `--exhaustive` mode
+  (every step file appears in the list). (b) The repo CI enforces **ordered-equality** of the
+  step lists in `templates/pipeline-state.md` and `examples/smoke/pipeline-state.md` — the new
+  line must sit at the **same position** in both (`.github/workflows/pipeline-state-check.yml:24-34`).
+  (c) `AGENTS.md:63-77` catalogs every step file and needs a new catalog line. `install.sh`
+  does **not** enumerate steps and stays unchanged; neither CI workflow yml lists step names,
+  so they pass automatically once the two lists and the step file agree.
+- **Downstream consumers read knowledge as inputs and must keep working.** `scene_generation`
+  reads `knowledge/baseline.md` (`agents/steps/scene-generation.md:7`, `:43`) and
+  `storyboarding` reads `knowledge/*.md` (`agents/steps/storyboarding.md:8`, `:48`), both to
+  plan reveals/concealments against current knowledge. The temporal model is **additive** —
+  it adds ids, a provenance stamp, a story-position field, and transitions, and keeps the
+  current-state sections (`## Knows` etc.) legible exactly as before — so these consumers
+  need no change this Sprint (they read current state as they do today).
 
 ## Definition of done
 
 The Sprint is complete when:
 
-1. ROADMAP.md tasks M13.1–M13.6 are checked; M14 is untouched. (The M13 section body, done-when, and Notes were refined at planning to the locked decisions below — leave them as they stand.)
-2. `agents/review-grammars.yaml`, `metaphor` block: `adoption: pending` → `adopted` (keep `migrates_in: M13`). Add the selection layer:
-   - one new machine-read key, `selection_tokens: FLATTEN REPLACE WORKSHOP` — the `Decision:` tokens that make an entry **actionable** (require a filled `Selected:` in the selection round); `KEEP`/`REJECT` are terminal and carry no selection.
-   - prose keys documenting the selection layer: the `Selected:` field holds exactly one **variant id** (machine-clean, validated structurally as a single well-formed token); `Selection-note:` is optional free text the validator never parses (the human's inline edit to the chosen variant, read by `metaphor_apply`) — the same machine-field / human-note split as `Decision:` / `Decision-note:`; blank `Selected:` on an actionable entry means selection-pending; a `Selected:` on a `KEEP`/`REJECT` entry is invalid.
-   - rewrite `item_shape` (one unit per figure; anchor above the `### [Short label]` heading; `- Decision:` / `- Decision-note:` replace `Human Assessment:`; on an actionable entry `metaphor_fix` inserts a blank `- Selected:` / `- Selection-note:` among the entry's fields and appends a stable-id variant set as a `#### ` section below; deletion is not a decision signal — a rejected figure carries `Decision: REJECT` and stays; **pre-migration rejection is by the heading-item orphan check, not a `container_pattern`** — an unanchored `### ` figure is an invalid orphaned item, and a no-figures scene records `## Metaphor Report — Scene xx-yy` + a single `No figures.` line), `counting` (unit = one figure; all five tokens are decisions; the selection layer counts selection-pending / selected over **actionable** entries only), `blank_means` (unchanged: pending; the producer's `CLEAN`/`REVIEW`/`BROKEN` flag is a recommendation, never a disposition), and `proceed_state` (**two consumers, two layers**: `metaphor_fix` proceeds at zero decision-pending and zero invalid, then acts only on `FLATTEN`/`REPLACE`/`WORKSHOP`, treating all-`KEEP`/`REJECT` as a clean no-op; `metaphor_apply` proceeds at zero decision-pending, zero selection-pending, and zero invalid, treating all-`KEEP`/`REJECT` as valid pass-through).
-   - do **not** set `container_pattern` or `container_exempt_suffix`; do **not** add `fanout_categories`. `id_item_pattern`, `id_min_locations`, `item_line_pattern`, `tokens`, `payload_*`, and `replace_policy` are already correct — do not change them. No other family's entry changes.
-3. Same file, header comments: the container-detection paragraph (`agents/review-grammars.yaml:40-57`) notes metaphor's settlement — no `container_pattern`; pre-migration rejection is by the heading-item orphan check — and that **all four families are now adopted** (none pending). The machine-read-keys list (`:20-22`) adds `selection_tokens`. The shared item-shape / blank-means comments (`:59-70`) gain a short note on the selection layer (`Selected:` machine id, `Selection-note:` human free text) parallel to `Decision:` / `Decision-note:`.
-4. `scripts/validate-review-artifact.sh` gains, and nothing else changes in its decision-round behavior:
-   - a `--round decision|selection` selector (leading optional flag, default `decision`). The `selection` round is valid only for a family declaring `selection_tokens`; passing it to a family without one is an input error (exit 1) naming the mismatch. The usage header, the argument list, and the exit-code documentation are updated.
-   - hardcoded parsing of `- Selected:` and `- Selection-note:` fields (mirroring the `Decision`/`Decision-note` rules). `Selection-note:` is consumed and ignored. A `Selected:` value is blank (selection-pending on an actionable unit) or a single well-formed variant-id token (selected); a multi-token / malformed value, or a `Selected:` on a non-actionable unit, is invalid. The validator checks the value **structurally**; it does not verify the id resolves to an appended variant (that is `metaphor_apply`'s anchor-gated locate step — see Conventions).
-   - selection-round classification: an actionable unit (`Decision:` ∈ `selection_tokens`) with a blank/absent `Selected:` is **selection-pending**; with a valid `Selected:` is **selected**; a still-blank `Decision:` remains **decision-pending** and also blocks the selection round; terminal (`KEEP`/`REJECT`) units are pass-through. Two new ledger rows (`selection-pending`, `selected`) and a `selection-pending-review-ids:` section print **only** in the selection round; the decision-round ledger shape is unchanged for every family.
-   - the heading-item orphan check: inside the `/^#/` rule, a line matching `item_line_pattern` with no anchor immediately above (`anchor_line != NR - 1`) is an orphaned-item defect. Additive; auto-scoped to heading-item families; fires on no existing fixture.
-5. `agents/review-validation.md` gains a metaphor extension: the `--round` selector and when each consumer passes which round; the two-layer per-consumer proceed rule (`metaphor_fix` = decision round exit 0; `metaphor_apply` = selection round exit 0); selection-pending distinct from decision-pending in the ledger and its `selection-pending-review-ids:` queue; and a "no auto-selection of a variant" bullet beside the existing "no auto-disposition from `CLEAN`/`REVIEW`/`BROKEN`" rule. No other family's guidance changes.
-6. `examples/review/metaphors.md` is rewritten to a two-layer specimen: every figure anchored with `- Decision:` / `- Decision-note:`; the `### Summary` block removed; a terminal `KEEP` and a non-destructive `REJECT`; a `REPLACE: <image>` actionable entry with a `#### Replace Options` variant set and a filled `Selected:`; a `WORKSHOP` (or `FLATTEN`) actionable entry with a blank `Selected:` (selection-pending); a `FLATTEN` actionable entry with a filled `Selected:` plus a `Selection-note:` inline edit; one blank-`Decision:` pending figure. A trailing expectation comment documents **both** round ledgers (decision round and selection round) and their exit codes, verified against a scratch-adopted grammar copy. `examples/review/README.md`'s metaphor row (`:22`) and pending-family prose (`:24-33`) are updated (adopted; the two-layer shape; both expected ledgers; **no** family remains pending). The other three fixtures are byte-for-byte untouched.
-7. `agents/steps/metaphor-identify.md` emits structured units: a `<!-- review-id: ... -->` anchor immediately above each figure's `### [Short label]` heading and blank `- Decision:` / `- Decision-note:` fields replacing `- **Human Assessment:**` (`:72`, `:83`); the `### Summary — Scene xx-yy` block (`:87-98`) removed; a clean scene records a single `No figures.` line; the `CLEAN`/`REVIEW`/`BROKEN` `Flag` and all identify fields unchanged; the `Reviewed-draft:` stamp and append/regenerate mechanics unchanged; on append, ordinals continue (model `compliance-report.md:41`); review-id grammar per the `metaphor` block (`metaphor:<scene>:figure-<NN>` short_story, book form), referenced not restated; Anti-Patterns add filling decision fields, anchoring a `No figures.` line, and dropping an anchor.
-8. `agents/steps/metaphor-fix.md` consumes the decision layer via the validator (`--round decision`, manifest always, read-from draft as the fourth positional when passed; invocation and interpretation language per `anti-ai-fix.md:38-44`) and proceeds only on exit 0; the "nothing to do" blocker (`:83`) is **replaced** by all-`KEEP`/`REJECT` = clean no-op (write nothing, record completion); the treat-as-`WORKSHOP` normalization of bare `REPLACE` (`:69`) is removed (bare `REPLACE` is invalid input, exit 3, block); the coordinator walks entries by `Decision:` token, not by presence/deletion, and acts only on `FLATTEN`/`REPLACE`/`WORKSHOP`; for each actionable entry it inserts a blank `- Selected:` / `- Selection-note:` among the entry's fields (before the variant heading, so both sit inside the unit) and each subagent appends a **`#### ` variant section** with stable per-variant ids; inline round-1 corrections are read from `- Decision-note:` (not "below the action word"); freshness/stale mechanics unchanged (no override branch — that lives in `metaphor_apply`).
-9. The three subagent contracts (`agents/metaphor/metaphor-flatten.md:22-32`, `metaphor-replace.md:22-33`, `metaphor-workshop.md:48-108`) demote their variant-section headings from `### ` to `#### `; state that the per-variant labels (`A`/`B`/`C`, `A`–`H`) are the **stable variant ids** the human names in `Selected:`; read inline corrections from the entry's `Decision-note:`; and replace the "delete the variants not wanted, leave one" language with "the human records the chosen variant id in the entry's `Selected:` field; unchosen variants stay as the audit record."
-10. `agents/steps/metaphor-apply.md` consumes the selection layer via the validator (`--round selection`, manifest/read-from as above) and proceeds only on exit 0; the "use your best understanding" best-guess (`:51`) is **removed** — an ambiguous/malformed selection is invalid (validator, exit 3) and a blank `Selected:` on an actionable entry is selection-pending (exit 4), neither guessed; a well-formed `Selected:` naming a variant the step cannot locate is skipped/noted per the existing anchor-gate (`:59`), not guessed; the inline edit is read from `Selection-note:` and applied as the target form; all-`KEEP`/`REJECT` is valid pass-through (writes `<next-draft>` with no substitutions); the review-evidence prose ("a surviving variant per entry", the "unselected variant set" `review_pending` analog at `:32`, `:127`, `:153`, `:127`'s Override paragraph) is reworded to the structured `Selected:` case; freshness, `Override:`, apply-log, manifest/active-head, and frontmatter mechanics unchanged.
-11. `templates/dispatcher/.claude/skills/amanuensis-review/SKILL.md` documents metaphor's two-round drive: a **disposition queue** (blank `Decision:`, via `--round decision`) and a **selection queue** (blank `Selected:` on actionable entries, via `--round selection`), with progress across both; a **second write surface** (`Selected:` / `Selection-note:`) added to the write-surface hard rule for this family; `CLEAN`/`REVIEW`/`BROKEN` flag-based queue prioritization (a presentation signal, never auto-disposition); payload capture (prompt for a `REPLACE` image; capture a selection's inline edit into `Selection-note:`); and no auto-selection. Metaphor declares no `fanout_categories`, so the fan-out machinery stays untouched and is never offered for it.
-12. `examples/smoke/README.md` gains metaphor recipes on the `metaphor_fix` / `metaphor_apply` pair (hand-authored `metaphors.md` fixtures under `plot/drafts/attempt01/`, untracked; expected outcomes name the validator's verdicts and ledger counts in the Recipe 9/13 style; deterministic `FLATTEN`/`REPLACE` entries with hand-authored variants, no `WORKSHOP` generation) covering: a decision-pending report blocking `metaphor_fix` as `review_pending` plus a non-destructive `REJECT` that does not block; a bare-`REPLACE` report rejected as invalid input; an all-`KEEP`/`REJECT` file as a `metaphor_fix` clean no-op **and** a `metaphor_apply` pass-through; a selection-pending report blocking `metaphor_apply` then a filled `Selected:` letting a deterministic apply run and write `<next-draft>`; and an ambiguous/malformed `Selected:` rejected as invalid. The recipe map (`:9`), the untracked-files note (`:28-29`), the touch-only-untracked note (`:735-737`), the OpenCode paragraph (`:748`), the reset text (`:750-757`), and the summary (`:760-768`) reflect the new recipe numbers and files. Existing recipes (1–15) are byte-for-byte untouched.
-13. `sh scripts/check-pipeline-state.sh --exhaustive templates/pipeline-state.md agents/steps` and `sh scripts/check-pipeline-state.sh examples/smoke/pipeline-state.md agents/steps` both pass; `git diff --stat` against the Sprint's start SHA (`3fe3c6c`, captured before the first commit) shows **no** changes to `scripts/check-pipeline-state.sh`, either `.github` workflow yml, either `pipeline-state.md`, `install.sh`, `AGENTS.md`, `agents/orchestrator.md`, `agents/chapters.md`, `templates/dispatcher/.claude/commands/`, `templates/dispatcher/.opencode/`, any step file other than the three metaphor steps, the three subagent contracts other than the metaphor ones, or `examples/review/{reviewer-actions,anti-ai,prose-pass}.md`. (`scripts/validate-review-artifact.sh`, `agents/review-validation.md`, and the companion skill **do** change this Sprint, unlike M11/M12.)
-14. Verification greps and validator runs confirm the sweep:
-    - `git grep -ln "review-id" -- agents/steps` lists **exactly** the nine retargeted step files (compliance ×2, anti-ai ×2, prose ×2, metaphor ×3).
-    - `grep -n "^  adoption:" agents/review-grammars.yaml` shows `adopted` for all four families; **none** `pending`.
-    - `git grep -ln "Human Assessment" -- agents/steps agents/metaphor` returns no hits.
-    - `git grep -n "selection_tokens" agents/review-grammars.yaml` hits the metaphor block; `git grep -ln "Selected" -- agents/steps/metaphor-fix.md agents/steps/metaphor-apply.md agents/metaphor` hits all four; `git grep -n "\-\-round" -- scripts/validate-review-artifact.sh agents/review-validation.md agents/steps/metaphor-fix.md agents/steps/metaphor-apply.md` hits each.
-    - `git grep -n "container_pattern" agents/review-grammars.yaml` shows compliance, anti_ai, prose_pass with one; metaphor **without**.
-    - Validator with the real grammar file: `examples/review/metaphors.md` → its documented decision-round and selection-round ledgers (exit codes as documented); `examples/review/reviewer-actions.md` → exit 3, `anti-ai.md` → exit 4, `prose-pass.md` → exit 4 with their **existing** documented ledgers (regression guard for the additive validator change); a scratch old-format metaphor specimen (unanchored `### ` figures) → invalid orphaned-item finding(s), exit 3; a scratch bare-`REPLACE` specimen → invalid, exit 3; a scratch selection-pending specimen (`--round selection`) → exit 4; a scratch all-`KEEP`/`REJECT` specimen → exit 0 in both rounds.
+1. ROADMAP.md tasks M14.1–M14.7 are checked; M15–M17 are untouched. The M14 section body,
+   done-when, and Notes carry the Sprint-19 planning addendum (the locked decisions below),
+   and nothing outside M14 changes.
+2. **The temporal character-state model is defined and single-sourced in
+   `agents/characters.md`**, spanning `knowledge/`, `timeline.md`, and `relationships.md`,
+   and covering: the canonical story-position reference; the durable per-entry id; the
+   draft-provenance stamp; the current / historical-transition / prospective-constraint
+   distinction; the basis type (including "remembered"); and the non-destruction invariant.
+   It states once, authoritatively, that the character Markdown files remain the sole
+   authority for character-relative state — **no** parallel index, database, or derived
+   state file is introduced.
+3. **`templates/knowledge-book.md` is evolved** to the model: each entry carries a durable
+   `id`, a `story-position` in the canonical format (replacing the deprecated `xx-yy`
+   `learned:`/`basis:` scheme, which is removed), a `committed-in: draft-vNN.md` provenance
+   stamp, and a `basis` field (`witnessed` | `told` | `inferred`) that lets "remembered" be
+   represented; the `## Lost or superseded` transition entry gains the same id/provenance so
+   a correction cites the entry it supersedes; the human `### [Short label]` heading stays as
+   a readable label. The file stays valid human-readable Markdown.
+4. **`templates/timeline.md` and `templates/relationships.md` are created**, each applying the
+   temporal model at the altitude that fits it: ordered, story-position-attributed,
+   id-bearing entries; relationship *dynamics* carry the current / superseded distinction
+   (a fractured loyalty supersedes a prior one, non-destructively); timeline events are the
+   inherently-chronological record. Both are human-readable Markdown and declare that they
+   are not a parallel authority — they describe character-relative truth, deferring objective
+   facts to canon/continuity (the M15 boundary).
+5. **A new step `agents/steps/scene-knowledge-update.md` exists and is wired.** It is the sole
+   writer of `knowledge/`; it reads the scene's storyboard knowledge deltas plus the accepted
+   `<latest-draft>`, confirms each delta against the drafted prose, and **reconciles** it into
+   the project-type-appropriate knowledge file: a new fact appends a stamped entry; a changed
+   fact appends a `## Lost or superseded` transition and records the corrected state — it
+   **never** overwrites or deletes an accumulated entry. It writes directly with
+   `review_required: false` (no human gate) and stamps every write with story-position +
+   `committed-in` draft + an `unreviewed` marker (capture's provenance idiom,
+   `agents/capture/capture-agent.md:54-59`). It touches **only** `knowledge/`; `timeline.md`
+   and `relationships.md` get the model/templates but no automated writer this Sprint.
+6. **The step is added to both recipes at the same position** — appended after `anti_ai_fix`
+   in `templates/pipeline-state.md` and `examples/smoke/pipeline-state.md` — so both
+   `check-pipeline-state.sh` modes pass and the CI ordered-equality check passes. `AGENTS.md`'s
+   step catalog (`:63-77`) gains a `scene-knowledge-update.md` line.
+7. **Freshness and correction behavior is defined** (M14.6): a knowledge entry's `committed-in`
+   stamp makes it a **derived-stale** predicate — an entry committed from a draft no longer in
+   the active head's lineage is stale, computed O(1) from the entry stamp and the manifest,
+   mirroring the `Reviewed-draft:` contract (`agents/orchestrator.md:150-181`) rather than
+   storing a field or sweeping. The correction behavior is the step's rerun-reconcile:
+   re-running `scene_knowledge_update` against the current active head appends corrections as
+   transitions and never silently rewrites; the step's idempotency section states this
+   explicitly (contrast `character_extraction`'s overwrite-on-rerun,
+   `agents/steps/character-extraction.md:74-76`). Where this rule needs a home beyond the step,
+   it lives in `agents/characters.md` and references the orchestrator contract; the
+   orchestrator's Artifact-state section is left byte-for-byte or gains at most a one-line
+   cross-reference.
+8. **The `deferred` framing is retired everywhere it appears.** `agents/characters.md:61`,
+   `agents/steps/character-extraction.md:54`/`:88`/`:80`, `agents/capture/capture-agent.md:46`/`:84`,
+   and `agents/capture/README.md:31` are updated to name the real `scene_knowledge_update`
+   step instead of "the deferred scene-knowledge-update step/workflow"; the capture hard-line
+   ("never `knowledge/`") is preserved, now pointing at a step that exists.
+9. **The scene-knowledge-update workflow entry is updated** (`agents/workflows.md:62-68`) to
+   reference the automated step and its reconciling, non-destructive, provenance-stamped
+   behavior, keeping the folder-style delta format it already uses (`:42-46`) aligned with the
+   canonical story-position reference.
+10. **A worked demonstration is committed** under `examples/character-state/` (a clearly-marked
+    example, per the `AGENTS.md` repository-boundary rule): an example character folder whose
+    knowledge changes more than once — a suspicion that becomes an incorrect belief that is
+    later corrected — under an active `## Must not know yet` reveal constraint, plus a README
+    that reconstructs the character's state at two different story positions from the
+    ids/stamps/transitions alone, showing the earlier state survives the later correction.
+11. **Smoke coverage exists** for the step in `examples/smoke/README.md`: at least one recipe
+    that hand-authors a character `knowledge/` file, a scene storyboard carrying a knowledge
+    delta, and an accepted draft, runs `scene_knowledge_update`, and confirms a
+    provenance-stamped non-destructive append; and a second run against a corrected fact that
+    confirms a transition is appended rather than the prior entry overwritten. The recipe
+    enumeration, layout/untracked notes, and reset procedure are updated for the new recipe(s)
+    and any new untracked paths; existing recipes are byte-for-byte untouched.
+12. **Verification passes.** `sh scripts/check-pipeline-state.sh --exhaustive
+    templates/pipeline-state.md agents/steps` and `sh scripts/check-pipeline-state.sh
+    examples/smoke/pipeline-state.md agents/steps` both succeed; the two step lists are
+    ordered-equal; `git diff --stat` against the Sprint start SHA (`eb11589`, captured before
+    the first commit) shows **no** changes to `scripts/validate-review-artifact.sh`,
+    `agents/review-grammars.yaml`, `agents/review-validation.md`, any of the four review-family
+    step files, the review companion skill, `install.sh`, either CI workflow yml, or the
+    dispatcher command/agent files. Greps confirm the sweep: `git grep -n "deferred
+    scene-knowledge-update"` returns no hits; `git grep -ln "scene_knowledge_update\|scene-knowledge-update"`
+    lists the step file, both pipeline-state files, `AGENTS.md`, `agents/characters.md`,
+    `agents/workflows.md`, the capture docs, and `character-extraction.md`; `git grep -n
+    "xx-yy" templates/knowledge-book.md` returns no hits.
 
 ## Conventions adopted by this Sprint
 
-Locked at planning (the two starred items are owner decisions from this Sprint's planning session); tasks don't rediscover them.
+Locked at planning (the two starred items are owner decisions from this Sprint's planning
+session); tasks don't rediscover them.
 
-- **★ The validator gains an explicit `--round decision|selection` selector.** The metaphor artifact gates two consumers with different proceed conditions on one file; rather than auto-detect the round from artifact content (ambiguous on a `metaphor_fix` rerun, which itself writes the blank `Selected:` fields, and on a skipped-`metaphor_fix` artifact) or ledger both layers under one precedence (which cannot separate "an actionable entry with no `Selected:` yet" — normal for `metaphor_fix`, a block for `metaphor_apply`), the consumer states which layer it gates. `metaphor_fix` passes `--round decision`; `metaphor_apply` passes `--round selection`; the default is `decision`, so the other three families and every existing invocation are unchanged. Rejected alternatives: auto-detect (implicit, rerun/skip edge-cases); both-layers-precedence (cannot distinguish the two consumers' reading of an absent `Selected:`).
-- **★ The inline-edit carrier is a `Selection-note:` field; `Selected:` holds only the variant id.** When the human picks a variant and edits it inline, the edit goes in a sibling `Selection-note:` the validator never parses; `Selected:` stays a single machine-clean variant id. This mirrors the contract's own `Decision:` (machine what) / `Decision-note:` (human why, never machine-parsed) split, keeps the `Selected:` structural check unambiguous, and gives a symmetric pair: `Decision-note:` carries round-one corrections, `Selection-note:` carries round-two edits. `metaphor_apply` reads `Selection-note:` to apply the edited form (as fix steps read `Decision-note:` for context, `compliance-fix.md:60`). Rejected: payload on `Selected:` (`Selected: B: <edit>` — matches the family's `TOKEN: payload` style but mixes a machine id with free text on one line, fuzzing the id check); reusing `Decision-note:` (overloads one field across both rounds).
-- **Every figure is an anchored review unit; deletion is not a decision signal.** `KEEP`, `REJECT`, `FLATTEN`, `REPLACE: <image>`, `WORKSHOP` — each carries a `review-id` anchor and blank `Decision:` / `Decision-note:` fields, and the human decides every one. A rejected figure carries `Decision: REJECT` and **stays** in the file as the audit record (both `metaphor_fix` and `metaphor_apply` skip it). This closes the accepted-vs-unreviewed gap (shared-design principle 4) at the disposition round and keeps the file a complete figurative-decision record.
-- **Round-one inline corrections move to `Decision-note:`.** The human's corrections to identify fields — honored by the flatten/replace/workshop subagents — move from the undocumented "below the action word" side channel into the entry's `Decision-note:`. The three subagent contracts read them from there.
-- **The container settles as the heading-item orphan check, with no `container_pattern`.** Pre-migration rejection is per-figure (an unanchored `### ` heading is an invalid orphaned item); a no-figures scene records `No figures.` (zero `### ` headings, no orphan, valid). The `### Summary` count block is retired (the ledger is the count), and the subagent variant sections demote to `#### ` so they never read as a figure item line or a container. Rationale: a scene-level `container_pattern` would need an exempt suffix on the scene heading to spare the legitimate no-figures scene, uglier than the marker the orphan check already permits. The orphan-item check is the M12-PR-review follow-up, folded in here because M13 owns heading-item container/anchor semantics.
-- **The selection layer is metaphor-only and additive.** The `--round selection` behavior, the `Selected:`/`Selection-note:` parsing, the `selection_tokens` key, and the two new ledger rows engage only for a family declaring `selection_tokens` (metaphor). The decision-round output of every family — and every existing smoke recipe and fixture ledger — is unchanged; the three adopted fixtures are re-verified as a regression guard.
-- **The validator checks the selection structurally; the step resolves it to prose.** The validator confirms `Selected:` is blank (pending) or one well-formed variant id (selected), and rejects a malformed or misplaced `Selected:` as invalid — this delivers "an ambiguous selection is invalid, never best-guessed." It does **not** parse variant bodies to confirm the id names an appended variant (the unit closes at the `#### ` variant heading, so cross-checking would require reopening units — disproportionate); `metaphor_apply` resolves the id to prose under its existing anchor-gate and blocks/skips, never guesses, if it cannot. This is the M10 division: the script owns the countable gate, the step body owns locating anchors in prose (`review-validation.md`'s "What remains agentic judgment").
-- **all-`KEEP`/`REJECT` is valid, not a failure, at both consumers.** A fully-decided file with no actionable entries is a clean no-op for `metaphor_fix` (nothing to generate) and a valid pass-through for `metaphor_apply` (nothing to substitute — it writes `<next-draft>` verbatim plus the manifest entry). This replaces `metaphor_fix`'s "nothing to do" blocker and `metaphor_apply`'s "no surviving variant = missing input" framing.
-- **Artifact-state mechanics are untouched.** Freshness stays a derived predicate; `metaphor_apply`'s stale override stays stale-axis-only, anchor-gated, recorded in the apply-log block comment; `metaphor_fix` mints no draft and carries no override branch; `agents/orchestrator.md` and `agents/chapters.md` are not edited (their generic "selected variant"/"annotated" wording still reads true under the structured field — confirmed by cross-read).
+- **★ The `scene_knowledge_update` step is built and wired this Sprint — it is not deferred.**
+  The owner chose to build the running step now (over defining the model and leaving the step
+  for M15/M16). So `agents/steps/scene-knowledge-update.md` is created, added to both recipes,
+  and cataloged in `AGENTS.md`; the pipeline gains its first writer of `knowledge/`, and the
+  empty-scaffold gap closes. Rejected alternative: model-and-templates only, step stays
+  deferred — cleaner and smaller, but leaves `knowledge/book-N.md` permanently unfilled and
+  postpones the milestone's one load-bearing capability.
+- **★ Capture-style writes, but no human gate: `review_required: false`.** The step writes
+  knowledge directly, the way capture writes inventions — provenance-stamped, non-destructive,
+  marked `unreviewed` — but does **not** block downstream steps on human approval. The owner's
+  rationale: applying a confirmed scene delta to a knowledge file is mechanical enough that the
+  agent can do it without a human double-check. "Reviewable" in M14.5 therefore means the
+  writes are **legible, traceable, and non-destructive** (a human *can* audit them and
+  reconstruct any earlier state), **not** that a human must approve each one. This is safe re:
+  reveal timing (Rule 2, `agents/update-rules.md:29-37`): the step records what a character
+  learned *from committed prose that already happened*, so it is recording history, never
+  forecasting a premature reveal; the prospective `## Must not know yet` constraints are
+  authored by planning, and the step does not write them. Rejected: `review_required: true`
+  (capture's gate) — the owner judged the write mechanical and the gate unnecessary friction.
+- **The reviewable-change format stays off the validator / review-grammar machinery.**
+  Character-state changes are **not** modeled as anchored `- Decision:` review units, and this
+  Sprint does not touch `agents/review-grammars.yaml`, `scripts/validate-review-artifact.sh`,
+  `agents/review-validation.md`, or the review companion. Agent-addressable, countable review
+  of character-state changes is M16's job (Bounded relational review), and the objective
+  continuity-update *reviewable* workflow is M15.5. Keeping M14 off that machinery avoids
+  building review infrastructure the later milestones are chartered to design. Rejected:
+  report/fix split via the validator — much heavier and a direct overlap with M15/M16.
+- **The canonical story-position reference is folder-style `<book-id>/<chapter-id>/<scene-id>`,
+  book-id omitted for `short_story`.** This adopts the form the knowledge-delta already uses
+  (`agents/workflows.md:42-46`) and the folder convention that `agents/project-layouts.md:11`
+  established, and **retires** the deprecated `xx-yy` numeric-prefix form in
+  `templates/knowledge-book.md`. For `short_story` (no chapter subdivision, one chapter) a
+  position reduces to `<scene-id>`. One format, ordered lexically by book → chapter → scene,
+  used everywhere a character-state entry cites where a change occurred. Rejected: keep `xx-yy`
+  (deprecated, and inconsistent with the delta the step reads).
+- **Durable identity is a visible `id` field, not an HTML-comment anchor.** Each entry carries
+  a stable `id` (e.g. `kn-01`, scoped to the character's knowledge file) as a normal structured
+  field, minted once and never changed — later steps and transitions cite it. It stays a
+  visible, human-readable field because the entry is already a structured unit with a `###`
+  label, so the review-artifact system's "a position is only a hope" concern (which drove the
+  `<!-- review-id -->` anchors) does not apply, and M14.4 demands human-readable Markdown.
+  Rejected: reuse the `<!-- review-id -->` anchor convention — consistent with the review
+  system but adds invisible markup to files a human reads directly, and couples character state
+  to a grammar M14 is deliberately staying off.
+- **Non-destruction is a hard invariant, realized by transitions.** A later change never
+  deletes or overwrites the prior state: a correction moves the superseded belief into `##
+  Lost or superseded` with its `id`, its held-from/held-to story positions, and what changed,
+  and records the new state as its own stamped entry. This is the same append-don't-destroy
+  discipline the draft-lineage model uses (superseded drafts stay on disk, unmodified —
+  `agents/project-layouts.md:79`). It is what makes point-in-time reconstruction (M14.7)
+  possible and what "not silently rewriting accumulated knowledge" (M14.5) concretely means.
+- **Freshness is a derived predicate over the `committed-in` stamp, not a stored field.**
+  Mirroring the Artifact-state contract (`agents/orchestrator.md:150-181`): an entry is
+  derived-stale iff its `committed-in: draft-vNN.md` names a draft outside the active head's
+  lineage, computed O(1) from the entry and the attempt manifest; no field is stored and no
+  sweep walks the knowledge tree. Correction is the step's rerun-reconcile. Dispatcher-level
+  detection of character-state staleness is **out of scope** — a deferred follow-on, exactly as
+  dispatcher-level artifact staleness is (`agents/orchestrator.md:187`).
+- **The step writes `knowledge/` only; `timeline.md` and `relationships.md` are
+  model-and-template only this Sprint.** The knowledge delta is the mechanical, reliable input
+  the step confirms and applies. Relationship shifts and timeline events are less mechanically
+  derivable from the storyboard, `timeline.md` already has a writer (capture, for invented
+  events), and adding a second automated writer per file invites conflicts. So the two files
+  get the temporal model and templates (M14.1/M14.4) but keep their existing human/post-chapter
+  update path (`agents/workflows.md:83-90`); an automated writer for them, if wanted, is later
+  work.
+- **short_story acquired knowledge lands in `knowledge/story.md`.** `short_story` has no
+  `book-N.md` (`agents/steps/character-extraction.md:80`); the step creates and writes
+  `knowledge/story.md` for facts acquired during the story, parallel to `book-N.md` for
+  book/series. `baseline.md` stays pre-story only. The step creates the target file if absent.
+- **The step runs at the end of the recipe, after `anti_ai_fix`.** It consumes the *accepted*
+  (final) chapter prose and produces character state that feeds the *next* chapter's planning
+  (`scene_generation`/`storyboarding` read `knowledge/`), matching the post-chapter-update
+  ordering (`agents/workflows.md:83-90`). Rejected: placing it right after `compliance_fix`
+  (where the storyboard-mandated facts are settled and the later passes are wording-only) — a
+  defensible alternative, but end-of-recipe is the most literal reading of "accepted prose" and
+  keeps the step reading one settled draft.
 
 ---
 
 ## Tasks
 
-Wave order: **Task 1** settles the machine contract — grammar rewrite, the validator extensions (round selector, selection parsing, orphan-item check), the interpretation contract, and the fixture — and must land and verify first; every step doc invokes the validator it builds. **Tasks 2, 3, 4, 5** touch disjoint file sets (identify step / fix step + subagents / apply step / companion skill) and can run in parallel after Task 1 — they implement against Task 1's contract and fixture, not against each other. **Task 6** verifies and closes out, last.
+Wave order: **Task 1** settles the model and the templates/guidance — every downstream file
+cites it — and lands first. **Task 2** builds and wires the step and defines its
+provenance/freshness/correction behavior against Task 1's model. **Task 3** demonstrates,
+smoke-tests, verifies, and closes out, last. The tasks are largely sequential (Task 2 writes to
+`agents/characters.md`'s step-reference and freshness sections that Task 1 establishes; Task 3
+depends on both), so run them in order rather than in parallel.
 
-### Task 1 — Contract + validator: the metaphor grammar, the selection layer, the orphan-item check, the fixture
+### Task 1 — The temporal model, the evolved knowledge template, and the timeline/relationships templates
 
-- [x] Todo
+- [ ] Todo
 
-**Goal.** metaphor becomes an `adopted` two-layer family; the shared validator gains the `--round` selector, `Selected:`/`Selection-note:` parsing, selection-round ledgering, and the heading-item orphan check; `review-validation.md` documents the two-consumer proceed rule; the fixture exercises both rounds. Closes **M13.2** (and the M12-PR-review orphan-item follow-up).
+**Goal.** Define the temporal character-state model once, authoritatively, in
+`agents/characters.md`, and realize it in the three templates as human-readable Markdown with
+no parallel state system. Closes **M14.1**, **M14.2**, **M14.3**, **M14.4**.
 
 **Requirements.**
 
-- `agents/review-grammars.yaml`, `metaphor` block and header comments per Definition-of-done items 2–3: flip to `adopted`; add `selection_tokens: FLATTEN REPLACE WORKSHOP` plus the selection-layer prose keys; rewrite `item_shape` / `counting` / `proceed_state` (two consumers, two layers; deletion not a signal; no `container_pattern`; `No figures.` clean scene); leave `container_pattern`/`fanout_categories` unset and the round-one machine-read keys unchanged; update the container-detection paragraph (metaphor settled without a `container_pattern`; all four families adopted), the machine-read-keys list (add `selection_tokens`), and the shared item-shape comment (the `Selected:`/`Selection-note:` split).
-- `scripts/validate-review-artifact.sh` per Definition-of-done item 4: the `--round decision|selection` selector (default `decision`; `selection` valid only for a `selection_tokens` family); hardcoded `- Selected:` / `- Selection-note:` parsing; selection-round classification (selection-pending / selected over actionable entries; decision-pending still blocks; terminal entries pass through; a `Selected:` on a terminal entry, or a malformed/multi-token value, is invalid); the two new ledger rows and `selection-pending-review-ids:` section printed only in the selection round; the orphan-item defect inside `/^#/` (`$0 ~ item_line_pattern` with `anchor_line != NR - 1`); usage/exit-code header updated. The decision-round behavior and output shape of every family stay unchanged.
-- `agents/review-validation.md` per Definition-of-done item 5: the `--round` selector and which consumer passes which round; the two-layer per-consumer proceed rule; selection-pending vs decision-pending and the `selection-pending-review-ids:` queue; a "no auto-selection of a variant" bullet.
-- `examples/review/metaphors.md` + `examples/review/README.md` per Definition-of-done item 6: rewrite the fixture to a two-layer specimen (terminal `KEEP`/`REJECT`; a `REPLACE` actionable entry with a `#### Replace Options` set and a filled `Selected:`; an actionable entry with a blank `Selected:`; a `FLATTEN` actionable entry with a filled `Selected:` + `Selection-note:` edit; one blank-`Decision:` pending figure; `### Summary` removed; every figure anchored); document both round ledgers in the trailing comment; update the README row and pending-family prose (none remain).
-- Verify (no repo changes beyond the above): the real grammar file against the rewritten fixture reproduces both documented round ledgers; against `reviewer-actions.md`/`anti-ai.md`/`prose-pass.md` still exit 3/4/4 with their **existing** documented ledgers; against scratch specimens — old-format metaphor (unanchored `### ` figures) → orphaned-item findings exit 3; bare-`REPLACE` → invalid exit 3; selection-pending (`--round selection`) → exit 4; all-`KEEP`/`REJECT` → exit 0 both rounds; `--round selection` on a non-metaphor family → input error exit 1.
+- In `agents/characters.md`: state the temporal model spanning `knowledge/`, `timeline.md`, and
+  `relationships.md` — the canonical story-position reference (folder-style
+  `<book-id>/<chapter-id>/<scene-id>`, book-id omitted for `short_story`, per Conventions); the
+  durable visible `id` (minted once, stable, character-file-scoped); the `committed-in:
+  draft-vNN.md` provenance stamp; the current / historical-transition / prospective-constraint
+  distinction (map it to the sections that already exist in the knowledge template); the `basis`
+  type (`witnessed` | `told` | `inferred`) and how "remembered" is expressed (a fact `witnessed`
+  at its source scene); and the **non-destruction invariant** (a later update never erases an
+  earlier reconstructable state; corrections become transitions). State once that the character
+  Markdown files remain the sole authority for character-relative state — no parallel
+  index/DB/derived-state file — and that objective facts are deferred to canon/continuity (the
+  M15 boundary), so a character file records what a character *believes*, not what is *true*.
+- Evolve `templates/knowledge-book.md` per Definition-of-done item 3: add `id`, `story-position`
+  (canonical format), `committed-in`, and `basis` fields to the `Knows` / `Suspects` /
+  `Believes incorrectly` entry shapes; **remove** the deprecated `learned: [xx-yy]` /
+  `basis: [xx-yy]` scheme and the `:4` note that defines `xx-yy`; give `## Lost or superseded`
+  entries the same `id` (citing the entry they supersede) plus held-from/held-to story positions
+  and `committed-in`; keep the `### [Short label]` heading as a readable label and `## Must not
+  know yet` as the prospective-constraint section. Keep it valid, legible Markdown.
+- Create `templates/timeline.md` and `templates/relationships.md` per Definition-of-done item 4:
+  ordered, story-position-attributed, `id`-bearing entries; `relationships.md` carries current
+  dynamics plus a superseded/transition section (a changed loyalty supersedes non-destructively,
+  citing the prior entry's `id`); `timeline.md` is the chronological event record with the same
+  attribution. Each opens with a short note that it is character-relative truth, not a parallel
+  authority, deferring objective facts to canon/continuity. Model tone and structure on
+  `templates/knowledge-book.md` and `templates/profile.md`.
+- Do not touch the step files, `pipeline-state.md`, or the review-artifact system in this task.
 
-**Done when.** metaphor is `adopted` with the selection layer modeled and the container settled without a `container_pattern`; the validator gates both rounds and closes the orphan-item gap while leaving every other family's decision-round behavior unchanged; `review-validation.md` documents the two-consumer rule; the fixture and README document both round ledgers; all validator runs (including the three regression fixtures) produce the expected verdicts; the item-14 greps for `adoption`, `selection_tokens`, `--round`, and `container_pattern` pass.
+**Done when.** `agents/characters.md` defines the full temporal model in one place; the three
+templates realize it as human-readable Markdown; `xx-yy` is gone from `knowledge-book.md`; no
+parallel state system is introduced; the story-position, id, provenance, basis, and
+non-destruction rules are stated once and referenced, not restated per file.
 
 ---
 
-### Task 2 — Retarget `metaphor_identify` to emit structured units
+### Task 2 — The `scene_knowledge_update` step: wired, provenance-stamped, non-destructive
 
-- [x] Todo
+- [ ] Todo
 
-**Goal.** The report emits anchored, countable disposition units and stops emitting the free-text `Human Assessment:` line and the count-only summary. Closes **M13.1**.
+**Goal.** Build the sole writer of `knowledge/`, wire it into the pipeline, and define its
+provenance, freshness, and correction behavior against Task 1's model. Closes **M14.5** and
+**M14.6**.
 
 **Requirements.**
 
-- In `agents/steps/metaphor-identify.md`: every figure gains a `<!-- review-id: ... -->` anchor on its own line immediately above its `### [Short label]` heading, plus blank `- Decision:` / `- Decision-note:` fields replacing `- **Human Assessment:**` (`:72`, `:83`). Update the per-entry template (`:61-73`) and state the unit shape once (anchor above the `### ` heading; identify fields and the `CLEAN`/`REVIEW`/`BROKEN` `Flag` unchanged; `Decision:` / `Decision-note:` replace `Human Assessment:`).
-- Remove the `### Summary — Scene xx-yy` block (`:87-98`); a scene with no figures records a single `No figures.` line under its `## Metaphor Report — Scene xx-yy` header (no anchor, no fields, not a unit — the anti-AI `No flags.` analog).
-- review-id grammar per the `metaphor` block in `agents/review-grammars.yaml` (`metaphor:<scene>:figure-<NN>` short_story; `metaphor:<book-id>:<chapter-id>:<scene-id>:figure-<NN>` book) — reference the YAML, do not restate. On the append path, continue ordinals (model `compliance-report.md:41`).
-- Add a short "Decisions" note referencing `agents/review-grammars.yaml` for the token set and blank-means-pending (no tokens restated); the `Flag` stays a producer recommendation, never a disposition. The `Reviewed-draft:` stamp and append/regenerate mechanics (`:47`, `:114`) and frontmatter are unchanged.
-- Update the Outputs section (`:112-114`) to the structured artifact description (model `compliance-report.md:139`) and add Anti-Patterns: pre-filling a decision field (a report that fills any `Decision:` has decided instead of reported); anchoring a `No figures.` line; dropping the anchor on any figure.
+- Create `agents/steps/scene-knowledge-update.md` with the standard step frontmatter
+  (`step_id: scene_knowledge_update`, `review_required: false`, `inputs`/`outputs`,
+  `preconditions`), modeling structure on an existing step (e.g.
+  `agents/steps/compliance-report.md`) and following the step-workflow contract
+  (`agents/orchestrator.md:35-79`). Inputs: the scene's storyboard blocks carrying the knowledge
+  deltas (`kind: source`, required), the accepted `<latest-draft>` (`kind: prose_draft`,
+  required), and the character `knowledge/` files it reconciles (`kind: source`, required:
+  false — the step creates missing targets). Behavior: for each character's scene knowledge
+  delta, **confirm** it against the drafted prose (correct the delta to what the prose actually
+  committed), then **reconcile** into the project-type target — `knowledge/book-N.md` for
+  book/series, `knowledge/story.md` for `short_story` (create if absent; `baseline.md` stays
+  pre-story). A new fact appends a stamped entry (`id`, `story-position`, `committed-in:
+  <latest-draft>`, `basis`, an `unreviewed` marker); a changed fact appends a `## Lost or
+  superseded` transition citing the prior entry's `id` and records the corrected state — the step
+  **never** overwrites or deletes an accumulated entry. It writes `knowledge/` only (never
+  `timeline.md`/`relationships.md`/`profile.md`/canon — those are capture's or human's), respects
+  each target's `edit_policy` (Rule 7, `agents/update-rules.md:62-108`), and records its own
+  completion in `pipeline-state.md` as its final action.
+- Define freshness and correction in the step body (and, where it generalizes, in
+  `agents/characters.md`): a knowledge entry is **derived-stale** iff its `committed-in` names a
+  draft outside the active head's lineage — computed O(1) from the entry stamp and the attempt
+  manifest's `Active-head:`/`read_from` chain (`agents/project-layouts.md:81-98`), mirroring the
+  `Reviewed-draft:` predicate (`agents/orchestrator.md:150-181`), never stored, never swept. An
+  **idempotency / rerun** section states the reconcile behavior explicitly: re-running the step
+  against the current active head appends corrections as transitions and duplicates nothing
+  (match existing entries by `id` / story-position + fact), in contrast to
+  `character_extraction`'s overwrite-on-rerun (`agents/steps/character-extraction.md:74-76`).
+  Dispatcher-level staleness detection stays out of scope (deferred, per
+  `agents/orchestrator.md:187`).
+- Wire it: append `- [ ] scene_knowledge_update` after `anti_ai_fix` in **both**
+  `templates/pipeline-state.md` and `examples/smoke/pipeline-state.md` (same position — CI
+  enforces ordered-equality). Add a `scene-knowledge-update.md` catalog line to `AGENTS.md:63-77`.
+  Run both `check-pipeline-state.sh` modes and confirm they pass.
+- Retire the `deferred` framing (Definition-of-done item 8) and update the workflow entry
+  (item 9): point `agents/characters.md:61`, `character-extraction.md:54`/`:88`/`:80`,
+  `agents/capture/capture-agent.md:46`/`:84`, `agents/capture/README.md:31`, and
+  `agents/workflows.md:62-68` at the real step and its reconciling, non-destructive,
+  provenance-stamped, `review_required: false` behavior; preserve capture's "never `knowledge/`"
+  hard line, now pointing at a step that exists. Leave the orchestrator's Artifact-state section
+  byte-for-byte, or add at most a one-line cross-reference that character-state entries follow the
+  same derived-freshness contract.
 
-**Done when.** The step specifies an anchor + blank decision fields per figure, `No figures.` for a clean scene, the `### Summary` block gone, ordinal continuation on append, stamp mechanics untouched, and no restated token set; both `check-pipeline-state.sh` modes still pass.
+**Done when.** The step exists, is the sole `knowledge/` writer, reconciles deltas
+non-destructively with provenance stamps and `review_required: false`, targets the right file per
+project type, and defines its freshness/correction behavior; both recipes carry the step at the
+same position; both `check-pipeline-state.sh` modes and the CI ordered-equality check pass; every
+`deferred scene-knowledge-update` reference is retired; the untouched-surface diff (item 12) holds.
 
 ---
 
-### Task 3 — Retarget `metaphor_fix` and the variant subagent contracts
+### Task 3 — Demonstration, smoke coverage, verification, and close-out
 
-- [x] Todo
+- [ ] Todo
 
-**Goal.** The coordinator consumes the decision layer through the validator, generates variants only for actionable entries, and appends each a stable-id variant set plus a blank selection field — with the subagent variant sections reshaped for the settled container. Closes **M13.3**.
-
-**Requirements.**
-
-- In `agents/steps/metaphor-fix.md`: after the freshness check (`:49`), run the shared validator over `metaphors.md` with `--round decision` (manifest always; read-from draft as the fourth positional when the dispatcher passed one; invocation/interpretation language per `anti-ai-fix.md:38-44`) and proceed only on exit 0. Walk entries by `Decision:` token, not by presence/deletion; act only on `FLATTEN`/`REPLACE`/`WORKSHOP`; `KEEP`/`REJECT` entries stay untouched.
-- Replace the "nothing to do" blocker (`:83`): an all-`KEEP`/`REJECT` file (no actionable entries) is a **clean no-op** — write nothing, record completion. Remove the bare-`REPLACE`→`WORKSHOP` normalization (`:69`); a bare `REPLACE` is invalid input the validator rejects (exit 3), so the step blocks, it does not normalize.
-- For each actionable entry, insert a blank `- Selected:` and `- Selection-note:` among the entry's fields (after `Decision-note:`, **before** the variant heading, so both sit inside the anchored unit); each subagent appends its variant section as a **`#### ` heading** (`#### Flatten Options` / `#### Replace Options` / `#### Workshop Candidates`) with stable per-variant ids. Blockers: exit 4 `review_pending` (copy the `pending-review-ids:` list); exit 3 invalid (name the findings — covers bare `REPLACE`, an orphaned legacy `### ` figure, an illegal token); exit 5 stale (block; no override branch here — `metaphor_fix` mints no draft). Inline round-one corrections are read from `- Decision-note:`, not "below the action word" (`:50-54`, `:66-72`).
-- In `agents/metaphor/metaphor-flatten.md`, `metaphor-replace.md`, `metaphor-workshop.md`: demote the variant-section heading from `### ` to `#### ` (`metaphor-flatten.md:22-28`, `metaphor-replace.md:22-29`, `metaphor-workshop.md:48-102`); state that the per-variant labels (`A`/`B`/`C`; workshop `A`–`H`) are the stable variant ids the human names in the entry's `Selected:` field; read inline corrections from the entry's `Decision-note:` (`metaphor-flatten.md:42`, `metaphor-replace.md:43`, `metaphor-workshop.md:33`); replace "the human deletes the variants not wanted and leaves one" with "the human records the chosen variant id in the entry's `Selected:` field; unchosen variants stay as the audit record" (`metaphor-flatten.md:32`, `metaphor-replace.md:33`, `metaphor-workshop.md:108`).
-- Unchanged: subagent isolation, the `WORKSHOP` storyboard/voice payload, the stamp preservation, and the Outputs/Open-questions freshness prose except where the blockers above change.
-
-**Done when.** `metaphor_fix` runs the validator `--round decision`, treats all-`KEEP`/`REJECT` as a clean no-op, blocks on bare `REPLACE` as invalid, and inserts blank selection fields plus `#### ` variant sections with stable ids on actionable entries; the three subagent contracts emit `#### ` sections, name their variant ids, and read corrections from `Decision-note:`; both `check-pipeline-state.sh` modes pass.
-
----
-
-### Task 4 — Retarget `metaphor_apply` to consume the selection layer
-
-- [x] Todo
-
-**Goal.** The terminal step consumes explicit `Selected:` fields through the validator and never best-guesses a selection. Closes **M13.4**.
+**Goal.** Prove point-in-time reconstruction end-to-end, give the step a runnable smoke recipe,
+run the verification sweep, and close the milestone. Closes **M14.7** and the residual of **M14**.
 
 **Requirements.**
 
-- In `agents/steps/metaphor-apply.md`: after the freshness check, run the shared validator with `--round selection` (manifest/read-from as in Task 3) and proceed only on exit 0. For each actionable entry, apply the variant named in `Selected:`; if `Selection-note:` carries an inline edit, that edited form is the target. Terminal (`KEEP`/`REJECT`) entries are skipped; an all-`KEEP`/`REJECT` file is a valid pass-through — write `<next-draft>` with no substitutions plus the manifest entry.
-- **Remove** the "use your best understanding" best-guess (`:51`): a blank `Selected:` on an actionable entry is selection-pending (validator exit 4, block); an ambiguous/malformed selection is invalid (exit 3, block); a well-formed `Selected:` naming a variant the step cannot locate is skipped and noted per the anchor-gate (`:59`), never guessed. Step 1 ("Identify the surviving variant", `:43-51`) is rewritten around `Selected:` rather than "what the human left / deletion".
-- Reword the review-evidence prose from "a surviving variant per entry" / "unselected variant set" to the structured `Selected:` case: the Inputs paragraph (`:32`), the Overrides paragraph's `review_pending` analog (`:127`), and the Open-questions "missing/ambiguous inputs" bullet (`:153`) — the `review_pending` analog is now "an actionable entry with a blank `Selected:`", resolved by the human selecting, and (as before) not liftable by an override.
-- Unchanged in mechanics: the freshness/stale block and the human-recorded `Override:` block (override lifts stale only, anchor-gated, recorded in the apply-log block comment — `:125-147`); the apply log (`:70-86`, which may name the review-id and the applied variant id); the substitution/preserve steps (`:53-68`); the manifest/active-head completion (`:109-156`); and the frontmatter.
+- Commit the worked demonstration under `examples/character-state/` (Definition-of-done item 10),
+  clearly marked as an example per the `AGENTS.md` repository-boundary rule: an example character
+  `knowledge/` file whose entries evolve across scenes — a **suspicion** that hardens into an
+  **incorrect belief** that is later **corrected** (the correction recorded as a `## Lost or
+  superseded` transition, not an overwrite), all under an active `## Must not know yet` reveal
+  constraint — plus a README that reconstructs the character's state at **two** story positions
+  from the ids/stamps/transitions alone and shows the earlier state survives the later correction.
+- Add the smoke recipe(s) to `examples/smoke/README.md` (Definition-of-done item 11), modeled on
+  the existing hand-authored-input recipes (the draft/report fixtures under
+  `plot/drafts/attempt01/`, untracked): hand-author a character `knowledge/story.md` (short_story
+  fixture), a scene storyboard carrying a knowledge delta, and an accepted draft; run
+  `scene_knowledge_update` and confirm a provenance-stamped non-destructive append; then a second
+  run against a corrected fact confirming a transition is appended, not an overwrite. Update the
+  recipe enumeration paragraph (`:9`), the layout/untracked notes (`:28-29`), and the reset
+  procedure to cover the new recipe number(s) and any new untracked paths; confirm the reset
+  removes them. Existing recipes (1–20) stay byte-for-byte untouched.
+- Run the full verification sweep (Definition-of-done items 6, 7, 12): both
+  `check-pipeline-state.sh` modes; the two step lists ordered-equal; the untouched-surface
+  `git diff --stat` against `eb11589` (no changes to the validator, review grammar/validation,
+  the four review families, the review companion, `install.sh`, either CI workflow yml, or the
+  dispatcher files); and the greps (`deferred scene-knowledge-update` → none;
+  `scene_knowledge_update`/`scene-knowledge-update` → the expected file set; `xx-yy` gone from
+  `knowledge-book.md`).
+- Cross-file consistency read: the step, the three templates, `agents/characters.md`,
+  `agents/workflows.md`, the capture docs, and `character-extraction.md` agree on the
+  story-position format, the id/provenance fields, the non-destruction invariant, and the
+  freshness rule — no drift, no restated model, no surviving `xx-yy`, no surviving `deferred`
+  reference; the demonstration and smoke fixtures match the evolved template shapes.
+- Update `ROADMAP.md`: check M14.1–M14.7 only after Tasks 1–2 pass verification; add the Sprint-19
+  planning addendum to the M14 Notes (the starred owner decisions and the locked conventions) so
+  the roadmap stays the plan of record. Check this SPRINT.md's per-task boxes (Tasks 1–3) only
+  after their acceptance conditions hold.
 
-**Done when.** `metaphor_apply` consumes `Selected:` via the validator `--round selection`, applies the named variant (with any `Selection-note:` edit), passes an all-`KEEP`/`REJECT` file through, and blocks — never guesses — on a blank/ambiguous selection; the stale/override mechanics are unchanged; both `check-pipeline-state.sh` modes pass.
-
----
-
-### Task 5 — Companion support: metaphor's two rounds
-
-- [x] Todo
-
-**Goal.** The companion drives disposition and selection as two queues with a second write surface. Closes **M13.5**.
-
-**Requirements.**
-
-- In `templates/dispatcher/.claude/skills/amanuensis-review/SKILL.md`: document metaphor's two-round drive — a **disposition queue** (validator `--round decision`, blank `Decision:`) and a **selection queue** (validator `--round selection`, blank `Selected:` on actionable entries), with progress reported across both rounds. Add the `Selected:` / `Selection-note:` write surface to the write-surface hard rule (`:151-166`) for this family (still no prose/storyboard/canon/state writes).
-- `CLEAN`/`REVIEW`/`BROKEN` flag-based queue prioritization (e.g. `BROKEN` first) as a **presentation** signal — never auto-disposition (the flags are producer recommendations; the decision-automation rules in `review-validation.md` bind the skill). Payload capture: when the human states `REPLACE`, prompt for the target image (`Decision: REPLACE: <image>`); when the human picks a variant and edits it, capture the pick in `Selected:` and the edit in `Selection-note:`. Never auto-select a variant and never auto-dispose from a flag.
-- Confirm (no change if already covered): metaphor declares no `fanout_categories`, so the fan-out machinery (`:76-127`) is never engaged or offered for it; the "explain the legal decisions" step reads tokens from the `metaphor` block in `agents/review-grammars.yaml`.
-
-**Done when.** The skill documents metaphor as a two-round family with disposition and selection queues and the `Selected:`/`Selection-note:` write surface; flag-based prioritization is presentation-only; payload capture is specified for `REPLACE` images and inline edits; no fan-out is offered; no auto-disposition or auto-selection.
-
----
-
-### Task 6 — Smoke recipes, verification sweep, ROADMAP / SPRINT check-off
-
-- [x] Todo
-
-**Goal.** Runnable verification of the metaphor round-trip across both rounds; close the milestone. Closes **M13.6** and the residual of **M13**.
-
-**Requirements.**
-
-- `examples/smoke/README.md`: add the metaphor recipes per Definition-of-done item 12 (hand-authored `metaphors.md` fixtures under `plot/drafts/attempt01/`, untracked; expected outcomes name the validator's verdicts and ledger counts in Recipe 9/13 style; deterministic `FLATTEN`/`REPLACE` with hand-authored `#### ` variant sections, no `WORKSHOP` generation, no storyboard/voice dependency). Cover: (a) decision-pending blocks `metaphor_fix` `review_pending`, with a non-destructive `REJECT` entry that stays and does not block; then fill `Decision:` and rerun; (b) a bare-`REPLACE` report rejected as invalid input (exit 3); (c) an all-`KEEP`/`REJECT` file — `metaphor_fix` clean no-op **and** `metaphor_apply` pass-through writing a verbatim `<next-draft>`; (d) selection-pending blocks `metaphor_apply` (exit 4), then a filled `Selected:` lets a deterministic apply write `<next-draft>` with a manifest entry; (e) an ambiguous/malformed `Selected:` rejected as invalid (exit 3). Model the drafts on Recipes 6/13.
-- Update the surrounding prose: recipe map (`:9`), untracked-files note (`:28-29`), touch-only-untracked note (`:735-737`), OpenCode paragraph (`:748` — metaphor decision/selection-writing is hand-edit on both hosts; the companion path is Claude Code-only, covered by the flat-family precedent, so no new companion recipe), reset text (`:750-757`), and summary (`:760-768`). Recipes 1–15 byte-for-byte untouched; confirm the existing reset removes all new untracked fixture files; commit nothing new under `examples/smoke/` except the README edit.
-- Run every check in Definition-of-done items 13–14 (both `check-pipeline-state.sh` modes, all fixture and scratch-specimen validator runs including the three regression fixtures, the untouched-surface diff against `3fe3c6c`, all greps).
-- Cross-file consistency read: the three metaphor steps, the three subagent contracts, and the skill against `agents/review-grammars.yaml` and `agents/review-validation.md` (no drift, no re-specified grammar, no surviving `Human Assessment:` line, no delete-to-select language, no `### ` variant heading); the fixture and its README against the YAML; the smoke recipes' hand-authored reports against the retargeted formats; and a confirmation cross-read that `agents/orchestrator.md`/`AGENTS.md`/`agents/chapters.md` generic "selected variant"/"annotated" wording still reads true under the structured `Selected:` field (left byte-for-byte).
-- Update `ROADMAP.md`: check M13.1–M13.6 only after Tasks 1–5 pass verification; keep the M13 Notes accurate to what shipped. Check this SPRINT.md's per-task boxes (Tasks 1–6) only after their acceptance conditions hold.
-
-**Done when.** The metaphor recipes are documented with expected outcomes and the reset covers them; all script runs and greps return the expected results (including the three regression fixtures and the untouched-surface diff); ROADMAP M13.1–M13.6 and SPRINT task boxes reflect completed work.
+**Done when.** The demonstration reconstructs a twice-changed character's state at two positions
+with the earlier state intact; the smoke recipe(s) run and the reset covers them; all script runs,
+the ordered-equality check, the untouched-surface diff, and the greps return the expected results;
+ROADMAP M14.1–M14.7 and the SPRINT task boxes reflect completed work.
 
 ---
 
 ## Out of scope for this Sprint
 
-- **Reverse ingestion (M14).** Untouched; tabled until the review milestones land.
-- **Stripping the inert artifact-bulk machinery and the always-0 `inherited-by-bulk` ledger row.** M13 is the slice that **confirms** no adopted family defines artifact-level bulk (metaphor sets `bulk_supported: no`), which unblocks the deferred strip — but the strip stays out of scope (it is a separate cleanup, and the bulk machinery still doubles as the stray-`BULK:`-header rejection path that must survive it). Record the confirmation in the M13 Notes; do the strip in a later slice.
-- **Any change to compliance / anti_ai / prose_pass.** Their grammar blocks, step files, and fixtures are byte-for-byte; the validator changes are additive (round defaults to `decision`; the orphan-item check fires on none of their fixtures), and the three fixtures are re-verified as a regression guard, not edited.
-- **`agents/orchestrator.md`, `agents/chapters.md`, `AGENTS.md`.** Byte-for-byte unchanged; the generic "selected variant" / "annotated" wording there is cross-family description, as M11/M12 established — confirmed by cross-read to still read true under the structured `Selected:` field. The Artifact-state contract already covers structured review evidence and metaphor_apply's override.
-- **OpenCode parity for the companion skill.** Claude Code only (ROADMAP Deferred list); on OpenCode the smoke recipes cover disposition- and selection-writing by hand-edit (Recipe 9/13's model).
-- **A dedicated metaphor companion smoke recipe.** Decision/selection-writing in the new recipes is by hand-edit; a companion session over metaphor is Claude Code-only and covered by the flat-family precedent (Recipe 10).
-- **Dispatcher-level staleness/review lift (M9.6), consumer-side CI lift, and any change to the step set / `check-pipeline-state.sh` / either CI workflow / either `pipeline-state.md` / `install.sh`.** Unchanged (Deferred list / M9.6).
-- **`WORKSHOP` subagent generation exercised in smoke, report quality, prose rewriting, or decision/selection automation beyond what the grammar grants.** The companion captures decisions and selections; it never fills one the human did not state, and there is no fan-out in this family.
+- **The review-grammar / validator machinery.** `agents/review-grammars.yaml`,
+  `scripts/validate-review-artifact.sh`, `agents/review-validation.md`, the four review-family
+  step files, and the `amanuensis-review` companion skill are byte-for-byte unchanged.
+  Character-state changes are not modeled as `- Decision:` review units; agent-addressable,
+  countable review of them is **M16** (Bounded relational review). The owner's capture-style /
+  no-gate / no-validator decision is the reason.
+- **Objective continuity state (M15).** The character files record character-*relative* truth
+  (what a character believes), never objective fact. The boundary — which class of fact each home
+  owns — is **M15.1**; the objective *reviewable* continuity-update workflow is **M15.5**. This
+  Sprint states the boundary only enough to keep character files from claiming objective
+  authority, and does not build any continuity state.
+- **Bounded relational review (M16).** Using maintained character state plus targeted retrieval to
+  catch cross-scene/-chapter/-book contradictions is M16. This Sprint produces the maintained state
+  and its provenance/ids/freshness so M16 can consume it; it does not add or change any relational
+  review.
+- **An automated writer for `timeline.md` or `relationships.md`.** They get the temporal model and
+  templates (M14.1/M14.4) but keep their existing human/post-chapter update path
+  (`agents/workflows.md:83-90`). `timeline.md` already has a writer (capture, for invented events);
+  a second automated writer per file is later work.
+- **Widening the capture subsystem.** Capture stays hard-barred from `knowledge/`
+  (`agents/capture/capture-agent.md:46`); only its "deferred" pointer is updated to name the real
+  step. Its routing to `timeline.md`/`profile.md`/`canon/generated/` is unchanged.
+- **Dispatcher-level freshness/override for character state.** Detection stays in step bodies as a
+  derived predicate; lifting it into the dispatcher is a deferred follow-on, exactly as it is for
+  artifact staleness (`agents/orchestrator.md:187`).
+- **Downstream consumer changes.** `scene_generation` and `storyboarding` read `knowledge/` as they
+  do today; the temporal model is additive and leaves the current-state sections legible, so their
+  step files are unchanged.
+- **`install.sh`, the CI workflow ymls, and the dispatcher command/agent files.** Unchanged —
+  adding a step touches only the two `pipeline-state.md` lists, the step file, and the `AGENTS.md`
+  catalog; nothing enumerates step names in those files.
