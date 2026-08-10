@@ -43,9 +43,9 @@ Route each permitted recommendation by its fact-type and target:
 
 Hard exclusions and special cases:
 
-- **Never `knowledge/`.** The capture agent does not write any `characters/<id>/knowledge/` file under any circumstance. Knowledge items are only written during the deferred scene-knowledge-update workflow (`agents/characters.md:61`); this protects reveal timing. The eggs-class fact — what a character did or ate in a scene — is a `timeline.md` **event**, not a knowledge item. If a recommendation seems to belong in `knowledge/`, that is the signal it is reveal-/knowledge-load-bearing and must not be captured at all — record it as an open question.
+- **Never `knowledge/`.** The capture agent does not write any `characters/<id>/knowledge/` file under any circumstance. Knowledge items are only written by the `scene_knowledge_update` step (`agents/steps/scene-knowledge-update.md`), the sole writer of `knowledge/` (see the knowledge-writer rule in `agents/characters.md`); this protects reveal timing. The eggs-class fact — what a character did or ate in a scene — is a `timeline.md` **event**, not a knowledge item. If a recommendation seems to belong in `knowledge/`, that is the signal it is reveal-/knowledge-load-bearing and must not be captured at all — record it as an open question.
 - **`canon/generated/` is distinct from human-authored canon.** World facts go under `canon/generated/`, never into the hand-authored `canon/` files. The subfolder is visibly separate so a human reviewer can tell agent-invented world truth from authored canon at a glance.
-- **Walk-on with no character folder.** If a character target has no `characters/<id>/` folder, create a `status: stub` folder **following the procedure in `agents/characters.md:74–91`** (do not invent a new procedure). Minimum files: `profile.md` (identity, role, and any known continuity constraints; unknown fields left explicitly blank, not invented) and `knowledge/baseline.md` (created as part of the stub scaffold per the procedure — the capture agent does **not** write captured facts into it). Create the stub folder first, then write the captured fact to `timeline.md` (for an `event`) or `profile.md` (for an `identity`).
+- **Walk-on with no character folder.** If a character target has no `characters/<id>/` folder, create a `status: stub` folder **following the procedure in `agents/characters.md` ("Creating a new character folder")** (do not invent a new procedure). Minimum files: `profile.md` (identity, role, and any known continuity constraints; unknown fields left explicitly blank, not invented) and `knowledge/baseline.md` (created as part of the stub scaffold per the procedure — the capture agent does **not** write captured facts into it). Create the stub folder first, then write the captured fact to `timeline.md` (for an `event`) or `profile.md` (for an `identity`).
 
 ---
 
@@ -81,7 +81,7 @@ The `status: invented, unreviewed` marker and the `provenance` block (scene + be
 
 A newly created `canon/generated/` file or a freshly created stub folder is the capture agent's own and is written directly (with the distinguishing frontmatter above).
 
-**Never write `knowledge/`.** Repeated because it is a hard line: no path through this agent writes any `knowledge/` file. The sole writer of `knowledge/` is the deferred scene-knowledge-update step.
+**Never write `knowledge/`.** Repeated because it is a hard line: no path through this agent writes any `knowledge/` file. The sole writer of `knowledge/` is the `scene_knowledge_update` step (`agents/steps/scene-knowledge-update.md`).
 
 **Only capture Rule 1 inventions.** Reveal-/knowledge-load-bearing facts are open questions, never captured (see *What may be captured*).
 
@@ -109,4 +109,4 @@ A newly created `canon/generated/` file or a freshly created stub folder is the 
 
 **Blocking the draft on a capture problem.** Log it in `notes.md` and move on; `draft-v01.md` still completes.
 
-**Inventing a new stub procedure.** Walk-on folders are created per `agents/characters.md:74–91`, not by an ad-hoc scheme.
+**Inventing a new stub procedure.** Walk-on folders are created per `agents/characters.md` ("Creating a new character folder"), not by an ad-hoc scheme.

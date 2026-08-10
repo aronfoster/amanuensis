@@ -51,7 +51,7 @@ Run in this order:
 
 4. **Populate `profile.md`.** Use `templates/profile.md` as the source template. Fill the frontmatter and mandatory sections (One-line summary, Narrative function, Core identity, Essence, Voice and presence, Continuity constraints, Open questions) with whatever the story plan and canon support. Optional sections may be filled when the plan or canon clearly supplies the material; otherwise omit them per the template's guidance for minor characters. For fields the plan or canon do not specify, leave them explicitly blank — use `TBD` for fields a future decision will fill, `open question (ref: <id>)` for fields tracked in `open-questions.md`, and `n/a` for fields that genuinely do not apply. Invention here is governed by Rule 1 in `agents/update-rules.md`: a profile's identity and other character-knowledge-load-bearing fields are load-bearing, so Rule 1 forbids inventing them — leave a genuinely-unknown such field blank / `TBD` / `open question (ref: <id>)` rather than filling it. For unnamed roles, set frontmatter `status: stub` and use the role-based snake_case `character_id`; for named characters anchored in canon or the plan, set `status: canonical`.
 
-5. **Populate `knowledge/baseline.md`.** Capture what the character plausibly knows before the story begins, drawn from canon and from any pre-story context the plan supplies (background, prior events, faction membership). Use the structured entry format described in `agents/characters.md` and the `templates/knowledge-book.md` template. Leave `knowledge/book-N.md` files as empty scaffolds — they are filled during the scene knowledge update workflow after drafting commits scene-level facts, not here.
+5. **Populate `knowledge/baseline.md`.** Capture what the character plausibly knows before the story begins, drawn from canon and from any pre-story context the plan supplies (background, prior events, faction membership). Use the structured entry format described in `agents/characters.md` and the `templates/knowledge-book.md` template. Leave `knowledge/book-N.md` files as empty scaffolds — they are filled by the `scene_knowledge_update` step (`agents/steps/scene-knowledge-update.md`) after drafting commits scene-level facts, not here.
 
 6. **Append open-questions entries.** For every gap that surfaces during extraction, append an entry to the project-root `open-questions.md` using the importance-tagged shape:
 
@@ -77,7 +77,7 @@ This step overwrites whatever sits at its declared output paths when re-run. A s
 
 ### Project-type notes
 
-- `short_story`: there is one book and one chapter. No `knowledge/book-N.md` files are created.
+- `short_story`: there is one book and one chapter. No `knowledge/book-N.md` files are created; this step creates only `baseline.md`. Story-acquired knowledge lands in `knowledge/story.md`, created by the `scene_knowledge_update` step (`agents/steps/scene-knowledge-update.md`), not here — the `book-N.md` scaffolds are for `book` / `series` projects.
 - `book`: create `knowledge/book-1.md` (and any further `book-N.md` scaffolds the plan implies the character appears in) alongside `baseline.md`.
 - `series`: create one `knowledge/book-N.md` scaffold per book the plan indicates the character appears in. "Which book is in flight" follows the deferred chapter-selection question noted in `agents/orchestrator.md`; for now, scaffold every book the plan names.
 
@@ -85,7 +85,7 @@ This step overwrites whatever sits at its declared output paths when re-run. A s
 
 - `characters/<character-id>/profile.md` — populated from `templates/profile.md`. Frontmatter plus the mandatory sections defined in that template; optional sections included where the plan or canon supports them. Unknown fields explicitly blank, `TBD`, or `open question (ref: <id>)`.
 - `characters/<character-id>/knowledge/baseline.md` — structured knowledge entries covering pre-story knowledge, per the format in `agents/characters.md` and `templates/knowledge-book.md`.
-- `characters/<character-id>/knowledge/book-N.md` — one empty scaffold per book the character appears in (`book` and `series` projects only). Filled later by the scene knowledge update workflow.
+- `characters/<character-id>/knowledge/book-N.md` — one empty scaffold per book the character appears in (`book` and `series` projects only). Filled later by the `scene_knowledge_update` step (`agents/steps/scene-knowledge-update.md`).
 - `open-questions.md` — appended entries in the importance-tagged format above, one per surfaced gap.
 
 ## Open questions handling

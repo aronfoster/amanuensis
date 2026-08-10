@@ -190,7 +190,7 @@ to write character and canon files.
   `opencode/agents/chapter-coordinator.md`.
 
 Notes: knowledge/ is deliberately out of bounds for capture — it stays the sole province of
-the deferred scene-knowledge-update step, which protects reveal timing. M3.7's provenance
+the scene-knowledge-update step, which protects reveal timing. M3.7's provenance
 annotation depends on M4.3's per-draft-version stamp. The agent-generated canon subfolder was
 named `canon/generated/` (Sprint 8 Open decision 1); capture annotates source scene + beat +
 attempt now and folds in the M4.3 draft-version stamp when M4 lands.

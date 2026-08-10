@@ -58,7 +58,7 @@ This is one of the most important systems in the repository.
 
 Each knowledge entry is a discrete fact with a short searchable heading and structured fields. Its fields — `id`, `story-position`, `committed-in`, `basis` — realize the **Temporal character-state model** defined below, which governs `knowledge/`, `timeline.md`, and `relationships.md` alike. See the [knowledge-book.md](templates/knowledge-book.md) template for the field shapes.
 
-Knowledge items are only written to these files during the **scene knowledge update** workflow, after drafting confirms what the scene committed. Storyboarding reads these files as inputs; it does not write to them.
+Knowledge items are only written to these files by the `scene_knowledge_update` step (`agents/steps/scene-knowledge-update.md`), the sole writer of `knowledge/`, after drafting confirms what the scene committed. Storyboarding reads these files as inputs; it does not write to them.
 
 ## Temporal character-state model
 

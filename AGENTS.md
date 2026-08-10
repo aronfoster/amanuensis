@@ -75,6 +75,7 @@ This is the catalog of step files this repo *provides to* consuming projects, no
 - `agents/steps/line-pass.md` — chunked line-level voice and rhythm pass over `<latest-draft>`, producing the next `draft-vNN.md` and appending an entry to the attempt's `draft-manifest.md`.
 - `agents/steps/anti-ai-report.md` — scans the line-pass output for AI-pattern flags across nine categories plus a flagged-words list, producing the annotated `anti-ai.md` report.
 - `agents/steps/anti-ai-fix.md` — applies the human-annotated fixes from `anti-ai.md` to `<latest-draft>`, producing the next `draft-vNN.md` (the final manuscript output) and appending an entry to the attempt's `draft-manifest.md`.
+- `agents/steps/scene-knowledge-update.md` — sole writer of `knowledge/`; reconciles the scene storyboards' knowledge deltas, confirmed against the accepted draft, into the project-type knowledge file (`book-N.md` for book/series, `story.md` for short_story) non-destructively and provenance-stamped, `review_required: false`.
 
 ## Support documents
 
