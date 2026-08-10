@@ -28,4 +28,5 @@ Any step can be invoked selectively with `run-step`, or the recipe can be follow
 - [ ] line_pass
 - [ ] anti_ai_report
 - [ ] anti_ai_fix
+- [ ] continuity_update
 - [ ] scene_knowledge_update

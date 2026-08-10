@@ -14,6 +14,12 @@ Each entry is one discrete fact. The `### heading` is a short searchable label.
 
 The section a fact sits in carries its certainty; a fact acquired across multiple scenes
 is broken into parts, each its own entry.
+
+A `## Believes incorrectly` entry's `truth:` field may optionally carry a qualified
+`continuity/book-N.md#co-NN` reference to the objective fact the belief contradicts — the objective
+fact is the authority in `continuity/`; the character file points, never restates or overrides it
+(see `agents/continuity.md`). This is continuity-tracking metadata, not character knowledge, and
+does not affect reveal timing.
 -->
 
 ---
@@ -56,7 +62,10 @@ is broken into parts, each its own entry.
 - **committed-in:** draft-v03.md
 - **basis:** told
 - **belief:** [What they believe.]
-- **truth:** [What is actually true, for continuity tracking.]
+- **truth:** [What is actually true, for continuity tracking. May optionally carry a QUALIFIED
+  reference to the objective fact in `continuity/` — `continuity/book-N.md#co-NN` (qualified because
+  continuity ids are file-scoped) — the authority for the true state. Free text is the fallback when
+  there is no confident match. See `agents/continuity.md`.]
 - **notes:** —
 
 ---

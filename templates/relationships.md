@@ -9,7 +9,9 @@ edit_policy: editable | careful_edit | propose_only | locked
 <!--
 This is the character's relationship dynamics — character-relative truth, NOT a parallel
 authority. It records how THIS character reads each relationship; objective facts about the
-other party or the world are deferred to canon/continuity (the M15 boundary). It realizes the
+other party or the world are deferred to their own authority — stable world truth to `canon/`,
+evolving objective story facts to `continuity/` (the M15 boundary, whose model is defined in
+`agents/continuity.md`). It realizes the
 temporal character-state model defined in `agents/characters.md` (## Temporal character-state
 model). See it for the rules; this template shows the shapes.
 

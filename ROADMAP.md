@@ -38,13 +38,13 @@ The continuity model must cover facts that exist independently of any character'
 
 Done when: Amanuensis can answer a material objective continuity question at a specified story position, identify the accepted evidence supporting the answer, distinguish objective truth from character belief, and detect when the maintained continuity state is stale or unsupported.
 
-* [ ] M15.1 Define the boundary between objective continuity, character-relative state, canon, storyboards, and prose evidence so each class of fact has one clear authority.
-* [ ] M15.2 Define which continuity facts are load-bearing enough to maintain and which details should remain only in prose.
-* [ ] M15.3 Define temporal and provenance requirements for objective continuity so earlier story state remains reconstructable and every maintained fact points to supporting evidence.
-* [ ] M15.4 Define how characters' knowledge and beliefs refer to objective facts and events without duplicating or silently overriding them.
-* [ ] M15.5 Add a reviewable continuity-update workflow that reconciles accepted chapter prose with prior continuity state and surfaces conflicts rather than silently choosing a version.
-* [ ] M15.6 Define freshness, invalidation, and rebuilding behavior when an accepted draft, storyboard, canon source, or earlier continuity entry changes.
-* [ ] M15.7 Demonstrate objective continuity across multiple chapters, including chronology, event staging, possession or role state, and a character who holds an incorrect belief about one of those facts.
+* [x] M15.1 Define the boundary between objective continuity, character-relative state, canon, storyboards, and prose evidence so each class of fact has one clear authority.
+* [x] M15.2 Define which continuity facts are load-bearing enough to maintain and which details should remain only in prose.
+* [x] M15.3 Define temporal and provenance requirements for objective continuity so earlier story state remains reconstructable and every maintained fact points to supporting evidence.
+* [x] M15.4 Define how characters' knowledge and beliefs refer to objective facts and events without duplicating or silently overriding them.
+* [x] M15.5 Add a reviewable continuity-update workflow that reconciles accepted chapter prose with prior continuity state and surfaces conflicts rather than silently choosing a version.
+* [x] M15.6 Define freshness, invalidation, and rebuilding behavior when an accepted draft, storyboard, canon source, or earlier continuity entry changes.
+* [x] M15.7 Demonstrate objective continuity across multiple chapters, including chronology, event staging, possession or role state, and a character who holds an incorrect belief about one of those facts.
 
 Notes: The maintained continuity representation is a bounded aid for reasoning, not a substitute for source prose. Source references must allow later steps to retrieve the original evidence when a summary is insufficient or disputed. The milestone should preserve Amanuensis's filesystem-only, host-agnostic design and human-readable artifacts.
 

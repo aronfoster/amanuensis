@@ -47,3 +47,13 @@ If a needed fact falls outside what Rule 1 permits:
 - record an open question
 - note the uncertainty
 - avoid pretending canon is settled when it is not
+
+## Canon vs. continuity
+
+`canon/` holds intentionally-**stable** world truth: rules, history, and institutions that hold
+across books and chapters unless deliberately revised. It is **not** the home for the objective
+facts the prose establishes and revises as the story advances (what day it is now, who holds the
+knife now, who is at the helm this chapter). Those evolving objective facts live in `continuity/`,
+whose model is defined in `agents/continuity.md`. Continuity never restates or overrides canon —
+canon outranks — and where prose contradicts settled canon, that is a conflict to surface, not a
+continuity overwrite.

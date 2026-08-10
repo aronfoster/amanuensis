@@ -59,6 +59,18 @@ Review the drafted prose and fix any deviations from storyboard requirements (es
 * Identify contradictions or premature knowledge
 * Record risks in the relevant continuity or open questions file
 
+This is a **human** reveal-timing / consistency-risk pass whose notes live in the book-level `continuity.md` planning file (`role: planning`) — distinct from the maintained, derived objective-continuity state in `continuity/` (`role: derived_state`) that the automated `continuity_update` step writes (see "Workflow: continuity update" below). The two are not the same file and are not conflated.
+
+## Workflow: continuity update
+
+* Gather the candidate objective facts the accepted chapter prose committed, using the scene storyboards' `## Canon active` / `## Must Preserve` / staging to know what to check
+* Confirm each candidate against the drafted prose — the prose is what happened; a fact the prose did not commit is not recorded
+* Keep only the load-bearing set (relational **and** reader-visible-contradiction-capable — the seven fact-classes of `agents/continuity.md`); a single-scene throwaway detail stays in prose
+* Reconcile into the project-type continuity file — `continuity/book-N.md` for `book` / `series`, `continuity/story.md` for `short_story` — appending a stamped, `evidence:`-bearing entry for a new fact, a non-destructive `## Superseded` transition plus a new stamped entry for a diegetically changed one (never an overwrite), and **surfacing a conflict** (prose contradicts a still-current fact and is not an intended change) to `open-questions.md` with both sides named — the prior entry left in place, the conflicting value not written
+* Conflict-surfacing is non-blocking; the step continues with the other facts and completes
+
+For projects on the orchestrator, this is automated by [`steps/continuity-update.md`](steps/continuity-update.md), the sole writer of `continuity/` and the realization of the model in [`continuity.md`](continuity.md): it confirms each objective fact against the accepted draft and reconciles it non-destructively with retrievable `evidence:` stamps, writing directly (`review_required: false`, no human gate) and surfacing conflicts rather than choosing silently. It runs just **before** scene knowledge update so a character's `truth:` reference can resolve to an already-recorded `co-NN`.
+
 ## Workflow: scene knowledge update
 
 * Read the knowledge deltas attached to the completed scene's storyboard blocks
