@@ -69,7 +69,10 @@ A single-scene throwaway detail (relational to nothing, contradictable by nothin
 4. **Possession** — who holds what.
 5. **Physical condition** — injuries, states of persons or objects.
 6. **Role / assignment** — rank, title, post ("who is at the helm").
-7. **Open causal threads** — unresolved threads capable of a later contradiction.
+7. **Open causal threads** — unresolved threads capable of a later contradiction. A thread's status is
+   **mutable single-valued state**: when later prose **answers** it, the open entry is superseded by a
+   resolved entry — a `## Superseded` transition keeping the open entry's `id`, so a character `truth:`
+   pointer to it chases forward — not recorded as an unrelated additive fact.
 
 The **open-thread** class is the natural join key for the character-belief → objective reference
 (below): a contested question ("who is the thief?") is one open thread that a character may answer
@@ -118,12 +121,15 @@ incorrectly`). Its `truth:` field may carry a **qualified** reference to the obj
 belief contradicts:
 
 ```
-truth: continuity/book-N.md#co-NN
+truth: continuity/book-N.md#co-NN   # book / series
+truth: continuity/story.md#co-NN    # short_story
 ```
 
-The reference is **qualified** (`continuity/book-N.md#co-NN`, not a bare `co-NN`) because `co-NN`
-ids are file-scoped and repeat across per-book files, so a bare id is ambiguous. The objective fact
-lives **once**, in `continuity/`; the character file **points, never copies or overrides**.
+The reference is **qualified** by **this project's** continuity file — `continuity/book-N.md#co-NN`
+for `book`/`series`, `continuity/story.md#co-NN` for `short_story` — not a bare `co-NN`, because
+`co-NN` ids are file-scoped and repeat across files, so a bare id is ambiguous. (A `book-N` path
+written into a `short_story`, whose file is `continuity/story.md`, would not resolve.) The objective
+fact lives **once**, in `continuity/`; the character file **points, never copies or overrides**.
 
 The reference is **advisory** and **degrades gracefully**:
 
@@ -142,15 +148,20 @@ A maintained fact can change two ways, and the two are recorded differently. Thi
 stated **once, here**, because it governs both writers and applies equally to M14's non-destructive
 temporal-state files (`knowledge/`, `timeline.md`, `relationships.md`).
 
-- **Diegetic change** — the **story advances** and the fact changes *in the fiction* (the ship's new
-  captain takes the helm; the next day begins). At the earlier story position the earlier value
-  really was the case, so it is preserved: a **non-destructive `## Superseded` transition** plus a
-  new stamped entry. **Owned by `continuity_update`.**
-- **Authorial change** — a human **`revise`** decides to change *what the fiction says* (the day was
-  always meant to be Tuesday; fix it). The earlier value was **never true-in-the-fiction** — it was
-  a draft being corrected, and the archived drafts are its record — so the current entry is
-  **corrected in place**, keeping its `id`. **Owned by `revise`.** A transition here would fabricate
-  an in-story change that never happened.
+- **Diegetic change** — the **story advances** and the fact changes *in the fiction*, so the new
+  value appears at a **later story position** (the ship's new captain takes the helm next chapter; the
+  next day begins). At the earlier position the earlier value really was the case, so it is preserved:
+  a **non-destructive `## Superseded` transition** plus a new stamped entry. **Owned by
+  `continuity_update`.**
+- **Authorial / draft-level change** — the prose at a story position is **rewritten without the story
+  advancing**, so a fact's value changes at the **same story position**: a human **`revise`** changing
+  what the fiction says (the day was always meant to be Tuesday; fix it), or a **fix-step rerun or
+  branch** producing a new active head that corrects an objective fact where it already stood. The
+  earlier value was **never true-in-the-fiction** — it was a draft being corrected, and the archived
+  drafts are its record — so the entry is **corrected in place**, keeping its `id`, with its
+  `committed-in`/`evidence:` moved to the draft that now carries the fact. **`revise` owns the human
+  case; `continuity_update`'s rerun-reconcile owns the draft-correction case.** A transition here would
+  fabricate an in-story change that never happened.
 
 This mirrors how `revise` already edits the active-head draft in place while leaving superseded
 drafts as the record (`agents/revision.md`). Current-state entries carry current truth — edit them
