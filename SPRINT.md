@@ -97,20 +97,22 @@ Established by inspection during planning, with file:line cites; tasks should no
   `kn-`/`tl-`/`rel-` id prefixes. M15's continuity artifact is this same idiom applied to objective
   facts, with a `co-` id prefix and one added field (`evidence:`); it does **not** invent a parallel
   temporal model.
-- **`continuity/book-N.md` aggregates facts across many chapters, so freshness must resolve per
-  source chapter.** For `book`/`series`, one continuity file accumulates entries from every chapter
-  of the book, but drafts and their `draft-manifest.md` are **per-chapter**
-  (`agents/project-layouts.md`), and `draft-vNN.md` basenames repeat across chapters. So an entry's
-  `committed-in: draft-vNN.md` (and its `evidence:` draft cite) is meaningful only **relative to its
-  own chapter's manifest** — comparing every entry against the currently-invoked chapter's active
-  lineage would falsely mark a prior-chapter entry stale/unsupported, or falsely fresh on a basename
-  collision. The entry's `story-position` names its originating chapter; the freshness predicates
-  (M15.6) resolve `committed-in`/`evidence` against **that** chapter's manifest and prose, still O(1)
-  per entry. (M14's knowledge predicate, `agents/characters.md:89` and
-  `agents/steps/scene-knowledge-update.md:71`, carries the same latent imprecision — it says "the
-  attempt manifest" without disambiguating — masked because its demo is a single-chapter
-  `short_story`; M15 states the resolved rule for `continuity/`, and the ROADMAP records the
-  retroactive fix for M14's knowledge predicate.)
+- **`continuity/book-N.md` aggregates facts across many chapters and attempts, so provenance must name
+  a specific draft file, not a bare basename.** For `book`/`series`, one continuity file accumulates
+  entries from every chapter of the book, but drafts and their `draft-manifest.md` are **per-chapter and
+  per-attempt** (`agents/project-layouts.md`): `chapter01/.../attempt01/draft-v01.md` and
+  `chapter02/.../attempt02/draft-v01.md` both exist, so a bare `draft-v01.md` basename identifies no
+  single file. Resolving a freshness/support check by basename against the currently-invoked
+  chapter/attempt would falsely mark a prior-chapter entry stale, or — worse — falsely **fresh** on a
+  basename collision (the one failure a maintained-state artifact must never make). The fix is to make
+  the entry's `evidence:` the **full attempt-qualified draft path**
+  (`<chapter-folder>/drafts/<attemptNN>/draft-vNN.md#<scene>`); the freshness predicates (M15.6) resolve
+  against the manifest and prose that path names — unambiguous across chapters *and* attempts — still
+  O(1) per entry. (M14's knowledge predicate, `agents/characters.md:89` and
+  `agents/steps/scene-knowledge-update.md:71`, carries the same latent imprecision — it says "the attempt
+  manifest" without disambiguating chapter or attempt — masked because its demo is a single-chapter,
+  single-attempt `short_story`; M15 states the resolved rule for `continuity/`, and the ROADMAP Deferred
+  list records the retroactive fix for M14's knowledge predicate.)
 - **`scene_knowledge_update` is the near-exact structural precedent for the writer.**
   `agents/steps/scene-knowledge-update.md` is a `review_required: false`, sole-writer-of-a-folder
   step that reads accepted `<latest-draft>`, **confirms** a forecast against the drafted prose
@@ -206,8 +208,10 @@ The Sprint is complete when:
 4. **The `continuity/` artifact and its template exist.** A new `templates/continuity-book.md` shows
    the entry shapes: each entry carries `id` (`co-NN`, file-scoped, minted once), `story-position`
    (canonical folder-style), `committed-in: draft-vNN.md`, `evidence:` (a retrievable pointer to the
-   supporting accepted artifact — draft filename + scene-position, and storyboard block / canon file
-   where they apply), the fact-class value fields, and the `- **review:** unreviewed` marker;
+   supporting accepted artifact — the **full attempt-qualified draft path**
+   `<chapter-folder>/drafts/<attemptNN>/draft-vNN.md#<scene>`, plus storyboard block / canon file where
+   they apply; a full path, never a bare basename), the fact-class value fields, and the
+   `- **review:** unreviewed` marker;
    fact-class sections cover the maintained set (Conventions); a `## Superseded` transition section
    applies the non-destruction invariant with held-from/to positions. A **cross-file** reference to
    an entry (e.g. a character `truth:` pointer) uses the qualified form `continuity/book-N.md#co-NN`,
@@ -251,15 +255,20 @@ The Sprint is complete when:
    catalog gains a `continuity-update.md` line and its support-doc catalog gains an
    `agents/continuity.md` line.
 9. **Freshness, invalidation, and rebuilding are defined** (M15.6): a continuity entry is
-   **derived-stale** iff its `committed-in` names a draft outside the active head's lineage (the M14
+   **derived-stale** iff its `committed-in` draft is outside the active head's lineage (the M14
    predicate, `agents/characters.md:89`, `agents/orchestrator.md:150-181`), and **derived-unsupported**
    iff its `evidence:` pointer no longer resolves in the active prose — both evaluated against the
-   manifest and prose of the **chapter named in the entry's `story-position`** (not the invoked
-   chapter — per Background), both O(1), never stored, never swept. **Rebuild is the step's
-   rerun-reconcile**: re-running `continuity_update` against the current active head appends
-   corrections as transitions and re-surfaces conflicts, never silently rewriting. The rule lives in
-   `agents/continuity.md` (and the step body computes it); the orchestrator's Artifact-state section
-   is left byte-for-byte or gains at most a one-line cross-reference.
+   manifest and prose identified by the entry's **full evidence path**
+   (`<chapter-folder>/drafts/<attemptNN>/draft-vNN.md`), so resolution is unambiguous across chapters
+   *and* attempts (a bare basename would false-fresh on a collision), both O(1), never stored, never
+   swept. Derived freshness covers the **prose axis only**; a change to a **non-prose evidence source
+   (storyboard, canon) or an earlier continuity entry** is handled by **rerun-reconcile** (re-running
+   `continuity_update` re-confirms against current prose + canon and surfaces new contradictions as
+   conflicts) and M16 review, not a stored dependency graph — proactive/dispatcher-level detection is
+   deferred. **Rebuild is the step's rerun-reconcile**: re-running against the current active head
+   appends corrections as transitions and re-surfaces conflicts, never silently rewriting. The rule
+   lives in `agents/continuity.md` (and the step body computes it); the orchestrator's Artifact-state
+   section is left byte-for-byte or gains at most a one-line cross-reference.
 10. **The `continuity_update` behavior is added to `agents/workflows.md`.** The "scene knowledge
     update" workflow neighbor gains a "continuity update" workflow entry describing the automated
     step and its evidence-stamped, non-destructive, conflict-surfacing behavior; the freeform
@@ -347,8 +356,10 @@ tasks don't rediscover them.
   derived freshness are **defined once in `agents/characters.md`** (## Temporal character-state model)
   and referenced, not restated. `agents/continuity.md` adds the one field that distinguishes objective
   fact from character belief: `evidence:`, a **retrievable** pointer to the accepted artifact that
-  supports the fact (draft filename + scene-position, plus storyboard block / canon file where they
-  apply) — the objective-fact counterpart to knowledge's `basis:` (the character's grounds). Rationale:
+  supports the fact — the **full attempt-qualified draft path**
+  (`<chapter-folder>/drafts/<attemptNN>/draft-vNN.md#<scene>`, never a bare `draft-vNN.md` basename, so it
+  names one specific draft across chapters *and* attempts), plus storyboard block / canon file where they
+  apply — the objective-fact counterpart to knowledge's `basis:` (the character's grounds). Rationale:
   the milestone requires every maintained fact to "point to supporting evidence" and let a later step
   "retrieve the original evidence when a summary is insufficient or disputed."
 - **The maintained fact-classes (M15.2 granularity policy).** Maintain a fact iff it is **relational**
@@ -376,8 +387,13 @@ tasks don't rediscover them.
   `revise` the target is corrected in place (the pointer still resolves). `scene_knowledge_update` stays
   the **sole writer of `knowledge/`** — it gains a continuity *read*, never a *write* — and reveal timing
   is unaffected: `truth:` is continuity-tracking metadata, not character knowledge (it already held
-  objective-truth text in M14). Rejected: a bare `co-NN` reference (ambiguous across per-book files);
-  restating the fact in `truth:` (duplication that drifts from the authority).
+  objective-truth text in M14). The step reads the **current project-type continuity file**; in a series
+  where the contradicted fact lives in an earlier book's `continuity/book-M.md`, resolving the qualified
+  pointer would require reading prior-book files — a **series-only refinement deferred** (ROADMAP), and
+  free-text `truth:` is the *correct* fallback until then: the reference is advisory, so an unresolved
+  cross-book pointer costs nothing (both belief and truth are still recorded; only the convenience link is
+  absent). Rejected: a bare `co-NN` reference (ambiguous across per-book files); restating the fact in
+  `truth:` (duplication that drifts from the authority).
 - **`continuity_update` surfaces conflicts to `open-questions.md`; it never silently chooses.** When the
   accepted prose contradicts a **still-current** maintained fact in a way that is not an intended change
   (a day count that regresses; a role or possession that collides with an unretired entry; a fact that
@@ -399,17 +415,25 @@ tasks don't rediscover them.
   place while leaving superseded drafts as the record (`agents/revision.md:22`). The distinction is stated
   once in `agents/continuity.md` and governs both writers; it applies equally to M14's non-destructive
   temporal-state files (`knowledge/`, `timeline.md`, `relationships.md`).
-- **Freshness is derived (stale + unsupported), never stored; resolved per source chapter; rebuild is
-  rerun-reconcile.** A continuity entry is **derived-stale** iff its `committed-in` names a draft outside
-  the active head's lineage, and **derived-unsupported** iff its `evidence:` no longer resolves in the
-  active prose. Both are evaluated against the manifest and prose of the **chapter named in the entry's
-  `story-position`** — not the currently-invoked chapter — because `continuity/book-N.md` aggregates
-  entries across chapters whose per-chapter `draft-vNN.md` basenames repeat (Background), so a bare
-  `committed-in` is meaningful only relative to its own chapter. Each is O(1) from facts on disk (the
-  entry's stamp + its source-chapter manifest), never written as a field, never swept (the M14 predicate,
-  `agents/orchestrator.md:150-181`). Rebuild is the step's rerun against the current active head.
-  Dispatcher-level detection of continuity staleness is **out of scope** — a deferred follow-on, exactly
-  as dispatcher-level artifact staleness (`agents/orchestrator.md:187`) and character-state staleness
+- **Freshness is a derived prose-provenance predicate, resolved by the entry's full evidence path, never
+  stored; rebuild is rerun-reconcile.** A continuity entry is **derived-stale** iff its `committed-in`
+  draft is outside the active head's lineage, and **derived-unsupported** iff its `evidence:` no longer
+  resolves in the active prose. Both are evaluated against the manifest and prose identified by the
+  entry's **full evidence path** — the specific `<chapter-folder>/drafts/<attemptNN>/draft-vNN.md` it
+  names — not the currently-invoked chapter/attempt, because one `continuity/book-N.md` aggregates entries
+  across chapters *and* attempts whose `draft-vNN.md` basenames repeat (Background); matching a bare
+  basename would false-fresh on a collision. Each stays O(1) from facts on disk (the entry's evidence path
+  + that draft's manifest), never a stored field, never swept (the M14 predicate,
+  `agents/orchestrator.md:150-181`). **Scope of the predicate (M15.6): the prose axis only.** The draft is
+  the one evidence source with a version model, so it is the one that defines derived freshness. A change
+  to a **non-prose evidence source (storyboard, canon) or an earlier continuity entry** does *not* flip a
+  derived bit; it is handled by **rerun-reconcile** — re-running `continuity_update` re-confirms each fact
+  against the current prose and canon and surfaces any new contradiction as a conflict — and by M16's
+  relational review, **not** by a stored canon/storyboard→continuity dependency graph with automatic
+  invalidation (which would be the O(artifacts) sweep the whole architecture rejects, and would duplicate
+  M16's job). Rebuild is that rerun against the current active head. Proactive / dispatcher-level detection
+  of any of these is **out of scope** — a deferred follow-on, exactly as dispatcher-level artifact
+  staleness (`agents/orchestrator.md:187`) and character-state staleness
   (`agents/steps/scene-knowledge-update.md:75`) are.
 - **`continuity_update` runs before `scene_knowledge_update`, at the end of the recipe.** Both consume
   the accepted chapter prose and write post-chapter state. Objective facts are written first so
@@ -533,12 +557,16 @@ Task 1's model. Closes **M15.5** and **M15.6**.
   its own completion in `pipeline-state.md` as its final action (mints no draft; does not touch the
   manifest `Active-head:`).
 - Define freshness/invalidation/rebuild in the step body (and, where it generalizes, in
-  `agents/continuity.md`): a continuity entry is **derived-stale** iff its `committed-in` names a draft
+  `agents/continuity.md`): a continuity entry is **derived-stale** iff its `committed-in` draft is
   outside the active head's lineage, and **derived-unsupported** iff its `evidence:` no longer resolves in
-  the active prose — both resolved against the manifest and prose of the **chapter named in the entry's
-  `story-position`**, not the invoked chapter (Background), both O(1) from facts on disk, never stored,
-  never swept (mirror `agents/steps/scene-knowledge-update.md:69-75` and `agents/orchestrator.md:150-181`).
-  An **idempotency/rerun** section: re-running against the current active head matches existing entries by
+  the active prose — both resolved against the manifest and prose identified by the entry's **full evidence
+  path** (`<chapter-folder>/drafts/<attemptNN>/draft-vNN.md`), unambiguous across chapters *and* attempts
+  (a bare basename false-freshes on a collision), both O(1) from facts on disk, never stored, never swept
+  (mirror `agents/steps/scene-knowledge-update.md:69-75` and `agents/orchestrator.md:150-181`). Scope the
+  predicate to the **prose axis**: a change to a non-prose evidence source (storyboard/canon) or an earlier
+  continuity entry is handled by **rerun-reconcile** + surfaced conflicts (and M16 review), not a stored
+  dependency graph; proactive detection is deferred (`agents/orchestrator.md:187`). An
+  **idempotency/rerun** section: re-running against the current active head matches existing entries by
   `id` / `(story-position + fact)`, appends only genuinely new facts, corrections (as transitions), and
   newly-detected conflicts, and duplicates nothing — a rerun converges. Dispatcher-level staleness
   detection stays out of scope (deferred, per `agents/orchestrator.md:187`).
@@ -576,7 +604,8 @@ Task 1's model. Closes **M15.5** and **M15.6**.
 **Done when.** The step exists, is the sole `continuity/` writer, confirms facts against prose, reconciles
 non-destructively with evidence stamps and `review_required: false`, surfaces conflicts to
 `open-questions.md` without silently choosing, targets the right file per project type, and defines its
-per-source-chapter freshness/invalidation/rebuild behavior; both recipes carry the step at the same
+full-evidence-path (per-chapter-and-attempt) prose-axis freshness/invalidation/rebuild behavior; both
+recipes carry the step at the same
 position before `scene_knowledge_update`; both `check-pipeline-state.sh` modes and CI ordered-equality
 pass; `scene_knowledge_update` writes the advisory qualified `truth:` reference (sole `knowledge/` writer,
 no continuity write); `agents/revision.md` reconciles `continuity/` in place with transitions as the
@@ -624,8 +653,9 @@ milestone. Closes **M15.7** and the residual of **M15**.
   `agents/characters.md`, `agents/canon.md`, `agents/revision.md`, `agents/workflows.md`, the layouts, and
   the adapter agree on the boundary, the `co-NN`/`story-position`/`committed-in`/`evidence` fields and the
   qualified cross-file reference form, the maintained fact-class set, the non-destruction invariant, the
-  diegetic-vs-authorial distinction, the conflict-surfacing rule, and the per-source-chapter freshness
-  predicates — no drift, no restated model; the demonstration and smoke fixtures match the template shapes.
+  diegetic-vs-authorial distinction, the conflict-surfacing rule, and the full-evidence-path (per-chapter-
+  and-attempt), prose-axis freshness predicates — no drift, no restated model; the demonstration and smoke
+  fixtures match the template shapes.
 - Update `ROADMAP.md`: check M15.1–M15.7 only after Tasks 1–2 pass verification; add the Sprint-20 planning
   addendum to the M15 Notes (the starred owner decisions and the locked conventions) and the two M14
   follow-ups to the Deferred list, so the roadmap stays the plan of record. Check this SPRINT.md's per-task
@@ -670,9 +700,22 @@ boxes reflect completed work.
 - **Dispatcher-level freshness/override for continuity state.** Detection stays in the step body as a
   derived predicate; lifting it into the dispatcher is a deferred follow-on, exactly as for artifact
   staleness (`agents/orchestrator.md:187`) and character-state staleness.
+- **Proactive cross-source (canon/storyboard) invalidation.** Derived freshness is deliberately the
+  **prose axis only** (M15.6 scope, Conventions). Detecting that a *storyboard or canon change* has
+  invalidated a maintained fact **without a rerun** — a stored canon/storyboard→continuity dependency
+  graph with automatic invalidation — is **not** built: it is the O(artifacts) sweep the architecture
+  rejects, and it duplicates M16's relational-review job. Such changes surface via rerun-reconcile
+  (`continuity_update` re-confirms against current prose + canon and surfaces conflicts) and M16 review;
+  proactive detection is the same deferred class as dispatcher-level artifact staleness
+  (`agents/orchestrator.md:187`).
+- **Cross-book `truth:` resolution.** The knowledge step's continuity read is the current project-type
+  file; resolving a `truth:` pointer whose target lives in an earlier book's `continuity/book-M.md`
+  (a series-only, cross-book incorrect-belief case) would need prior-book inputs. Because the reference
+  is advisory with a correct free-text fallback, this is a **series-only refinement deferred to the ROADMAP**,
+  not a bug — an unresolved cross-book pointer costs nothing.
 - **"Which chapter is current" for book/series.** The orchestrator TODO (`:146-148`) is unchanged; the
   multi-chapter demonstration is hand-authored, as `examples/character-state/` is.
-- **The M14 retroactive follow-ups.** The knowledge-freshness per-source-chapter wording fix
+- **The M14 retroactive follow-ups.** The knowledge-freshness per-source-chapter-and-attempt wording fix
   (`agents/characters.md:89`, `agents/steps/scene-knowledge-update.md:71`) and a demonstration of `revise`
   against M14's temporal-state files are **recorded on the ROADMAP Deferred list**, not executed here — M15
   states the resolved freshness rule for `continuity/` and teaches `revise` the current-vs-record discipline
