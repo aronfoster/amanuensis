@@ -9,4 +9,7 @@
 
 # Step bodies write outputs under these paths during a real run; reset them
 # with `git checkout examples/smoke/ && git clean -fd examples/smoke/`.
+# `continuity_update` writes `continuity/` just as `character_extraction` writes
+# `characters/`.
 /characters/
+/continuity/
