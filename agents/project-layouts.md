@@ -115,6 +115,8 @@ story-project/
       profile.md
       timeline.md
       relationships.md
+  continuity/
+    story.md
   locations/
   plot/
     summary.md
@@ -136,6 +138,7 @@ Resolution rules:
 - `<chapter-folder>` resolves to `plot/`.
 - `<book-folder>` is undefined. Steps that reference book-level files must either handle the absence gracefully or be inapplicable to short stories.
 - `<latest-attempt>` in the example above resolves to `attempt02`.
+- The maintained objective-continuity file (`agents/continuity.md`) is `continuity/story.md`.
 
 ## book
 
@@ -158,6 +161,8 @@ book-project/
       knowledge/
         baseline.md
         book-1.md
+  continuity/
+    book-1.md
   locations/
   plot/
     book1/
@@ -192,6 +197,7 @@ Resolution rules:
 - `<book-folder>` resolves to `plot/<book-id>/` (e.g., `plot/book1/`).
 - `<chapter-folder>` resolves to `plot/<book-id>/<chapter-id>/` (e.g., `plot/book1/chapter02/`).
 - `<latest-attempt>` for `chapter02` in the example above resolves to `attempt02`.
+- The maintained objective-continuity file (`agents/continuity.md`) is `continuity/book-N.md`, one per book (e.g., `continuity/book-1.md`).
 
 ## series
 
@@ -215,6 +221,9 @@ series-project/
         baseline.md
         book-1.md
         book-2.md
+  continuity/
+    book-1.md
+    book-2.md
   locations/
   plot/
     book1/
@@ -253,3 +262,4 @@ Resolution rules:
 - `<book-folder>` resolves to `plot/<book-id>/`.
 - `<chapter-folder>` resolves to `plot/<book-id>/<chapter-id>/`.
 - `<latest-attempt>` for `book2/chapter01` in the example above resolves to `attempt02`.
+- The maintained objective-continuity file (`agents/continuity.md`) is `continuity/book-N.md`, one per book (e.g., `continuity/book-1.md`, `continuity/book-2.md`).
