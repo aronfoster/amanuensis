@@ -5,6 +5,8 @@ inputs:
   - <chapter-folder>/storyboards/*-storyboard.md
   - <chapter-folder>/drafts/<latest-attempt>/<latest-draft>
   - characters/<character-id>/knowledge/*.md
+  - continuity/book-N.md
+  - continuity/story.md
 outputs:
   - characters/<character-id>/knowledge/book-N.md
   - characters/<character-id>/knowledge/story.md
@@ -18,6 +20,10 @@ preconditions:
     required: true
     review_sensitive: false
   - path: characters/<character-id>/knowledge/*.md
+    kind: source
+    required: false
+    review_sensitive: false
+  - path: continuity/book-N.md
     kind: source
     required: false
     review_sensitive: false
@@ -40,6 +46,7 @@ The temporal model these writes realize — the canonical story-position referen
 - `<chapter-folder>/storyboards/*-storyboard.md` — the chapter's storyboard blocks. Each block's `## Knowledge Delta` section (`agents/storyboard-schema.md`) and the compact per-scene delta attached at the end of storyboarding (`agents/workflows.md`) are the mechanical input this step confirms and applies. The delta lines use the form `[CharacterName] now knows: <fact> [from <story-position>]` and `[CharacterName] falsely believes: <fact> [from <story-position>]`, with the canonical story-position citation (`<book-id>/<chapter-id>/<scene-id>`, reduced to `<scene-id>` for `short_story`).
 - `<chapter-folder>/drafts/<latest-attempt>/<latest-draft>` — the accepted chapter prose. Resolved at step start via the attempt manifest's `Active-head:` pointer per `agents/project-layouts.md`, not by highest-numbered draft. This step reads a draft but does not mint one.
 - `characters/<character-id>/knowledge/*.md` — the character knowledge files this step reconciles into. Read to locate the reconcile target, respect its `edit_policy`, and match already-recorded entries by `id`. Not required to pre-exist: the step creates the project-type target if it is absent.
+- `continuity/book-N.md` (`book` / `series`) or `continuity/story.md` (`short_story`) — the objective-continuity file, read `required: false` for one purpose only: to resolve the objective fact a `## Believes incorrectly` entry contradicts and write a qualified `truth: continuity/book-N.md#co-NN` reference to it (see Behavior). The precondition names `continuity/book-N.md`; for `short_story` it resolves to `continuity/story.md`. This is a continuity **read**, never a write — `continuity/` has one writer, the `continuity_update` step (`agents/steps/continuity-update.md`), which runs just before this step. Because the input is `required: false`, when `continuity/` is absent or the steps run out of order the step falls back to a free-text `truth:` and does not block.
 
 ## Behavior
 
@@ -51,7 +58,7 @@ Run in this order:
 
 3. **Reconcile the confirmed deltas into the project-type target.** The target is `characters/<character-id>/knowledge/book-N.md` for `book` and `series` projects and `characters/<character-id>/knowledge/story.md` for `short_story` projects (create the target if absent; `baseline.md` stays pre-story only and is never written by this step). Before writing, read the target's frontmatter `edit_policy` (Rule 7, `agents/update-rules.md:62-108`): a `locked` or `propose_only` target is **not** written — record an open question describing the fact, the target, and the routing decision, exactly as capture does for a blocked target. For a writable target:
 
-   - A **new** fact appends a stamped entry to the right current-state section — `## Knows`, `## Suspects`, or `## Believes incorrectly` — carrying `id` (the next unused `kn-NN` for the file, minted once), `story-position` (canonical format), `committed-in: <latest-draft>`, `basis` (`witnessed` | `told` | `inferred`), and the `unreviewed` marker `- **review:** unreviewed`. An incorrect belief also carries `truth:` for continuity tracking, per the template.
+   - A **new** fact appends a stamped entry to the right current-state section — `## Knows`, `## Suspects`, or `## Believes incorrectly` — carrying `id` (the next unused `kn-NN` for the file, minted once), `story-position` (canonical format), `committed-in: <latest-draft>`, `basis` (`witnessed` | `told` | `inferred`), and the `unreviewed` marker `- **review:** unreviewed`. An incorrect belief also carries `truth:` for continuity tracking, per the template. When it writes a `## Believes incorrectly` entry, the step resolves the objective fact the belief contradicts from the continuity file read above — matching the belief to the objective fact it contradicts by subject — and writes a **qualified** `truth: continuity/book-N.md#co-NN` reference to it (qualified because `co-NN` ids are file-scoped and repeat across per-book files, so a bare `co-NN` is ambiguous). This reference is **advisory** and **non-fabricating**: it is written only on a confident match; absent one — or when `continuity/` is absent (the input is `required: false`) or the steps ran out of order — the step falls back to a **free-text `truth:`** (the M14 behavior, per the template) and **never invents a pointer**. This is a continuity **read**, never a continuity **write** — the objective fact lives once, in `continuity/`; this step points at it and reconciles into `knowledge/` only. Reveal timing is unaffected: `truth:` is continuity-tracking metadata, not character knowledge (it already held objective-truth text in M14), so writing a pointer instead of prose changes no reveal-timing behavior. The reference degrades gracefully as the fact evolves: a diegetic supersession moves the target `co-NN` to `## Superseded` keeping its id and naming its successor (the pointer chases forward to the record), and an authorial `revise` corrects the target in place keeping its id (the pointer still resolves) — see `agents/continuity.md`.
    - A **changed** fact (a correction of an entry already in the file) appends a `## Lost or superseded` transition that cites the **prior entry's** `id` — with `held` (from/to story positions), `committed-in`, `superseded-by` (the new entry's `id`), and `what changed` — **and** appends the corrected state as its **own** new stamped entry (new `id`) in the appropriate current-state section, naming the entry it supersedes. The superseded entry is **never** overwritten or deleted; it is moved into the transition section, keeping its `id`. This is the non-destruction invariant (`agents/characters.md`, **## Temporal character-state model**) and it is a hard rule of this step.
 
    The step does **not** author `## Must not know yet`. Prospective reveal-timing constraints are authored by planning, not derived from committed prose.

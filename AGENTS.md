@@ -75,6 +75,7 @@ This is the catalog of step files this repo *provides to* consuming projects, no
 - `agents/steps/line-pass.md` — chunked line-level voice and rhythm pass over `<latest-draft>`, producing the next `draft-vNN.md` and appending an entry to the attempt's `draft-manifest.md`.
 - `agents/steps/anti-ai-report.md` — scans the line-pass output for AI-pattern flags across nine categories plus a flagged-words list, producing the annotated `anti-ai.md` report.
 - `agents/steps/anti-ai-fix.md` — applies the human-annotated fixes from `anti-ai.md` to `<latest-draft>`, producing the next `draft-vNN.md` (the final manuscript output) and appending an entry to the attempt's `draft-manifest.md`.
+- `agents/steps/continuity-update.md` — sole writer of `continuity/`; confirms the accepted draft's objective facts against the prose and reconciles the load-bearing set into the project-type continuity file (`book-N.md` for book/series, `story.md` for short_story) non-destructively and `evidence:`-stamped, surfacing conflicts to `open-questions.md` rather than choosing silently, `review_required: false`.
 - `agents/steps/scene-knowledge-update.md` — sole writer of `knowledge/`; reconciles the scene storyboards' knowledge deltas, confirmed against the accepted draft, into the project-type knowledge file (`book-N.md` for book/series, `story.md` for short_story) non-destructively and provenance-stamped, `review_required: false`.
 
 ## Support documents
@@ -87,6 +88,7 @@ This is the catalog of support files this repo *provides to* consuming projects;
 - `agents/books.md` — rules for book-level planning folders.
 - `agents/chapters.md` — rules for chapter workflow files.
 - `agents/characters.md` — rules for character profiles, knowledge state, timelines, and relationships.
+- `agents/continuity.md` — the objective story-continuity model: the class-of-fact boundary, the granularity policy and maintained fact-classes, the `evidence:` field, the diegetic-vs-authorial change distinction, and derived freshness. The single source `agents/steps/continuity-update.md` realizes.
 - `agents/storyboard-schema.md` — schema for storyboard blocks.
 - The voice file consumed by drafting, prose pass, line pass, and metaphor workshop is **not** kept here. It lives at the consuming project's root as `voice.md` (overridable by a path named in the project's top-level `AGENTS.md`). This repo ships only the starter at `templates/voice.md`.
 - `agents/meta.md` — meta notes about the agent guide.
