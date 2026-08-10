@@ -43,7 +43,7 @@ After completing all storyboard blocks for a scene, produce a **knowledge delta*
 [CharacterName] falsely believes: [fact] [from <book-id>/<chapter-id>/<scene-id>]
 ```
 
-Use the folder-style scene citation: `[from <book-id>/<chapter-id>/<scene-id>]` (for example, `[from book1/chapter02/scene03]`). For `short_story` projects `<book-id>` is omitted, giving `[from <chapter-id>/<scene-id>]`. Include the scene reference so the source is traceable if the storyboard changes later. Attach the delta to the storyboard output. Do not apply it to character knowledge files yet — that happens after drafting.
+Use the folder-style scene citation: `[from <book-id>/<chapter-id>/<scene-id>]` (for example, `[from book1/chapter02/scene03]`). For `short_story` projects — no book, no chapter subdivision — it reduces to `[from <scene-id>]` (for example, `[from scene03]`). Include the scene reference so the source is traceable if the storyboard changes later. Attach the delta to the storyboard output. Do not apply it to character knowledge files yet — that happens after drafting.
 
 ## Workflow: drafting
 
@@ -63,8 +63,10 @@ Review the drafted prose and fix any deviations from storyboard requirements (es
 
 * Read the knowledge deltas attached to the completed scene's storyboard blocks
 * Confirm the deltas reflect what the drafted prose actually committed — if the draft changed something, update the delta first
-* Apply confirmed deltas to the relevant `characters/<name>/knowledge/book_n.md` files, including the scene citation
+* Reconcile confirmed deltas into the project-type knowledge file — `characters/<name>/knowledge/book-N.md` for `book` / `series`, `characters/<name>/knowledge/story.md` for `short_story` — appending a provenance-stamped entry for a new fact, and a non-destructive `## Lost or superseded` transition plus the corrected state for a changed one; never overwrite or delete an accumulated entry
 * Note any open questions the deltas surface
+
+For projects on the orchestrator, this is automated by [`steps/scene-knowledge-update.md`](steps/scene-knowledge-update.md), the sole writer of `knowledge/`: it confirms each storyboard delta against the accepted draft and reconciles it non-destructively with provenance stamps, writing directly (`review_required: false`, no human gate).
 
 ## Workflow: metaphor check
 

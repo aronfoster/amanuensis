@@ -56,9 +56,37 @@ This is one of the most important systems in the repository.
 
 ## Knowledge file format
 
-Each knowledge entry is a discrete fact with a short searchable heading and structured fields. See the [knowledge-book.md](templates/knowledge-book.md) template for details.
+Each knowledge entry is a discrete fact with a short searchable heading and structured fields. Its fields — `id`, `story-position`, `committed-in`, `basis` — realize the **Temporal character-state model** defined below, which governs `knowledge/`, `timeline.md`, and `relationships.md` alike. See the [knowledge-book.md](templates/knowledge-book.md) template for the field shapes.
 
-Knowledge items are only written to these files during the **scene knowledge update** workflow, after drafting confirms what the scene committed. Storyboarding reads these files as inputs; it does not write to them.
+Knowledge items are only written to these files by the `scene_knowledge_update` step (`agents/steps/scene-knowledge-update.md`), the sole writer of `knowledge/`, after drafting confirms what the scene committed. Storyboarding reads these files as inputs; it does not write to them.
+
+## Temporal character-state model
+
+Character state changes as the story advances. This section defines, once and authoritatively, how that change is recorded across a character's `knowledge/` files, `timeline.md`, and `relationships.md`. All three realize this one model. The templates (`templates/knowledge-book.md`, `templates/timeline.md`, `templates/relationships.md`) show the field shapes at each altitude, but the rules below are the source of truth and are not restated per file.
+
+**Character files record belief, not objective truth.** A character file records what the character *believes* to be true — character-relative state — as of a point in the story. Objective facts (what actually happened, world continuity) are deferred to canon/continuity; a character file never claims objective authority. This is the M15 boundary: a character may hold something false, and the file records the belief, noting the true state only where continuity tracking needs it (the `truth:` field on an incorrect belief).
+
+**Sole authority.** The character Markdown files are the sole authority for character-relative state. No parallel index, database, or derived-state file is introduced. Reconstructing what a character knew, felt, or experienced at any story point is done by reading these files, and nothing else.
+
+**Canonical story-position reference.** Every entry that cites where a change occurred uses one format: folder-style `<book-id>/<chapter-id>/<scene-id>` (for example `book1/chapter02/scene03`), ordered lexically book → chapter → scene. For `short_story` — no book, no chapter subdivision — it reduces to `<scene-id>` (for example `scene03`). This is the same citation the knowledge delta uses (`agents/workflows.md`). The deprecated `xx-yy` numeric-prefix form is retired; do not use it.
+
+**Durable id.** Each entry carries a visible, human-readable `id` field — a normal structured field, not an HTML-comment anchor — scoped to the character's file, minted once and never changed. Knowledge entries use `kn-01`, `kn-02`, …; timeline entries `tl-01`, …; relationship entries `rel-01`, …. Later steps and transitions cite the id to refer to an entry without depending on its position in the file.
+
+**Provenance stamp.** Each entry carries `committed-in: draft-vNN.md`, naming the accepted draft that committed the fact into the prose. The story position says *where in the story* the change happened; the provenance stamp says *which draft* established it.
+
+**Basis.** Each knowledge or experience entry carries `basis:` — one of `witnessed` | `told` | `inferred` — recording how the character came to hold it. "Remembered" is not a separate basis: a remembered fact is one `witnessed` at its source scene (held by direct experience of a prior scene) and still held later. The basis is the character's grounds, not the fact's truth — an `inferred` or `told` fact may be wrong.
+
+**Current, historical, and prospective state.** The knowledge sections map the three, and the other two files carry the same distinction at their altitude:
+
+- **Current state** — what the character holds now: `## Knows`, `## Suspects`, `## Believes incorrectly`.
+- **Historical transitions** — states once held and since corrected or lost: `## Lost or superseded`.
+- **Prospective constraints** — reveal-timing guardrails on what the character must *not* yet hold: `## Must not know yet`.
+
+`timeline.md` records current vs. corrected events; `relationships.md` records a current dynamic vs. a superseded prior loyalty — the same current/historical split.
+
+**Non-destruction invariant (hard).** A later update never deletes or overwrites an earlier reconstructable state. A correction moves the superseded entry into the file's transition section (`## Lost or superseded` for knowledge; the parallel superseded section in `timeline.md`/`relationships.md`) — carrying its `id`, its held-from/held-to story positions, its `committed-in`, and what changed — and records the corrected state as its **own** new stamped entry with a new `id` in the appropriate current-state section, naming the entry it supersedes. This is the same append-don't-destroy discipline draft lineage uses (superseded drafts stay on disk unmodified, `agents/project-layouts.md`), and it is what makes point-in-time reconstruction possible.
+
+**Freshness is derived, never stored.** An entry's `committed-in: draft-vNN.md` makes its freshness a derived predicate: an entry is stale iff its stamp names a draft outside the active head's lineage, computed O(1) from the entry stamp and the attempt manifest. This mirrors the Artifact-state / `Reviewed-draft:` freshness contract (`agents/orchestrator.md`, "Artifact state"): freshness is never written as a field, and no step sweeps the character files to maintain it. The workflow that computes this predicate and reconciles a stale entry is defined separately; the model states only the rule so that workflow can reference it.
 
 ## Character update expectations
 

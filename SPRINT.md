@@ -308,7 +308,7 @@ depends on both), so run them in order rather than in parallel.
 
 ### Task 1 — The temporal model, the evolved knowledge template, and the timeline/relationships templates
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Define the temporal character-state model once, authoritatively, in
 `agents/characters.md`, and realize it in the three templates as human-readable Markdown with
@@ -353,7 +353,7 @@ non-destruction rules are stated once and referenced, not restated per file.
 
 ### Task 2 — The `scene_knowledge_update` step: wired, provenance-stamped, non-destructive
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Build the sole writer of `knowledge/`, wire it into the pipeline, and define its
 provenance, freshness, and correction behavior against Task 1's model. Closes **M14.5** and
@@ -413,7 +413,7 @@ same position; both `check-pipeline-state.sh` modes and the CI ordered-equality 
 
 ### Task 3 — Demonstration, smoke coverage, verification, and close-out
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Prove point-in-time reconstruction end-to-end, give the step a runnable smoke recipe,
 run the verification sweep, and close the milestone. Closes **M14.7** and the residual of **M14**.
