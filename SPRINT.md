@@ -462,7 +462,7 @@ creates; Task 3 depends on both), so run them in order rather than in parallel.
 
 ### Task 1 — The boundary, the objective-continuity model, and the artifact/templates/layouts
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Define the class-of-fact boundary, the granularity policy, the temporal/provenance/evidence
 model, the character-belief → objective reference, and the diegetic-vs-authorial change distinction
@@ -527,7 +527,7 @@ temporal model is introduced and no rule is restated per file.
 
 ### Task 2 — The `continuity_update` step, the knowledge-step reference, and the revise contract
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Build the sole writer of `continuity/`, wire it before `scene_knowledge_update`, teach
 `scene_knowledge_update` to write the qualified `truth:` reference and `revise` to reconcile
@@ -615,7 +615,7 @@ record; the workflow entry and capture exclusion are in place; the untouched-sur
 
 ### Task 3 — Demonstration, smoke coverage, verification, and close-out
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Prove objective continuity across multiple chapters end-to-end (including a character wrong about
 an objective fact), give the step a runnable smoke recipe, run the verification sweep, and close the
