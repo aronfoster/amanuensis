@@ -121,13 +121,13 @@ the new value is recorded as its own new stamped entry.
 
 <!-- Unresolved threads capable of a later contradiction; the join key for character belief. -->
 
-### Who breached the water casks?
-- **id:** co-07
-- **story-position:** book1/chapter02/scene04
+### Who breached the water casks? — resolved
+- **id:** co-08
+- **story-position:** book1/chapter03/scene04
 - **committed-in:** draft-v04.md
 - **evidence:** plot/book1/chapter03/drafts/attempt01/draft-v04.md#scene04
-- **thread:** The thread opens at chapter02/scene04 with the breached casks (co-03); the crew does not yet know who is responsible. Objectively it was the **quartermaster**, who staved the casks to cover a shortfall in his own tally — established in prose at chapter03/scene04, where he is caught re-cutting the ledger. The thread anchors at chapter02/scene04 (where the question is raised); the evidence draft is the chapter03/scene04 scene, where the objective answer is committed.
-- **notes:** This is the join key for character belief. Bosun Rin believes the *cook* did it — the `## Believes incorrectly` entry in `characters/rin/knowledge/book-1.md` points here with a qualified `truth: continuity/book-1.md#co-07` reference. The objective fact lives once, here; the character file points, never copies or overrides.
+- **thread:** **Resolved:** the **quartermaster** breached the casks, staving them to cover a shortfall in his own tally — established in prose at chapter03/scene04, where he is caught re-cutting the ledger. Supersedes the open thread co-07 (raised at chapter02/scene04, co-03): the story opened the question at chapter02 with it unanswered in the prose, and chapter03 answers it. Open → resolved is a transition, not an additive fact.
+- **notes:** This is the join key for character belief. Bosun Rin believes the *cook* did it — the `## Believes incorrectly` entry in `characters/rin/knowledge/book-1.md` points at this objective fact with a qualified `truth: continuity/book-1.md#co-08` reference. The objective fact lives once, here; the character file points, never copies or overrides.
 - **review:** unreviewed
 
 ---
@@ -151,4 +151,15 @@ transition (agents/continuity.md, Diegetic vs. authorial change).
 - **committed-in:** draft-v02.md
 - **evidence:** plot/book1/chapter01/drafts/attempt01/draft-v02.md#scene01
 - **superseded-by:** co-05
+- **assignment:** Captain Voss commands the *Meridian* (the value that held across chapter01–chapter03, kept here so the held range stays answerable and verifiable).
 - **what changed:** Captain Voss commanded the *Meridian* from the crossing's start until he was wounded in the Day-12 storm. Command transferred to first mate Halden at book1/chapter03/scene03 (co-05). The earlier command was true for its held range and is preserved here — kept, not overwritten — with its evidence pointer intact so "at chapter02, Voss commanded" stays retrievable after the handover.
+
+### Who breached the water casks? — open (prior)
+- **id:** co-07
+- **formerly:** open causal threads
+- **held:** book1/chapter02/scene04 to book1/chapter03/scene04
+- **committed-in:** draft-v03.md
+- **evidence:** plot/book1/chapter02/drafts/attempt01/draft-v03.md#scene04
+- **superseded-by:** co-08
+- **thread:** Open — who breached the water casks? Raised at chapter02/scene04 with the breached casks (co-03) and unanswered in the prose through chapter03/scene04.
+- **what changed:** chapter03/scene04 revealed the quartermaster; the open thread resolved to co-08. The open state is preserved here — with its own evidence pointer — so "at chapter02/scene05 the culprit was still unknown in the prose" stays reconstructable (the reveal-timing fact a later check may need), and Rin's `truth: continuity/book-1.md#co-08` reference to the resolved answer resolves through the durable id chain.

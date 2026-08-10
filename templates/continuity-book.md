@@ -159,9 +159,11 @@ AUTHORIAL `revise` corrects the current entry in place instead (no transition).
 
 <!--
 Non-destruction invariant (DIEGETIC change only — the story advances and a fact changes in the
-fiction). Move the superseded entry here, keeping its id and citing held-from/to story positions,
-and record the new value as its own new stamped entry in the class section above, naming the entry
-it supersedes. An AUTHORIAL `revise` corrects the current entry in place instead and never adds a
+fiction). Move the superseded entry here, keeping its id, its held-from/to story positions, **its
+fact-class value field, and its `evidence:` pointer** — so what was true during the held range stays
+answerable and verifiable, and a later authorial correction has a structured value to update — and
+record the new value as its own new stamped entry in the class section above, naming the entry it
+supersedes. An AUTHORIAL `revise` corrects the current entry in place instead and never adds a
 transition (agents/continuity.md, Diegetic vs. authorial change).
 -->
 
@@ -169,7 +171,10 @@ transition (agents/continuity.md, Diegetic vs. authorial change).
 - **id:** co-06
 - **formerly:** role / assignment
 - **held:** book1/chapter03/scene04 to book1/chapter05/scene02
-- **committed-in:** draft-v12.md
+- **committed-in:** draft-v05.md
+- **evidence:** plot/book1/chapter03/drafts/attempt01/draft-v05.md#scene04
 - **superseded-by:** co-14
+- **assignment:** [The fact-class value as it stood during the held range — e.g. "Halden is acting
+  helmsman."]
 - **what changed:** [Brief explanation — e.g. "The captain resumes the helm once his arm heals; the
   acting assignment ends."]

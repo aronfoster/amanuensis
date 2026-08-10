@@ -11,9 +11,11 @@ See the folder README at `examples/continuity/README.md`.
 
 The load-bearing entry here is the `## Believes incorrectly` one: Rin believes
 the *cook* breached the water casks. Its `truth:` field carries the QUALIFIED
-reference `continuity/book-1.md#co-07` to the objective fact she is wrong about —
-objectively it was the quartermaster. The objective fact lives once, in
-`continuity/`; this file points, never copies or overrides it. The reference is
+reference `continuity/book-1.md#co-08` to the objective fact she is wrong about —
+objectively it was the quartermaster (co-08, the **resolved** thread; the question
+was open as co-07 in chapter02 and the prose answered it in chapter03). The
+objective fact lives once, in `continuity/`; this file points, never copies or
+overrides it. The reference is
 continuity-tracking metadata, not character knowledge, and does not affect
 reveal timing.
 -->
@@ -53,8 +55,8 @@ reveal timing.
 - **committed-in:** draft-v03.md
 - **basis:** inferred
 - **belief:** Rin is convinced the ship's cook staved in the water casks — he had the run of the forward hold and had quarreled with her over the ration count the day before.
-- **truth:** continuity/book-1.md#co-07
-- **notes:** The qualified `truth:` reference points at the objective open-thread fact in `continuity/`: objectively it was the *quartermaster* (co-07), established at book1/chapter03/scene04. Rin does not know this. The objective fact is the authority; this entry records only her belief and defers to `continuity/book-1.md#co-07` for the true state — it never restates or overrides it.
+- **truth:** continuity/book-1.md#co-08
+- **notes:** The qualified `truth:` reference points at the objective fact in `continuity/`: objectively it was the *quartermaster* (co-08, the **resolved** thread — the question was open as co-07 at book1/chapter02/scene04 and the prose answered it at book1/chapter03/scene04). Rin formed this belief at chapter02/scene05, while the thread was still open, and does not know the answer. The objective fact is the authority; this entry records only her belief and defers to `continuity/book-1.md#co-08` for the true state — it never restates or overrides it.
 - **review:** unreviewed
 
 ---

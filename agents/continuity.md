@@ -60,8 +60,11 @@ A single-scene throwaway detail (relational to nothing, contradictable by nothin
 1. **Chronology / time anchors** — day count, date, season, elapsed-time claims. These are
    **additive**: each anchor is permanently true at its own story position, so an advancing anchor
    ("Day 1" at one scene, "Day 12" at a later one) is recorded as a **new** entry, *not* a
-   supersession of the earlier one — both stand. An anchor that names an *earlier* time than a
-   still-current one is a **conflict** (time does not run backward), surfaced rather than written.
+   supersession of the earlier one — both stand. An anchor that **asserts the current timeline has
+   regressed** (a later scene claiming an earlier time, with no flashback framing) is a **conflict**,
+   surfaced rather than written — but an **intentional flashback, recollection, or recounted scene** is
+   not a regression: narrative order and story-world time are not always monotonic, so its earlier-time
+   anchor is recorded at the story-world time it depicts, not surfaced as a conflict.
    Only genuinely mutable, single-valued state (below) is superseded when it changes.
 2. **Event staging** — the canonical staging of named events, for recall/recap fidelity (what was
    said, who was present, how it happened).

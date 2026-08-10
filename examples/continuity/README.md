@@ -32,8 +32,10 @@ one continuity file plus one character folder:
      `## Superseded` transition plus a new stamped entry, never an overwrite.
   4. **Possession.** The ship's seal and log (co-04) pass to Halden with the
      post at `book1/chapter03/scene03` — the handover made material.
-  5. **Open causal thread (the join key).** Who breached the water casks (co-07)
-     — objectively the quartermaster.
+  5. **Open causal thread (the join key), resolved as a transition.** Who breached
+     the water casks — opened at `chapter02` (co-07) and answered at `chapter03`
+     (co-08, the quartermaster); the open entry moves to `## Superseded` and the
+     resolved entry supersedes it, a transition rather than an additive fact.
 - `characters/rin/profile.md` and `characters/rin/knowledge/book-1.md` — bosun
   Rin, a character **wrong about an objective fact**: she believes the *cook*
   breached the casks. Her `## Believes incorrectly` entry points at the
@@ -124,16 +126,17 @@ it:
 
 | | objective fact | Rin's belief |
 | --- | --- | --- |
-| where it lives | `continuity/book-1.md`, co-07 (`## Open causal threads`) | `characters/rin/knowledge/book-1.md`, kn-02 (`## Believes incorrectly`) |
+| where it lives | `continuity/book-1.md`, co-08 (`## Open causal threads`, resolving co-07) | `characters/rin/knowledge/book-1.md`, kn-02 (`## Believes incorrectly`) |
 | the claim | the **quartermaster** breached the water casks | the **cook** breached the water casks |
-| support | `evidence:` `plot/book1/chapter03/drafts/attempt01/draft-v04.md#scene04` (established in prose at `chapter03/scene04`) | `truth:` `continuity/book-1.md#co-07` — a **qualified** pointer to the objective fact she is wrong about |
+| support | `evidence:` `plot/book1/chapter03/drafts/attempt01/draft-v04.md#scene04` (co-08, established in prose at `chapter03/scene04`) | `truth:` `continuity/book-1.md#co-08` — a **qualified** pointer to the objective fact she is wrong about |
 
 The character file never restates or overrides the objective fact: kn-02 carries
-only Rin's (wrong) belief and defers, via `truth: continuity/book-1.md#co-07`, to
+only Rin's (wrong) belief and defers, via `truth: continuity/book-1.md#co-08`, to
 the one place the true state is maintained. The reference is qualified
-(`continuity/book-1.md#co-07`, not a bare `co-07`) because continuity ids are
-file-scoped and repeat across per-book files. co-07 is the natural **join key**:
-one open thread that a character answers wrongly while the prose answers rightly.
+(`continuity/book-1.md#co-08`, not a bare `co-08`) because continuity ids are
+file-scoped and repeat across per-book files. The thread is the natural **join
+key**: one question — opened at `chapter02` (co-07) and answered at `chapter03`
+(co-08) — that Rin answers wrongly while the prose answers rightly.
 
 ## The earlier state survives the correction
 
