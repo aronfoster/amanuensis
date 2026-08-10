@@ -57,7 +57,7 @@ Then group tasks into **waves** by these rules:
 
 A foundational task that many others reference (e.g. defining a rule the rest
 cite) usually belongs in its own first wave so later waves build on the final
-wording.
+wording. Single-agent and fully sequential waves are fine when appropriate.
 
 **Audit the sprint's verification commands against the repo's current state**
 before spawning anything. Run each defined check (greps, scripts, diff
@@ -131,7 +131,10 @@ to an approval step.
    reporting success is a claim, not evidence. The sprint's defined checks are
    necessary but not sufficient: a stale line can pass every grep the sprint
    names yet still contradict what the sprint changed, so read the diffs and
-   grep output for meaning — not only for the patterns enumerated.
+   grep output for meaning — not only for the patterns enumerated. An edit that
+   moves lines can strand `file:line` cites in *other* files — a finished wave
+   leaves them pointing at the wrong place; re-check cites into any file a wave
+   changed.
 4. **Handle failures before moving on.** Fix or re-dispatch what's broken, but
    bound it: if a task still fails its check after one re-dispatch, stop and
    surface it to the human with the evidence rather than looping. Prefer
