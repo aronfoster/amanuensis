@@ -150,8 +150,11 @@ A **diegetic** change (the story advances; command really transfers) never
 deletes an earlier reconstructable state — it appends a `## Superseded`
 transition and a new stamped entry, and the prior fact stays addressable by its
 id. (An **authorial** `revise` — deciding the fiction should have read
-differently all along — would instead correct the current entry in place, since
-the earlier value was never true-in-the-fiction; that path is `revise`'s, not
-`continuity_update`'s. See `agents/continuity.md`, "Diegetic vs. authorial
+differently all along, e.g. that the *early* commander was someone other than
+Voss — would instead correct that entry's value **in place, keeping its `id` and
+transition structure**; here that entry is co-01, which already lives in
+`## Superseded`, so the correction lands there rather than adding a transition,
+since the rejected value was never true-in-the-fiction. That path is `revise`'s,
+not `continuity_update`'s. See `agents/continuity.md`, "Diegetic vs. authorial
 change.") That is what makes point-in-time reconstruction hold across a change,
 and it is exactly what this fixture exists to demonstrate.

@@ -57,7 +57,12 @@ A single-scene throwaway detail (relational to nothing, contradictable by nothin
 
 ### The seven maintained fact-classes
 
-1. **Chronology / time anchors** — day count, date, season, elapsed-time claims.
+1. **Chronology / time anchors** — day count, date, season, elapsed-time claims. These are
+   **additive**: each anchor is permanently true at its own story position, so an advancing anchor
+   ("Day 1" at one scene, "Day 12" at a later one) is recorded as a **new** entry, *not* a
+   supersession of the earlier one — both stand. An anchor that names an *earlier* time than a
+   still-current one is a **conflict** (time does not run backward), surfaced rather than written.
+   Only genuinely mutable, single-valued state (below) is superseded when it changes.
 2. **Event staging** — the canonical staging of named events, for recall/recap fidelity (what was
    said, who was present, how it happened).
 3. **Location** — where an entity or party is.
@@ -148,8 +153,16 @@ temporal-state files (`knowledge/`, `timeline.md`, `relationships.md`).
   an in-story change that never happened.
 
 This mirrors how `revise` already edits the active-head draft in place while leaving superseded
-drafts as the record (`agents/revision.md`). Current-state entries carry current truth (edit in
-place under an authorial change); `## Superseded` transitions are *the record* (never edited).
+drafts as the record (`agents/revision.md`). Current-state entries carry current truth — edit them
+in place under an authorial change. A `## Superseded` transition's **structure** — its `id`, its
+held-from/to range, and its `superseded-by` link — is the record of a *diegetic* change and is never
+fabricated, re-timed, or deleted by a revision (nor does a revision ever add a transition of its
+own). But the **value** a superseded entry stores is still an objective claim, and an authorial
+`revise` may correct it **in place, keeping the transition structure**, when the human changes what
+was always true at that earlier position — otherwise the rejected value would stay the maintained
+answer for that position. An in-place correction follows the corrected prose: the entry's
+`committed-in`/`evidence:` move to the draft that now carries the fact (`agents/revision.md` states
+the procedure, including new-draft mode).
 
 ## Freshness
 
