@@ -214,10 +214,13 @@ The Sprint is complete when:
    `Escalated:` block without re-deriving it (the step never reads canon files itself).
 5. A synthetic fixture demonstrates the full round trip: an unreviewed-premise finding tagged
    distinctly (via a resolved `canon/**` or `continuity/`/`knowledge/` source), `ESCALATE`
-   routing naming `/revise` with the correct locator shape for that system, and `/revise`'s
-   confirm and correct-and-confirm paths flipping the marker — including at least one
-   `timeline.md` or `profile.md` example, confirmed directly (not via a compliance finding,
-   since none reaches them) to prove `/revise`'s extended scope.
+   routing naming `/revise` with the correct locator shape for that system, `/revise`'s confirm
+   and correct-and-confirm paths flipping the marker — including at least one `timeline.md` or
+   `profile.md` example, confirmed directly (not via a compliance finding, since none reaches
+   them) to prove `/revise`'s extended scope — **and the closing step this mechanism hands off
+   to**: a `compliance_report` re-run against the confirmed state, showing either no finding
+   (the confirmed premise matched the prose) or a fresh, untagged finding the human can `FIX`
+   normally. The marker flip routes and unblocks the decision; it is not itself the prose fix.
 6. Verification passes: `agents/review-grammars.yaml` and `scripts/validate-review-artifact.sh`
    are byte-for-byte unchanged; the four families' fixtures under `examples/review/` are
    byte-for-byte unchanged; no pipeline step is added or removed and `pipeline-state.md` /
@@ -449,6 +452,17 @@ its resolved referent is unreviewed; teach `compliance_fix`'s escalation routing
   - Do not touch the transition-structure prohibitions at `:22` — a confirmation is a
     current-state-entry update, never a fabricated `## Superseded` / `## Lost or superseded`
     transition.
+  - **Reconcile with `## Consequences the command accepts` (`:43`)** (surfaced at PR review,
+    Codex PR-57 round 7): that section states "a revision never touches freshness or review
+    state" — meaning the `Reviewed-draft:`/review-gate concept from `agents/orchestrator.md`'s
+    Artifact-state contract (an artifact's pending-vs-decided review status), which `/revise`
+    still never touches. That is a different thing from the per-entry `unreviewed`/`confirmed`
+    marker this Sprint adds — which, for `continuity/`/`knowledge/`, is literally named `-
+    **review:**`, an unfortunate naming collision with the sentence that forbids touching
+    "review state." Left unreconciled, the completed contract would simultaneously require and
+    appear to forbid the same write. Add one clarifying sentence at `:43` distinguishing the two
+    — artifact review-gate state (never touched) vs. per-entry generated-state confirmation
+    markers (the write this Sprint's confirm-or-correct mechanism performs by design).
 - **Update both installed `/revise` host adapters so the confirm-only invocation is actually
   reachable, not just defined in the contract they point at** (surfaced at PR review, Codex
   PR-57 round 6). `templates/dispatcher/.claude/commands/revise.md` and
@@ -570,7 +584,15 @@ sweep, and close the milestone. Closes **M18.5** and the residual of **M18**.
     canon-file read); and — after a `/revise` confirm-only pass on that one entry — that its
     per-entry inline tag flips to confirmed while
     both the file-level frontmatter `status:` and the sibling (still-unreviewed) entry's inline
-    tag are visibly unchanged, proving per-entry-only scope.
+    tag are visibly unchanged, proving per-entry-only scope. **State explicitly in the README**
+    (surfaced at PR review, Codex PR-57 round 7) **that the marker flip is not the end of the
+    round trip for a `FIX`-decided unit**: the escalation's job was to route the decision to the
+    right place and stop an unconfirmed guess from reaching prose, not to apply the eventual
+    prose correction itself. Once the entry is confirmed or corrected, the human re-runs
+    `compliance_report` — the existing recipe step, not a new mechanism — which either finds no
+    violation (the confirmed premise already matched the prose) or emits a fresh, untagged
+    finding the human can `FIX` normally through `compliance_fix`. Show this as the fixture's
+    closing step, not just the marker flip.
   - A `continuity/` **or** `knowledge/` entry stamped `- **review:** unreviewed`, cited by a
     Check 4 finding, showing the same tag and an `Escalated:` block routing to `/revise` by its
     minted `co-NN`/`kn-NN` id. Note in the README that `compliance_report`'s detection logic is
@@ -600,7 +622,8 @@ sweep, and close the milestone. Closes **M18.5** and the residual of **M18**.
 
 **Done when.** The synthetic fixture demonstrates the full round trip (unreviewed citation →
 tagged finding → routed escalation naming `/revise` → confirm or correct-and-confirm flipping
-the marker); the verification sweep and both `check-pipeline-state.sh` modes pass; ROADMAP
+the marker → a `compliance_report` re-run showing the loop actually closes, not just the marker
+flip); the verification sweep and both `check-pipeline-state.sh` modes pass; ROADMAP
 M18.1–M18.5 and the SPRINT task boxes reflect completed work.
 
 ---
@@ -642,8 +665,13 @@ M18.1–M18.5 and the SPRINT task boxes reflect completed work.
   `status:` is untouched permanently, by any entry's confirmation (Conventions). Rejected:
   derive the file-level status from its entries' state (e.g. "confirmed" once all are
   confirmed) — adds a sweep no consumer needs, for a field nothing reads.
-- **OpenCode parity for `/revise` or the compliance steps.** Unrelated to and untouched by this
-  Sprint; OpenCode companion parity is tracked separately under M17.
+- **OpenCode parity for the `amanuensis-review` companion skill.** That is a separate,
+  unrelated feature (compliance-review UX, not `/revise`), tracked under M17. **Narrowed at PR
+  review (Codex PR-57 round 7)** from an earlier, broader "OpenCode parity for `/revise` or the
+  compliance steps" phrasing that directly contradicted Task 2, which *does* touch
+  `templates/dispatcher/.opencode/agents/revise.md` (round 6's fix) to keep `/revise`'s
+  confirm-only invocation reachable on both hosts — that adapter edit is in scope and is not
+  excluded by this bullet.
 - **Dispatcher-level detection of unreviewed entries.** Matches the standing dispatcher-stays-
   thin non-goal already recorded in `agents/orchestrator.md` for staleness and overrides;
   detection here stays in the step bodies (`compliance_report`) exactly as those do.

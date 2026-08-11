@@ -137,7 +137,13 @@ that whichever check resolved it already wrote into the tag, since no minted id 
   marker flip as its only edit, so the request actually writes something rather than reporting
   success with no change. Preserve the current-state-vs-record distinction already stated there
   (`:24`) — a confirmation is an in-place update to a current-state entry, never a fabricated
-  transition. Update both installed `/revise` host adapters
+  transition. Reconcile with `## Consequences the command accepts` (`:43`), which states "a
+  revision never touches freshness or review state" — that sentence means the
+  `Reviewed-draft:`/review-gate concept from `agents/orchestrator.md`'s Artifact-state contract,
+  not the per-entry `unreviewed`/`confirmed` marker this milestone adds (an unfortunate naming
+  collision, sharpest for `continuity/`/`knowledge/`'s literal `- **review:**` field); add one
+  clarifying sentence there distinguishing the two, so the contract does not simultaneously
+  require and appear to forbid the same write. Update both installed `/revise` host adapters
   (`templates/dispatcher/.claude/commands/revise.md`,
   `templates/dispatcher/.opencode/agents/revise.md`) to acknowledge the confirm-only shape: as
   written, both frame every request as a correction ("what is wrong and what should be true
@@ -183,8 +189,11 @@ that whichever check resolved it already wrote into the tag, since no minted id 
 * [ ] M18.5 Smoke/demo coverage: a synthetic fixture exercising an unreviewed-premise finding
   flagged distinctly (via a resolved `canon/**`/`continuity/`/`knowledge/` source, not bare
   `canon_active`), `ESCALATE` routing naming `/revise` with each system's actual locator shape,
-  and `/revise`'s confirm and correct-and-confirm paths each flipping the marker — including at
-  least one `timeline.md` or `profile.md` entry to prove the extended `/revise` scope.
+  `/revise`'s confirm and correct-and-confirm paths each flipping the marker — including at
+  least one `timeline.md` or `profile.md` entry to prove the extended `/revise` scope — and the
+  closing step this mechanism hands off to: a `compliance_report` re-run against the confirmed
+  state, showing the loop actually closes (no finding, or a fresh untagged one the human can
+  `FIX` normally) rather than treating the marker flip as the end of the round trip.
 
 Notes: Sprint 22 plans M18 (see SPRINT.md). Locked at planning (2026-08-11, prompted by a
 live `amanuensis-review` companion session on `the-course-he-kept`): (1) **scope is
@@ -266,6 +275,21 @@ contract, as originally scoped, would have left the mechanism real but practical
 through the actual installed command. M18.2 now updates both adapters with a minimal
 acknowledgment of the confirm-only shape, pointing at the contract's `## Invocation` section for
 it, rather than restating the full contract in each.
+(10) **Further corrections from PR review (Codex PR-57 round 7):** three more confirmed gaps.
+First, `agents/revision.md:43`'s "a revision never touches freshness or review state" collides
+in wording with this milestone's own `- **review:**` marker field on `continuity/`/`knowledge/`
+entries — the sentence means the `Reviewed-draft:`/review-gate concept from
+`agents/orchestrator.md`'s Artifact-state contract, an unrelated thing, but left unreconciled
+the completed contract would simultaneously require and appear to forbid the same write. M18.2
+now adds one clarifying sentence at `:43` distinguishing the two. Second, the Out-of-scope
+framing "OpenCode parity for `/revise` or the compliance steps" directly contradicted round 6's
+own fix, which does touch the OpenCode `/revise` adapter — narrowed to name only the unrelated
+`amanuensis-review` companion skill (M17's domain) as out of scope. Third, the plan treated the
+`/revise` marker flip as the end of the round trip for a `FIX`-decided unit, but a marker flip
+alone doesn't correct prose that still contradicts the (now-confirmed) canon — M18.5's
+demonstration now closes the loop with a `compliance_report` re-run against the confirmed state,
+showing the escalation's job was to route and unblock the decision, not apply the eventual prose
+fix itself.
 
 ---
 
