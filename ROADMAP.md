@@ -158,16 +158,22 @@ that whichever check resolved it already wrote into the tag, since no minted id 
   file's own file-level frontmatter `status:`, which this milestone never reads or writes for
   any entry) is unreviewed, tag the finding distinctly from a settled-truth citation. For a
   `canon/generated/` referent specifically (no minted id, reached by either check's canon-file
-  escalation), also write a self-contained `[ref: canon/generated/<file>#<scene-beat-attempt>
-  "<quote>"]` tag onto the violation line at report time — `compliance_fix` cannot read canon
-  files to reconstruct this later (`agents/steps/compliance-fix.md:51`) and the report's `##
-  Context consulted` section records only the file path, not the entry (`:178-186`). Bare
-  `canon_active` comparisons (either check's common, non-escalated path) are explicitly out of
-  scope: `agents/storyboard-schema.md:110-112` requires `canon_active` to hold an extracted
-  rule, "not a file path, not a summary of a source document," so there is no source to check a
-  marker against until the check escalates — forcing provenance back into `canon_active` would
-  fight that schema decision, not fix a bug in it. `timeline.md`/`profile.md` are out of scope
-  for this task (`compliance_report` has no input reading them — see Deferred).
+  escalation), the violation line ends up with exactly one self-contained `[ref:
+  canon/generated/<file>#<scene-beat-attempt> "<quote>"]` tag — appended fresh for Check 3
+  (which carries no `[ref:]` today) or enriched in place for Check 4 (which already carries a
+  `canon/<file>` + quote `[ref:]` on every relational finding per M16, so this must replace that
+  value, not duplicate the tag) — built at report time, since `compliance_fix` cannot read canon
+  files to reconstruct it later (`agents/steps/compliance-fix.md:51`) and the report's `##
+  Context consulted` section records only the file path, not the entry (`:178-186`). Update the
+  step doc's own tag-format contract (`:113`, "the local findings (Checks 1–3) do not carry the
+  tag") to carve out Check 3's escalation-path exception, so its generation instructions don't
+  contradict what this milestone requires it to produce. Bare `canon_active` comparisons (either
+  check's common, non-escalated path) are explicitly out of scope:
+  `agents/storyboard-schema.md:110-112` requires `canon_active` to hold an extracted rule, "not
+  a file path, not a summary of a source document," so there is no source to check a marker
+  against until the check escalates — forcing provenance back into `canon_active` would fight
+  that schema decision, not fix a bug in it. `timeline.md`/`profile.md` are out of scope for
+  this task (`compliance_report` has no input reading them — see Deferred).
 * [ ] M18.4 Retrofit `compliance_fix`'s routing so `[premise: unreviewed]` overrides the
   ordinary defect-label rule for `FIX`, not only for units already routed upstream. Today, `FIX`
   goes straight to a prose edit whenever the defect label is `prose` or absent
@@ -290,6 +296,18 @@ alone doesn't correct prose that still contradicts the (now-confirmed) canon —
 demonstration now closes the loop with a `compliance_report` re-run against the confirmed state,
 showing the escalation's job was to route and unblock the decision, not apply the eventual prose
 fix itself.
+(11) **Further corrections from PR review (Codex PR-57 round 8):** two more confirmed gaps, both
+in the `[ref:]`-tagging mechanics. First, `agents/steps/compliance-report.md:113` states "the
+local findings (Checks 1–3) do not carry the tag" — a sentence M18.3's Check-3 tagging directly
+contradicts without updating it, so the step doc's own generation instructions could tell a
+future implementer to omit the very tags this milestone requires; M18.3 now includes updating
+that sentence to carve out Check 3's escalation-path exception. Second, Check 4 already carries
+a `[ref: <referent>]` tag on every relational finding per M16 — for a canon-file citation,
+already in the `canon/<file>` + quote form (`:113`) — so instructing it to "append" a second,
+richer `[ref:]` tag for an unreviewed `canon/generated/` entry would leave two tags on one line,
+ambiguous about which `compliance_fix` should use. M18.3/M18.4 now distinguish the two paths:
+Check 3 (no existing tag) gets one appended; Check 4 (existing tag) has its `<referent>`
+enriched in place with the fuller locator — one `[ref:]` tag per violation line, always.
 
 ---
 

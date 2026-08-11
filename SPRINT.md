@@ -98,6 +98,16 @@ this.
   unreviewed` marker for every capture destination — no per-entry `id` field of any kind. A
   `continuity/`/`knowledge/` entry can be routed by its minted id; a `canon/generated/` entry
   cannot, so routing there needs a different locator (see Conventions).
+- **Check 4 already carries a `[ref:]` tag on every relational finding — including a canon-file
+  citation — so a `canon/generated/` fix there must enrich it, not append a second one.**
+  `agents/steps/compliance-report.md:113` defines a relational finding's `<referent>` as one of
+  `continuity/book-N.md#co-NN`, `characters/<id>/knowledge/book-N.md#kn-NN`, `reveals.md#rv-NN`,
+  or `canon/<file>` + a quote — so when Check 4's Canon-consistency sub-check escalates onto a
+  named canon file, the finding already has a `[ref: canon/<file> "quote"]` tag in the basic
+  form. Only Check 3 (`:113`, "the local findings (Checks 1–3) do not carry the tag") has none
+  to build on — Check 4's needs enriching in place with the entry's scene/beat/attempt
+  provenance, not duplicating (see Task 2). That same `:113` sentence also needs updating, since
+  Check 3's escalation path is about to become an exception to "local findings carry no tag."
 - **`canon/generated/*` files carry the marker at two levels — file frontmatter and per-entry —
   and only the per-entry level is the one that matters for detection or confirmation.**
   `agents/capture/capture-agent.md:62-76` defines a file-level `status: invented, unreviewed`
@@ -193,10 +203,16 @@ The Sprint is complete when:
    `agents/storyboard-schema.md:110-112`; `timeline.md`/`profile.md` citations are not tagged
    either, since `compliance_report` has no input reading them. For a `canon/generated/`
    referent (no minted id) resolved by **either** check's canon-file escalation, the violation
-   line's `[ref: <referent>]` tag itself carries the complete locator — file path + the entry's
-   scene/beat/attempt provenance + a short quote of the entry's own text — captured at the
-   moment `compliance_report` already has the entry in hand, since `compliance_fix` cannot read
-   canon files to reconstruct it later (`agents/steps/compliance-fix.md:51`).
+   line carries exactly one `[ref: <referent>]` tag with the complete locator — file path + the
+   entry's scene/beat/attempt provenance + a short quote of the entry's own text — appended fresh
+   for Check 3 (which carries no `[ref:]` today) or enriched in place for Check 4 (which already
+   carries a `canon/<file>` + quote `[ref:]` for every relational finding per M16, so this Sprint
+   never produces two `[ref:]` tags on one line) — captured at the moment `compliance_report`
+   already has the entry in hand, since `compliance_fix` cannot read canon files to reconstruct
+   it later (`agents/steps/compliance-fix.md:51`). Checks 1–3's step-doc format contract
+   (`agents/steps/compliance-report.md:113`, "local findings do not carry the tag") is updated to
+   carve out Check 3's escalation-path exception, so the step's own generation instructions don't
+   contradict what it's required to produce.
 4. `agents/steps/compliance-fix.md`'s routing treats `[premise: unreviewed]` as an override on
    `FIX` and `ESCALATE` — regardless of defect label or its absence, both are routed upstream,
    never applied to prose, until the underlying entry is confirmed. `SKIP` is untouched: it
@@ -275,21 +291,24 @@ rediscover them.
   `corrected`) — no consumer needs the distinction, since `/revise`'s existing report (step 8,
   `agents/revision.md:39`) already names what changed when something did.
 - **Finding-tag convention: `[premise: unreviewed]`, appended only when the check actually
-  resolved a marker-bearing source — and for `canon/generated/`, paired with a self-contained
-  `[ref: <referent>]` tag, since nothing downstream can re-derive one.** Rides the same
-  violation line as the existing `[defect: <type>] [ref: <referent>]` tag from M16, appended
-  after it, on any finding whose resolved source's **per-entry** marker (never a file-level
-  status — see Background) is unreviewed: a Check 4 finding (via its `continuity/`/`knowledge/`
-  resolution, or its own Canon-consistency sub-check's canon-file escalation), or a Check 3
-  finding that took the Canon check's escalation path. **Two distinct escalation points** open a
-  named canon file — Check 3's Canon check and Check 4's Canon-consistency sub-check — and both
-  get this treatment identically. Check 4 findings already carry `[ref: <referent>]` per M16,
-  naming the `continuity/`/`knowledge/` entry's minted id when that's the resolved source.
-  Neither check's canon-file path carries a `[ref:]` tag today, and `canon/generated/` mints no
-  id to put in one — so this Sprint adds one: whenever either check's canon escalation resolves
-  an unreviewed `canon/generated/` entry, the violation line gets `[ref:
-  canon/generated/<file>#<scene-beat-attempt> "<short quote>"]`, self-contained because
-  `compliance_fix` cannot read canon files to reconstruct it later
+  resolved a marker-bearing source — and for `canon/generated/`, always exactly one `[ref:
+  <referent>]` tag carries the self-contained locator, never two.** (Corrected at PR review,
+  Codex PR-57 round 8 — see below.) Rides the same violation line as the existing `[defect:
+  <type>] [ref: <referent>]` tag from M16, appended after it, on any finding whose resolved
+  source's **per-entry** marker (never a file-level status — see Background) is unreviewed: a
+  Check 4 finding (via its `continuity/`/`knowledge/` resolution, or its own Canon-consistency
+  sub-check's canon-file escalation), or a Check 3 finding that took the Canon check's escalation
+  path. **Two distinct escalation points** open a named canon file — Check 3's Canon check and
+  Check 4's Canon-consistency sub-check — and both get the `[premise: unreviewed]` treatment
+  identically, but their `[ref:]` handling differs: Check 3 carries no `[ref:]` tag today, so
+  this Sprint **appends** a new one; Check 4 already carries `[ref: <referent>]` on every
+  relational finding per M16 — for a canon-file citation, already in the form `canon/<file>` +
+  quote (`agents/steps/compliance-report.md:113`) — so this Sprint **enriches that existing tag
+  in place** with the entry's scene/beat/attempt provenance rather than appending a second one.
+  `canon/generated/` mints no id to put in either form, hence the self-contained locator: the
+  violation line gets a `[ref: canon/generated/<file>#<scene-beat-attempt> "<short quote>"]`
+  tag — appended (Check 3) or replacing the prior value in place (Check 4) — self-contained
+  because `compliance_fix` cannot read canon files to reconstruct it later
   (`agents/steps/compliance-fix.md:51`) and the report's `## Context consulted` section records
   only the file path, not the entry (`agents/steps/compliance-report.md:178-186`). **Never** on
   a finding decided from bare `canon_active` (in either check) — that field has no resolvable
@@ -499,15 +518,32 @@ its resolved referent is unreviewed; teach `compliance_fix`'s escalation routing
     unreviewed]` to the violation line, after the existing `[defect: <type>] [ref: <referent>]`
     tag where present (Check 4) or standing alone (Check 3's escalation path, which carries no
     defect tag today).
-  - **Whenever either check's canon-file escalation resolves a `canon/generated/` entry**
-    (Check 3's Canon check, or Check 4's Canon-consistency sub-check), also append a `[ref:
-    <referent>]` tag naming the self-contained locator — `canon/generated/<file>#<scene-beat-
-    attempt> "<short quote of the entry's own text>"` — built now, while the entry is in hand,
-    because `compliance_fix` cannot read canon files to build this later
-    (`agents/steps/compliance-fix.md:51`) and the `## Context consulted` section records only
-    the file path, not the entry (`agents/steps/compliance-report.md:178-186`). Check 4's
-    resolution of a `continuity/`/`knowledge/` entry already carries `[ref:]` naming its minted
-    id per M16 — no change needed there.
+  - **Check 3's Canon-check escalation onto a `canon/generated/` entry: append a new `[ref:
+    <referent>]` tag** — Check 3 carries none today — naming the self-contained locator:
+    `canon/generated/<file>#<scene-beat-attempt> "<short quote of the entry's own text>"`, built
+    now, while the entry is in hand, because `compliance_fix` cannot read canon files to build
+    this later (`agents/steps/compliance-fix.md:51`) and the `## Context consulted` section
+    records only the file path, not the entry (`agents/steps/compliance-report.md:178-186`).
+  - **Check 4's Canon-consistency escalation onto a `canon/generated/` entry: enrich, don't
+    duplicate, its existing `[ref:]` tag** (correction surfaced at PR review, Codex PR-57 round
+    8) — every Check 4 relational finding already carries `[defect: <type>] [ref: <referent>]`
+    per M16, and a canon-file citation's `<referent>` already takes the form `canon/<file>` + a
+    quote (`agents/steps/compliance-report.md:113`). Appending a second `[ref:]` tag would leave
+    the violation line with two, ambiguous about which one `compliance_fix` should copy. Instead,
+    when this escalation resolves an unreviewed `canon/generated/` entry, replace that existing
+    `<referent>` value in place with the same fuller, self-contained locator form (adding the
+    entry's scene/beat/attempt provenance to the file+quote it already carries) — one `[ref:]`
+    tag per violation line, always.
+  - Check 4's resolution of a `continuity/`/`knowledge/` entry already carries `[ref:]` naming
+    its minted id per M16 — no change needed there.
+  - **Update `agents/steps/compliance-report.md`'s own tag-format contract** (surfaced at PR
+    review, Codex PR-57 round 8): the sentence "The **local** findings (Checks 1–3) do not carry
+    the tag" (`:113`) is no longer true once Check 3's Canon-check escalation carries
+    `[premise: unreviewed]` and, on a `canon/generated/` referent, `[ref: <referent>]` too.
+    Amend that sentence to carve out the exception explicitly — Checks 1–2 and Check 3's
+    non-escalated common path still carry no tag; only Check 3's escalation path does — so the
+    step doc's own generation instructions don't contradict what this Sprint requires it to
+    produce.
   - No change to Checks 1–2 (Must-Contain, Must-Not-Contain) — they don't cite maintained state
     or named canon files. No new inputs are added to read `timeline.md` or `profile.md` — those
     stay outside this task (see Conventions and Out of scope).
