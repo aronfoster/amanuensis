@@ -163,8 +163,10 @@ The Sprint is complete when:
    `anti_ai_report`) with its class and one-line justification (M16.2); the **referent-identification and
    targeted-retrieval** rule (how a review names the characters/events/facts/constraints/back-references it
    must check, then obtains only the maintained state and named source evidence needed — M16.4); the
-   **precedence** rule (review tiebreak storyboard > distilled state > raw source, atop authoring-authority
-   canon > continuity — M16.5); the **defect taxonomy** (prose / storyboard / state / canon / missing-context,
+   **precedence** rule (review tiebreak storyboard > distilled *derived* state > raw source, atop
+   authoring-authority canon > continuity, **with the reveal-plan carve-out**: for reveal-timing checks the
+   human-authored `reveals.md` plan is the controlling authority and outranks storyboards, so an early-leaking
+   block is a storyboard defect — M16.5); the **defect taxonomy** (prose / storyboard / state / canon / missing-context,
    the label assigned by *which artifact is wrong under precedence* — so prose-vs-*valid*-state is a prose
    defect, and "state" means the maintained entry itself is stale or contradicts higher-precedence intent/canon,
    spanning all three maintained-state artifacts `continuity/` / `knowledge/` / `reveals.md` — each routing to
@@ -254,13 +256,15 @@ The Sprint is complete when:
      well as across scenes — block 003 precedes a `concealed-until: …:block-004` where a bare `<scene-id>`
      could not order them. For each ledger secret still active at the current block, check whether the block
      discloses it; an ordinary beat that leaks a ledger secret early is a finding even though the block is not
-     itself a reveal. This is the story-level
+     itself a reveal, and it is a **storyboard defect** — the storyboard violates the higher-precedence reveal
+     plan (precedence carve-out, Conventions), never a "ledger is wrong" defect. This is the story-level
      analog of M14's "prohibited from knowing" active reveal constraint, and it is bounded — O(active secrets ×
      blocks), not a corpus rescan.
-   Findings cite the ledger entry (`reveals.md#rv-NN`) as the referent and declare context consulted; a ledger
-   that under-specifies or misstates a reveal is a **state defect against `reveals.md`** (the reveals-ledger
-   member of the maintained-state type in the taxonomy, Conventions), routed to the human who maintains the
-   ledger — not a storyboard defect. The step stays advisory / report-only (no fix step), and its within-chapter
+   Findings cite the ledger entry (`reveals.md#rv-NN`) as the referent and declare context consulted. A leaking
+   or ill-ordered *storyboard* is a **storyboard defect** (above); only the *plan itself* being wrong — a ledger
+   entry that is internally inconsistent or contradicts canon — is a **reveals-ledger defect** (the `reveals.md`
+   member of the maintained-state type, Conventions), routed to the human who maintains the ledger. The step
+   stays advisory / report-only (no fix step), and its within-chapter
    takeaway-support and takeaway/concealment checks are unchanged.
 6. **`compliance_fix` routes remediation by defect type, on every decision** (M16.7). It inspects each unit's
    defect label for **all** decisions, not only `ESCALATE`: a **prose**-defect `FIX` is applied to prose as
@@ -373,15 +377,26 @@ don't rediscover them.
   (`NOTES.md:88-100`). Reproducibility comes from **declaring** the consulted context, not from excluding it;
   at series scale the consulted set is a small named subset, and naming it is what makes a bounded check
   auditable. The anchor/`review-id`/`Decision:` scheme is preserved; no cross-block units are invented.
-- **Precedence: two orders, stated once, non-conflicting (M16.5).** For a *review tiebreak* — what the
-  reviewed prose should match — **the storyboard block's deliberate intent > the distilled continuity/knowledge
-  state > raw canon/prose**; broader context supplements, never overrides the block, so raw source without a
-  tiebreaker cannot manufacture a false positive where a storyboard deliberately diverged (`NOTES.md:82-87`).
-  For *authoring authority* — which artifact owns a fact — **canon > continuity** (`agents/continuity.md`), and
-  a prose-vs-canon contradiction is surfaced, not absorbed. The review tiebreak sits atop the authoring order
-  and does not change it. Rejected: "`canon_active` is authoritative, ignore everything else" (the current
+- **Precedence: stated once, with the reveal-plan carve-out (M16.5).** For the *review tiebreak* over
+  **derived** state — what the reviewed prose should match on a continuity/knowledge fact — **the storyboard
+  block's deliberate intent > the distilled continuity/knowledge state > raw canon/prose**; broader context
+  supplements, never overrides the block, so raw source without a tiebreaker cannot manufacture a false
+  positive where a storyboard deliberately diverged (`NOTES.md:82-87`). This ordering is correct because
+  `continuity/`/`knowledge/` are **derived** from prose — a storyboard may legitimately outrank them.
+  **The reveals ledger is different: it is a human-authored *plan/spec*, not derived state, so for
+  reveal-timing checks it is the *controlling authority* and outranks storyboard intent** — the reveal-timing
+  order is **canon > reveal plan (`reveals.md`) > storyboard > prose**. Consequence (the case this Sprint
+  exists to catch): a storyboard block that discloses a ledger secret before its `concealed-until:` is a
+  **storyboard defect** (the storyboard violates the reveal plan), **never** a "ledger contradicts higher
+  storyboard intent" state defect — the guard must not be talked out of the finding by relaxing the plan. A
+  **reveals-ledger** defect is reserved for the plan being wrong *on its own terms* (internally inconsistent,
+  or contradicting canon), not for a storyboard disagreeing with it. For *authoring authority* — which artifact
+  owns a fact — **canon > continuity** (`agents/continuity.md`), and a prose-vs-canon contradiction is
+  surfaced, not absorbed. Rejected: "`canon_active` is authoritative, ignore everything else" (the current
   block-local rule — manufactures false positives on deliberate divergence and hides cross-scene defects);
-  rejected: raw source always wins (overrides deliberate storyboard intent).
+  rejected: raw source always wins (overrides deliberate storyboard intent); rejected: the reveal plan is
+  outranked by storyboards (self-defeating — it would blame the plan for a leaking block, the exact failure
+  M16 must catch).
 - **Scope is tiered by check type; new inputs are `required: false` and project-type-aware.** Intra-chapter
   continuity → the whole current chapter (bounded); cross-chapter / cross-book → maintained state + targeted
   retrieval of named referents, **never** a full re-read; canon → block `canon_active` first, escalate to
@@ -395,14 +410,16 @@ don't rediscover them.
   is at fault." A finding is **prose** when the prose is the wrong one — including the common case where the
   **storyboard intent and the maintained state agree** and only the prose diverges (this is a prose defect,
   `compliance_fix` edits the prose, *not* a state defect); **storyboard** when the beat's own spec
-  under-specifies or misstates the fact; **state** when a maintained-state entry itself is at fault — it is
-  **derived-stale** (including stamped in a superseded attempt, item 4a), or it contradicts higher-precedence
-  storyboard intent or canon — so the entry, not the prose, must change. The **state** type spans all three
-  maintained-state artifacts, each routing to its owner: `continuity/` (route to `continuity_update` /
-  `revise`, or surface as an M15 continuity conflict), `characters/<id>/knowledge/` (route to
-  `scene_knowledge_update` / `revise`), and the human-authored **`reveals.md`** ledger (route to the human —
-  the "reveals-ledger defect" `storyboard_review` emits is this member: an under-specified or wrong ledger
-  entry). Then **canon** when settled canon is contradicted; or **missing-context** when the fact needed to
+  under-specifies or misstates the fact — **including a storyboard block that discloses a ledger secret before
+  its `concealed-until:`** (it violates the higher-precedence reveal plan, per the precedence carve-out above);
+  **state** when a maintained-state entry itself is at fault — it is **derived-stale**, or it contradicts a
+  higher-precedence authority (for the **derived** `continuity/`/`knowledge/` entries: storyboard intent or
+  canon). The **state** type spans all three maintained-state artifacts, each routing to its owner: `continuity/`
+  (route to `continuity_update` / `revise`, or surface as an M15 continuity conflict), `characters/<id>/knowledge/`
+  (route to `scene_knowledge_update` / `revise`), and the human-authored **`reveals.md`** ledger (route to the
+  human). For `reveals.md` the qualifier differs, because the ledger *outranks* storyboards (it is a plan, not
+  derived state): a **reveals-ledger defect** is the plan being wrong *on its own terms* — internally
+  inconsistent, or contradicting canon — **not** a storyboard disagreeing with it (that is a storyboard defect). Then **canon** when settled canon is contradicted; or **missing-context** when the fact needed to
   judge is absent from every consulted source (surface as an open question). So prose-vs-*valid*-state is a
   **prose** defect; **state** (any of the three artifacts) is the label only when the maintained entry is the
   thing that is stale or wrong. `NOTES.md:108-111` is the precedent ("Label storyboard-defect vs prose-defect
