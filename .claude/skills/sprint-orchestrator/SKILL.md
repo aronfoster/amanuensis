@@ -164,9 +164,23 @@ to an approval step.
 
 - **Personally verify** every sprint objective is met — re-run the sprint's
   done-when checks and milestone-level criteria yourself.
-- Check the sprint task boxes (`[ ]` → `[x]`) and mark milestone/roadmap items
-  complete. **Do not erase or overwrite** the sprint file — only mark items
-  done and add a short note if the sprint asks you to record a decision.
+- Check the sprint task boxes (`[ ]` → `[x]`) and mark the milestone/roadmap
+  items complete. **Marking a milestone complete is more than flipping its
+  checkboxes.** If the roadmap files finished milestones under a dedicated
+  **Completed** (or **Done**) section, *relocate* the finished milestone into
+  it — demote its heading to match that section's entries (e.g. `## Mxx` →
+  `### Mxx`) and move the whole section there — rather than leaving a done
+  milestone in the active zone with only its boxes ticked. Check first how the
+  roadmap already files its earlier finished milestones and follow that
+  convention; if there is no such section, ticking the boxes in place is the
+  convention. Do the move as a **pure relocation** (moved content byte-identical
+  except the heading level, verified with a diff) and touch **only** the
+  milestone this sprint completed — do not sweep unrelated milestones, even if
+  they look mis-filed.
+- **Do not erase or overwrite** the sprint file — only mark items done and add a
+  short note if the sprint asks you to record a decision. (This caution is about
+  the sprint file's content; it does **not** forbid relocating the completed
+  milestone within the roadmap, which is the expected closeout above.)
 - If the workflow defines a "next task" hand-off (e.g. queue the next sprint's
   planning prompt), provide it.
 

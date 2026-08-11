@@ -6,7 +6,7 @@ This directory is a minimal `short_story` project committed inside the Amanuensi
 
 The goal of running the recipes below is to confirm that the dispatcher itself works: it locates `pipeline-state.md`, confirms the requested (or recommended-next) step_id appears in the recipe list, resolves the workflow file at `amanuensis/agents/steps/<step>.md`, verifies the step's `required: true` preconditions resolve to existing files, and follows the step body in the same session — the step body then either records its own completion or stops with a question. Validating the literary quality of the step bodies' output is **not** a goal here.
 
-Four recipes cover the four selective-execution behaviors: the default recipe run in order (Recipe 1), rerunning a completed step (Recipe 2), a fix step blocking on a stale report (Recipe 3), and a non-dependent step running out of recipe order (Recipe 4). A fifth recipe covers the draft-lineage branch surface: rerunning a fix step from an earlier draft with a read-from argument, which mints a new draft as the active head and stamps the displaced drafts superseded (Recipe 5). Three further recipes exercise the Artifact-state model (`agents/orchestrator.md`'s **Artifact state** section) on the `anti_ai_report → anti_ai_fix` pair: a pending (blank-`Decision:`) report blocking the fix step as `review_pending` (Recipe 6), regenerating a stale report against the active head so the fix step runs clean (Recipe 7), and a human-recorded override that lets a stale apply proceed (Recipe 8). Two further recipes exercise the M10 structured review contract on the `compliance_report → compliance_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` and the hand-filled decision letting it run clean (Recipe 9), and an `amanuensis-review` companion session recording the same decision by review-id (Recipe 10). Two final recipes exercise the M11 structured anti-AI contract: a companion fan-out session adjudicating a whole eligible category with one stated decision plus a per-entry `SKIP` exception (Recipe 11), and a stray legacy `BULK:` header blocking the fix step as invalid input (Recipe 12). Three more recipes exercise the M12 structured prose-pass contract on the `prose_pass → prose_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` then the hand-filled decision letting it run clean (Recipe 13), an all-`KEEP` report (every finding anchored, decided `SKIP`) validating clean so the fix step passes the draft through unchanged (Recipe 14), and an unanchored pre-M12 report rejected as invalid input (Recipe 15). Five final recipes exercise the M13 two-evidence-layer metaphor contract on the `metaphor_fix → metaphor_apply` pair: a decision-pending report blocking `metaphor_fix` as `review_pending` alongside a non-destructive `REJECT` that does not block, then the filled decision running clean (Recipe 16); a bare-`REPLACE` report rejected as invalid input (Recipe 17); an all-`KEEP`/`REJECT` file as a `metaphor_fix` clean no-op and a `metaphor_apply` pass-through (Recipe 18); a selection-pending report blocking `metaphor_apply` then a filled `Selected:` running a deterministic apply (Recipe 19); and an ambiguous `Selected:` rejected as invalid input (Recipe 20). A final recipe exercises the M14 temporal character-state contract on `scene_knowledge_update`: from a hand-authored character `knowledge/story.md`, a scene storyboard carrying a knowledge delta, and an accepted draft, a first run confirms a provenance-stamped non-destructive append, and a second run against a corrected fact confirms the correction is appended as a `## Lost or superseded` transition rather than the prior entry overwritten (Recipe 21). A further recipe exercises the M15 objective-continuity contract on `continuity_update` — the sole writer of `continuity/`, run at the end of the recipe against the accepted prose: from a hand-authored `continuity/story.md` carrying one prior entry, a storyboard naming an objective fact, and accepted drafts, a first run confirms an evidence-stamped non-destructive append, a second run against a diegetically changed fact confirms a `## Superseded` transition plus a new stamped entry rather than an overwrite, and a third run against a conflicting fact confirms the conflict is surfaced non-blockingly to `open-questions.md` with the prior entry left intact (Recipe 22). See `agents/orchestrator.md` for the canonical contract the dispatcher follows.
+Four recipes cover the four selective-execution behaviors: the default recipe run in order (Recipe 1), rerunning a completed step (Recipe 2), a fix step blocking on a stale report (Recipe 3), and a non-dependent step running out of recipe order (Recipe 4). A fifth recipe covers the draft-lineage branch surface: rerunning a fix step from an earlier draft with a read-from argument, which mints a new draft as the active head and stamps the displaced drafts superseded (Recipe 5). Three further recipes exercise the Artifact-state model (`agents/orchestrator.md`'s **Artifact state** section) on the `anti_ai_report → anti_ai_fix` pair: a pending (blank-`Decision:`) report blocking the fix step as `review_pending` (Recipe 6), regenerating a stale report against the active head so the fix step runs clean (Recipe 7), and a human-recorded override that lets a stale apply proceed (Recipe 8). Two further recipes exercise the M10 structured review contract on the `compliance_report → compliance_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` and the hand-filled decision letting it run clean (Recipe 9), and an `amanuensis-review` companion session recording the same decision by review-id (Recipe 10). Two final recipes exercise the M11 structured anti-AI contract: a companion fan-out session adjudicating a whole eligible category with one stated decision plus a per-entry `SKIP` exception (Recipe 11), and a stray legacy `BULK:` header blocking the fix step as invalid input (Recipe 12). Three more recipes exercise the M12 structured prose-pass contract on the `prose_pass → prose_fix` pair: a blank `Decision:` field blocking the fix step as `review_pending` then the hand-filled decision letting it run clean (Recipe 13), an all-`KEEP` report (every finding anchored, decided `SKIP`) validating clean so the fix step passes the draft through unchanged (Recipe 14), and an unanchored pre-M12 report rejected as invalid input (Recipe 15). Five final recipes exercise the M13 two-evidence-layer metaphor contract on the `metaphor_fix → metaphor_apply` pair: a decision-pending report blocking `metaphor_fix` as `review_pending` alongside a non-destructive `REJECT` that does not block, then the filled decision running clean (Recipe 16); a bare-`REPLACE` report rejected as invalid input (Recipe 17); an all-`KEEP`/`REJECT` file as a `metaphor_fix` clean no-op and a `metaphor_apply` pass-through (Recipe 18); a selection-pending report blocking `metaphor_apply` then a filled `Selected:` running a deterministic apply (Recipe 19); and an ambiguous `Selected:` rejected as invalid input (Recipe 20). A final recipe exercises the M14 temporal character-state contract on `scene_knowledge_update`: from a hand-authored character `knowledge/story.md`, a scene storyboard carrying a knowledge delta, and an accepted draft, a first run confirms a provenance-stamped non-destructive append, and a second run against a corrected fact confirms the correction is appended as a `## Lost or superseded` transition rather than the prior entry overwritten (Recipe 21). A further recipe exercises the M15 objective-continuity contract on `continuity_update` — the sole writer of `continuity/`, run at the end of the recipe against the accepted prose: from a hand-authored `continuity/story.md` carrying one prior entry, a storyboard naming an objective fact, and accepted drafts, a first run confirms an evidence-stamped non-destructive append, a second run against a diegetically changed fact confirms a `## Superseded` transition plus a new stamped entry rather than an overwrite, and a third run against a conflicting fact confirms the conflict is surfaced non-blockingly to `open-questions.md` with the prior entry left intact (Recipe 22). A final recipe exercises the M16 bounded relational review on the retrofitted `compliance_report`: from a hand-authored `continuity/story.md`, a `characters/<id>/knowledge/story.md`, a storyboard, and an accepted draft whose prose contradicts a maintained fact, a single run reads the prose against the maintained state via targeted retrieval and writes a `reviewer-actions.md` carrying at least one relational per-block finding with a cited referent and a `[defect: <type>]` label plus a `## Context consulted` section, which the shared validator then accepts as a pending (blank-`Decision:`) fresh report (Recipe 23). See `agents/orchestrator.md` for the canonical contract the dispatcher follows.
 
 ## Layout
 
@@ -25,10 +25,10 @@ Committed in this directory:
 - `.claude/commands/run-step.md` and `.claude/commands/next-step.md` — copied in by `install.sh`.
 - `.opencode/agents/run-step.md` and `.opencode/agents/next-step.md` — copied in by `install.sh`.
 - `amanuensis` — symlink to the Amanuensis repo root (this repo). Lets the dispatcher resolve `amanuensis/agents/steps/<step>.md` exactly as it would under a real submodule install.
-- `characters/` — written by `character_extraction` on a successful run (Recipes 1–2); also hand-authored for Recipe 21 (a `rao/knowledge/story.md` knowledge file), which `scene_knowledge_update` then appends to on each of its two runs.
-- `continuity/` — written by `continuity_update` on a successful run; hand-authored for Recipe 22 (a `story.md` continuity file carrying one prior `co-01` entry), which `continuity_update` then appends stamped entries to — and adds a `## Superseded` transition to — across its three runs.
-- `plot/storyboards/` — hand-authored for Recipes 21 and 22 (a `001-storyboard.md` block: a `## Knowledge Delta` section for Recipe 21, and `## Canon active` / `## Must Preserve` / staging fields for Recipe 22).
-- `plot/drafts/attempt01/` — hand-authored for Recipes 3–20 (filler drafts and a stamped report: a `reviewer-actions.md` for Recipes 3–5 and 9–10, an `anti-ai.md` for Recipes 6–8 and 11–12, a `prose-pass.md` for Recipes 13–15, a `metaphors.md` for Recipes 16–20; Recipe 5 additionally hand-authors a `draft-manifest.md` carrying an `Active-head: draft-vNN.md` pointer and a three-entry lineage). On Recipe 4's success the fix step also writes `draft-v03.md` and `draft-manifest.md` here; on Recipe 5's success it writes the branch output `draft-v04.md` and updates the hand-authored manifest's pointer and `superseded_by` stamps; on Recipes 7–8's success `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md`, and in Recipe 7 `anti_ai_report` first overwrites `anti-ai.md` in place; on Recipe 9's success (and Recipe 10's follow-on) `compliance_fix` writes `draft-v03.md` and `draft-manifest.md` here as in Recipe 4; on Recipe 11's success (its second fix run, after the companion session fills the report's decision fields in place) `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md` as in Recipes 7–8; on Recipe 13's success (its second fix run, after the `Decision:` field is filled in place) `prose_fix` writes `draft-v03.md` and `draft-manifest.md` and appends an `Applied:` block to `prose-pass.md`; on Recipe 14's success `prose_fix` writes a verbatim pass-through `draft-v03.md` and `draft-manifest.md` (no `Applied:` blocks); Recipe 15 writes nothing (it blocks as invalid input). For the metaphor pair: on Recipe 16's filled rerun `metaphor_fix` appends a `#### Flatten Options` section and blank `Selected:` / `Selection-note:` fields to `metaphors.md` in place (minting no draft); on Recipe 18's success `metaphor_fix` is a clean no-op (writes nothing) and the follow-on `metaphor_apply` writes a verbatim pass-through `draft-v03.md` and `draft-manifest.md`; on Recipe 19's filled rerun `metaphor_apply` writes `draft-v03.md` and `draft-manifest.md`; Recipes 17 and 20 write nothing (they block as invalid input). Recipe 21 additionally hand-authors `draft-v01.md` and `draft-v02.md` here — the accepted prose its two `scene_knowledge_update` runs confirm against; that step mints no draft and writes only under `characters/`, so nothing else is added to this tree. Recipe 22 likewise hand-authors `draft-v01.md`, `draft-v02.md`, and `draft-v03.md` here — the accepted prose its three `continuity_update` runs confirm against; that step mints no draft and writes only under `continuity/`, so nothing else is added to this tree.
+- `characters/` — written by `character_extraction` on a successful run (Recipes 1–2); also hand-authored for Recipe 21 (a `rao/knowledge/story.md` knowledge file), which `scene_knowledge_update` then appends to on each of its two runs, and for Recipe 23 (a `rao/knowledge/story.md` knowledge file carrying one `kn-01` entry), which `compliance_report` reads read-only.
+- `continuity/` — written by `continuity_update` on a successful run; hand-authored for Recipe 22 (a `story.md` continuity file carrying one prior `co-01` entry), which `continuity_update` then appends stamped entries to — and adds a `## Superseded` transition to — across its three runs; and hand-authored for Recipe 23 (a `story.md` continuity file carrying one `co-01` chronology anchor), which `compliance_report` reads read-only.
+- `plot/storyboards/` — hand-authored for Recipes 21, 22, and 23 (a `001-storyboard.md` block: a `## Knowledge Delta` section for Recipe 21, `## Canon active` / `## Must Preserve` / staging fields for Recipe 22, and a `## Must Preserve` / staging block naming the maintained chronology fact for Recipe 23).
+- `plot/drafts/attempt01/` — hand-authored for Recipes 3–20 (filler drafts and a stamped report: a `reviewer-actions.md` for Recipes 3–5 and 9–10, an `anti-ai.md` for Recipes 6–8 and 11–12, a `prose-pass.md` for Recipes 13–15, a `metaphors.md` for Recipes 16–20; Recipe 5 additionally hand-authors a `draft-manifest.md` carrying an `Active-head: draft-vNN.md` pointer and a three-entry lineage). On Recipe 4's success the fix step also writes `draft-v03.md` and `draft-manifest.md` here; on Recipe 5's success it writes the branch output `draft-v04.md` and updates the hand-authored manifest's pointer and `superseded_by` stamps; on Recipes 7–8's success `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md`, and in Recipe 7 `anti_ai_report` first overwrites `anti-ai.md` in place; on Recipe 9's success (and Recipe 10's follow-on) `compliance_fix` writes `draft-v03.md` and `draft-manifest.md` here as in Recipe 4; on Recipe 11's success (its second fix run, after the companion session fills the report's decision fields in place) `anti_ai_fix` writes `draft-v03.md` and `draft-manifest.md` and appends to `anti-ai.md` as in Recipes 7–8; on Recipe 13's success (its second fix run, after the `Decision:` field is filled in place) `prose_fix` writes `draft-v03.md` and `draft-manifest.md` and appends an `Applied:` block to `prose-pass.md`; on Recipe 14's success `prose_fix` writes a verbatim pass-through `draft-v03.md` and `draft-manifest.md` (no `Applied:` blocks); Recipe 15 writes nothing (it blocks as invalid input). For the metaphor pair: on Recipe 16's filled rerun `metaphor_fix` appends a `#### Flatten Options` section and blank `Selected:` / `Selection-note:` fields to `metaphors.md` in place (minting no draft); on Recipe 18's success `metaphor_fix` is a clean no-op (writes nothing) and the follow-on `metaphor_apply` writes a verbatim pass-through `draft-v03.md` and `draft-manifest.md`; on Recipe 19's filled rerun `metaphor_apply` writes `draft-v03.md` and `draft-manifest.md`; Recipes 17 and 20 write nothing (they block as invalid input). Recipe 21 additionally hand-authors `draft-v01.md` and `draft-v02.md` here — the accepted prose its two `scene_knowledge_update` runs confirm against; that step mints no draft and writes only under `characters/`, so nothing else is added to this tree. Recipe 22 likewise hand-authors `draft-v01.md`, `draft-v02.md`, and `draft-v03.md` here — the accepted prose its three `continuity_update` runs confirm against; that step mints no draft and writes only under `continuity/`, so nothing else is added to this tree. Recipe 23 hand-authors `draft-v01.md` here — the accepted prose its `compliance_report` run reviews — and the step writes `reviewer-actions.md` here (its report output, stamped `Reviewed-draft: draft-v01.md`, carrying a blank-`Decision:` relational finding); that step mints no draft, so nothing else is added to this tree.
 
 ## Setup
 
@@ -1256,9 +1256,146 @@ Expected observable outcome (Run 3 — a conflicting fact surfaced to `open-ques
 
 As with the earlier runs, the exact wording is not asserted — what each run confirms is the structural outcome: Run 1 an evidence-stamped non-destructive append, Run 2 a `## Superseded` transition plus a new stamped entry with the prior entry preserved, and Run 3 a conflict surfaced to `open-questions.md` with the prior entry intact and completion still recorded.
 
-### Recipes 3–22 touch only untracked files
+### M16.9 recipe — bounded relational review
 
-The hand-authored `plot/drafts/attempt01/` tree — the drafts, the stamped report (`reviewer-actions.md` for Recipes 3–5 and 9–10, `anti-ai.md` for Recipes 6–8 and 11–12, `prose-pass.md` for Recipes 13–15), and everything the report and fix steps write into it — lives entirely in untracked paths. Recipe 21's hand-authored inputs are untracked too: `characters/rao/knowledge/story.md`, `plot/storyboards/001-storyboard.md`, and `plot/drafts/attempt01/draft-v01.md` / `draft-v02.md`, along with the stamped entries `scene_knowledge_update` appends to `story.md`. Recipe 22's hand-authored inputs are untracked as well: `continuity/story.md`, `plot/storyboards/001-storyboard.md`, and `plot/drafts/attempt01/draft-v01.md` / `draft-v02.md` / `draft-v03.md`, along with the stamped entries and the `## Superseded` transition `continuity_update` appends to `story.md`. Nothing new is committed under `examples/smoke/`, and the existing reset procedure below restores the committed baseline.
+A final recipe carries the maintained-state coverage from the *writers* (`scene_knowledge_update` in Recipe 21, `continuity_update` in Recipe 22) to a *reader*: the M16 **bounded relational review**, exercising the retrofitted `compliance_report` reading drafted prose against the maintained `continuity/` + `characters/<id>/knowledge/` state via targeted retrieval, per `agents/review-context.md`. Unlike those two maintained-state writers, this step consults the maintained state **read-only** and emits per-block relational findings that cite the referent each turns on. It is a review-artifact producer like the `compliance_report → compliance_fix` and `prose_pass → prose_fix` pairs (Recipes 9, 13), so it runs the shared review contract: the report it writes leaves `Decision:` fields **blank** (the fresh-report state), and a second step confirms the shared validator accepts it as `pending-remain` (exit 4) — the same review-evidence gate as those pairs. Because the fixture is a `short_story` project, the new relational inputs are `required: false` and project-type-aware (`continuity/`, the `knowledge/` files, and `canon/**` do not gate dispatch), story-positions reduce to `<scene-id>`, and referents are `continuity/story.md#co-NN` / `characters/<id>/knowledge/story.md#kn-NN`. The recipe runs the step **once**: it produces `reviewer-actions.md` carrying at least one relational per-block finding with a cited referent and a `[defect: <type>]` label plus a `## Context consulted` section, then flips its own `[x]`; a follow-on validator step confirms the report validates.
+
+### Recipe 23 — bounded relational review produces a cited finding
+
+Reset the fixture and repeat Setup. Then hand-author the following four untracked inputs. Per the `short_story` layout in `agents/project-layouts.md`, `<chapter-folder>` resolves to `plot/`, so storyboards live at `plot/storyboards/*-storyboard.md`, drafts at `plot/drafts/attempt01/`, the continuity target is the project-root `continuity/story.md`, and the character folder is `characters/<id>/`. Use `rao`, the fixture's lighthouse keeper.
+
+`continuity/story.md` — one maintained chronology entry (`co-01`) standing in for a fact maintained before this scene, in the `templates/continuity-book.md` shape (short_story: no `book_id`, story-position reduced to `<scene-id>`, evidence path `plot/drafts/attempt01/draft-vNN.md#<scene>`). The `continuity/story.md` precondition is `required: false`, so it does not gate dispatch; it is hand-authored so the relational chronology check has a maintained fact to read the prose against:
+
+```markdown
+---
+role: derived_state
+edit_policy: editable
+---
+
+# Objective Continuity — Story
+
+## Chronology / time anchors
+
+### Day 3 of the storm
+- **id:** co-01
+- **story-position:** scene00
+- **committed-in:** draft-v00.md
+- **evidence:** plot/drafts/attempt01/draft-v00.md#scene00
+- **anchor:** It is the third day of the storm that has kept Rao at the lamp.
+- **review:** unreviewed
+
+## Event staging
+
+## Location
+
+## Possession
+
+## Physical condition
+
+## Role / assignment
+
+## Open causal threads
+
+## Superseded
+```
+
+`characters/rao/knowledge/story.md` — one maintained knowledge entry (`kn-01`), in the `templates/knowledge-book.md` shape (short_story: story-position `<scene-id>`, full attempt-qualified `committed-in:`). Also `required: false`; present so the step's concealment check has a knowledge referent available:
+
+```markdown
+# Rao Knowledge State — Story
+
+---
+
+## Knows
+
+### the relief boat is overdue
+- **id:** kn-01
+- **story-position:** scene00
+- **committed-in:** plot/drafts/attempt01/draft-v00.md
+- **basis:** witnessed
+- **fact:** Rao knows the relief boat is overdue and has not been sighted.
+- **review:** unreviewed
+
+---
+
+## Suspects
+
+---
+
+## Believes incorrectly
+
+---
+
+## Must not know yet
+
+---
+
+## Lost or superseded
+```
+
+`plot/storyboards/001-storyboard.md` — a storyboard block whose `## Must Preserve` names the elapsed-time fact the maintained anchor fixes, so the relational chronology check has a block to anchor its finding to:
+
+```markdown
+---
+scene_ref: "plot/scene-list.md#scene-001"
+date: "Month YYYY"
+location: "Lighthouse gallery"
+beat_index: 1
+pov: Rao
+beat_type: interiority
+pace: measured
+---
+
+## Must Preserve
+
+- The elapsed time is consistent with the maintained chronology anchor: it is the third day of the storm (co-01), not weeks.
+
+## Staging
+
+Rao stands the lamp through the storm's third day, counting the days he has kept the light alone.
+```
+
+`plot/drafts/attempt01/draft-v01.md` — the accepted prose that **contradicts** the maintained chronology anchor (a cross-scene chronology contradiction: the prose names far more elapsed time than `co-01` allows):
+
+```markdown
+Rao trimmed the wick and watched the sea break white against the gallery glass.
+
+Three weeks into the blow, and still no relief boat. He had kept the lamp alone the whole while, and the oil was running thin.
+```
+
+Then:
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+/run-step compliance_report
+```
+
+Expected observable outcome (the relational review runs and writes a cited finding):
+
+- The dispatcher's existence checks pass: the `required: true` preconditions resolve — a `*-storyboard.md` exists under `plot/storyboards/` and `<latest-draft>` resolves to `draft-v01.md` (the only draft on disk) — so the step body loads. The new relational inputs `continuity/`, `characters/<character-id>/knowledge/*.md`, and `canon/**` are `required: false`, so they do not gate dispatch; here `continuity/story.md` and `characters/rao/knowledge/story.md` are hand-authored and present.
+- The step reads the drafted prose against the maintained state by **targeted retrieval** — naming the referent the prose invokes, not scanning the corpus: the prose's elapsed-time claim (`Three weeks into the blow`) contradicts the maintained chronology anchor `co-01` (the third day of the storm, at `scene00`), a cross-scene chronology contradiction.
+- It writes `plot/drafts/attempt01/reviewer-actions.md` beginning with a `Reviewed-draft: draft-v01.md` stamp and containing at least one relational per-block review unit — a `<!-- review-id: compliance:<scene-id>:block-NNN-vKK -->` anchor above an `INCONSISTENT (chronology): … [defect: prose] [ref: continuity/story.md#co-01]` violation line, with blank `- Decision:` / `- Decision-note:` fields — plus a report-level `## Context consulted` section naming the entry it read (e.g. `- continuity/story.md#co-01 (chronology anchor)`). The `Decision:` field is left blank, exactly as the step emits it (the decision belongs to the human).
+- The step's final action flips `[ ] compliance_report` to `[x] compliance_report` and updates `last_updated` — out of recipe order, while every upstream line stays `[ ]`.
+
+As in Recipes 21–22, the exact prose of the finding is not asserted; what this run confirms is that the step loaded past its preconditions, read the prose against the maintained state, and produced a per-block relational finding carrying a **cited referent** and a `[defect: <type>]` label plus a `## Context consulted` record.
+
+Then confirm the produced report validates. In a second step, run the shared validator over it (as `compliance_fix` and the `amanuensis-review` companion do — `agents/review-validation.md`):
+
+```sh
+# In a new Claude Code session, with cwd = examples/smoke:
+sh amanuensis/scripts/validate-review-artifact.sh plot/drafts/attempt01/reviewer-actions.md amanuensis/agents/review-grammars.yaml
+```
+
+Expected observable outcome:
+
+- The validator identifies the `compliance` family (an `adopted` family), parses the report, and reports `pending-remain` (exit 4): the produced finding carries a blank `Decision:` and therefore no review evidence yet, so it is `review_pending`, and the validator prints a `pending-review-ids:` section naming the unit. This is the **expected fresh-report state** — the same review-evidence gate as Recipes 9 and 13, where a `compliance_report` / `prose_pass` report is emitted with blank decisions and filling them is the human's next act (which would flip the verdict to `proceed`, exit 0). No `draft-manifest.md` is hand-authored, so the validator's state layer is `not checked`.
+- The report is **structurally valid**: the relational finding's ` [defect: <type>] [ref: <referent>]` tag and the `## Context consulted` section are additive and raise no structural or grammar defect (invalid 0). The blank-`Decision:` pending state is not an error — it is exactly what a freshly produced compliance report looks like before human review.
+
+As with Recipes 21–22, the structural outcome is asserted, not the exact prose: a well-formed, anchored relational review unit citing a maintained referent, a `## Context consulted` record, and the validator accepting the report as a **pending** (not invalid) fresh report.
+
+### Recipes 3–23 touch only untracked files
+
+The hand-authored `plot/drafts/attempt01/` tree — the drafts, the stamped report (`reviewer-actions.md` for Recipes 3–5 and 9–10, `anti-ai.md` for Recipes 6–8 and 11–12, `prose-pass.md` for Recipes 13–15), and everything the report and fix steps write into it — lives entirely in untracked paths. Recipe 21's hand-authored inputs are untracked too: `characters/rao/knowledge/story.md`, `plot/storyboards/001-storyboard.md`, and `plot/drafts/attempt01/draft-v01.md` / `draft-v02.md`, along with the stamped entries `scene_knowledge_update` appends to `story.md`. Recipe 22's hand-authored inputs are untracked as well: `continuity/story.md`, `plot/storyboards/001-storyboard.md`, and `plot/drafts/attempt01/draft-v01.md` / `draft-v02.md` / `draft-v03.md`, along with the stamped entries and the `## Superseded` transition `continuity_update` appends to `story.md`. Recipe 23's hand-authored inputs are untracked too: `continuity/story.md`, `characters/rao/knowledge/story.md`, `plot/storyboards/001-storyboard.md`, and `plot/drafts/attempt01/draft-v01.md`, along with the `plot/drafts/attempt01/reviewer-actions.md` the `compliance_report` step writes. Nothing new is committed under `examples/smoke/`, and the existing reset procedure below restores the committed baseline.
 
 ## Run — OpenCode
 
@@ -1269,7 +1406,7 @@ The hand-authored `plot/drafts/attempt01/` tree — the drafts, the stamped repo
 # primary agent). For run-step, the step_id goes in the invoking message.
 ```
 
-The same recipes hold, with the `next-step` agent standing in for `/next-step` (Recipe 1) and the `run-step` agent standing in for `/run-step <step_id>` (Recipes 2–9, 11, 12, 13–15, 16–20, 21, and 22); for Recipe 5, the read-from draft goes in the invoking message alongside the step_id (`compliance_fix from draft-v01`). The expected observable outcomes are identical to the Claude Code lists above. The OpenCode dispatcher sources are held to behavioral parity with the Claude Code ones; only host-specific frontmatter and invocation differ. Recipe 10 and Recipe 11's fan-out companion session are Claude Code-only: the companion ships as a Claude Code skill (OpenCode parity is on the ROADMAP's deferred list), so on OpenCode cover their decision-writing by hand-editing the `Decision:` / `Decision-note:` fields instead — Recipe 9's hand-edit is the model; for Recipe 11, hand-write the category decision into each covered em-dash unit's fields (including the category-decision notes) and the per-entry `SKIP` exception, then proceed with the fix runs as written. Recipes 13–15's decision-writing is by hand-edit on both hosts (Recipe 9's model); prose_pass is flat with no fan-out, so no dedicated companion recipe exists, matching the flat-family precedent of Recipe 10. The metaphor recipes (16–20) are hand-edit on both hosts too — both the disposition (`Decision:`) and selection (`Selected:` / `Selection-note:`) writes; a companion session over metaphor is Claude Code-only and covered by the flat-family precedent (Recipe 10), so no dedicated metaphor companion recipe is added. Recipe 21 is a `/run-step scene_knowledge_update` recipe with no companion session — it holds on OpenCode via the `run-step` agent exactly as on Claude Code, both runs (the non-destructive append and the correction-as-transition) identical in outcome. Recipe 22 is likewise a `/run-step continuity_update` recipe with no companion session — it holds on OpenCode via the `run-step` agent exactly as on Claude Code, all three runs (the non-destructive append, the `## Superseded` transition, and the conflict surfaced to `open-questions.md`) identical in outcome.
+The same recipes hold, with the `next-step` agent standing in for `/next-step` (Recipe 1) and the `run-step` agent standing in for `/run-step <step_id>` (Recipes 2–9, 11, 12, 13–15, 16–20, 21, 22, and 23); for Recipe 5, the read-from draft goes in the invoking message alongside the step_id (`compliance_fix from draft-v01`). The expected observable outcomes are identical to the Claude Code lists above. The OpenCode dispatcher sources are held to behavioral parity with the Claude Code ones; only host-specific frontmatter and invocation differ. Recipe 10 and Recipe 11's fan-out companion session are Claude Code-only: the companion ships as a Claude Code skill (OpenCode parity is on the ROADMAP's deferred list), so on OpenCode cover their decision-writing by hand-editing the `Decision:` / `Decision-note:` fields instead — Recipe 9's hand-edit is the model; for Recipe 11, hand-write the category decision into each covered em-dash unit's fields (including the category-decision notes) and the per-entry `SKIP` exception, then proceed with the fix runs as written. Recipes 13–15's decision-writing is by hand-edit on both hosts (Recipe 9's model); prose_pass is flat with no fan-out, so no dedicated companion recipe exists, matching the flat-family precedent of Recipe 10. The metaphor recipes (16–20) are hand-edit on both hosts too — both the disposition (`Decision:`) and selection (`Selected:` / `Selection-note:`) writes; a companion session over metaphor is Claude Code-only and covered by the flat-family precedent (Recipe 10), so no dedicated metaphor companion recipe is added. Recipe 21 is a `/run-step scene_knowledge_update` recipe with no companion session — it holds on OpenCode via the `run-step` agent exactly as on Claude Code, both runs (the non-destructive append and the correction-as-transition) identical in outcome. Recipe 22 is likewise a `/run-step continuity_update` recipe with no companion session — it holds on OpenCode via the `run-step` agent exactly as on Claude Code, all three runs (the non-destructive append, the `## Superseded` transition, and the conflict surfaced to `open-questions.md`) identical in outcome. Recipe 23 is likewise a `/run-step compliance_report` recipe with no companion session — it holds on OpenCode via the `run-step` agent exactly as on Claude Code (the relational review reads the maintained state and writes the cited-referent finding), and its follow-on validator step is a plain shell command identical on both hosts.
 
 ## Reset between runs
 
@@ -1278,7 +1415,7 @@ git checkout examples/smoke/
 git clean -fd examples/smoke/
 ```
 
-`git checkout` restores `pipeline-state.md`, `open-questions.md`, and any other tracked file the run modified. `git clean -fd` removes the untracked install artifacts (`.claude/`, `.opencode/`), the `amanuensis` symlink, any `characters/` tree written by Recipes 1–2 or hand-authored for Recipe 21 (including the `rao/knowledge/story.md` the step appended to), the `continuity/` tree hand-authored for Recipe 22 (including the `story.md` the step appended entries and a `## Superseded` transition to), the `plot/storyboards/` tree hand-authored for Recipes 21 and 22, and the entire hand-authored `plot/drafts/attempt01/` tree from Recipes 3–22 — including anything the report and fix steps wrote into it (`draft-v03.md` or `draft-v04.md`, `draft-manifest.md`, the appended or decision-edited `reviewer-actions.md`, the regenerated, decision-edited, or appended `anti-ai.md`, the appended or decision-edited `prose-pass.md`, and the decision/selection-edited or variant-appended `metaphors.md`). After both commands the fixture is back to the committed baseline.
+`git checkout` restores `pipeline-state.md`, `open-questions.md`, and any other tracked file the run modified. `git clean -fd` removes the untracked install artifacts (`.claude/`, `.opencode/`), the `amanuensis` symlink, any `characters/` tree written by Recipes 1–2 or hand-authored for Recipe 21 (including the `rao/knowledge/story.md` the step appended to) or Recipe 23 (the `rao/knowledge/story.md` `compliance_report` reads), the `continuity/` tree hand-authored for Recipe 22 (including the `story.md` the step appended entries and a `## Superseded` transition to) or Recipe 23 (the `story.md` `compliance_report` reads), the `plot/storyboards/` tree hand-authored for Recipes 21, 22, and 23, and the entire hand-authored `plot/drafts/attempt01/` tree from Recipes 3–23 — including anything the report and fix steps wrote into it (`draft-v03.md` or `draft-v04.md`, `draft-manifest.md`, the appended or decision-edited `reviewer-actions.md` — including the fresh blank-`Decision:` `reviewer-actions.md` `compliance_report` writes in Recipe 23 — the regenerated, decision-edited, or appended `anti-ai.md`, the appended or decision-edited `prose-pass.md`, and the decision/selection-edited or variant-appended `metaphors.md`). After both commands the fixture is back to the committed baseline.
 
 To rerun, repeat the **Setup** section.
 
@@ -1286,7 +1423,7 @@ To rerun, repeat the **Setup** section.
 
 For each recipe: the dispatcher located `pipeline-state.md`, confirmed the step_id appears in the recipe list (selecting the first non-`[x]` step in `/next-step`'s case), resolved the step workflow file under `amanuensis/agents/steps/`, verified every `required: true` precondition resolves to an existing file, and started executing the step body in the same session. From there one of:
 
-- The step body completed, wrote its declared outputs, and as its final action marked its own step line `[x]` and updated `last_updated`. No other checkbox moved. Recipe 21's two `scene_knowledge_update` runs both take this success path — each records completion after a non-destructive, provenance-stamped write to `characters/rao/knowledge/story.md` (the second refreshing the already-`[x]` line), minting no draft and moving no other checkbox. Recipe 22's three `continuity_update` runs all take this success path too — the first records completion after an evidence-stamped non-destructive append to `continuity/story.md`, the second after a `## Superseded` transition plus a new stamped entry, and the third after surfacing a conflict to `open-questions.md` non-blockingly (the conflict does not block — the prior entry is left intact and the step still completes); each mints no draft and moves no other checkbox.
+- The step body completed, wrote its declared outputs, and as its final action marked its own step line `[x]` and updated `last_updated`. No other checkbox moved. Recipe 21's two `scene_knowledge_update` runs both take this success path — each records completion after a non-destructive, provenance-stamped write to `characters/rao/knowledge/story.md` (the second refreshing the already-`[x]` line), minting no draft and moving no other checkbox. Recipe 22's three `continuity_update` runs all take this success path too — the first records completion after an evidence-stamped non-destructive append to `continuity/story.md`, the second after a `## Superseded` transition plus a new stamped entry, and the third after surfacing a conflict to `open-questions.md` non-blockingly (the conflict does not block — the prior entry is left intact and the step still completes); each mints no draft and moves no other checkbox. Recipe 23's `compliance_report` run takes this success path as well — it records completion after writing `plot/drafts/attempt01/reviewer-actions.md` with a relational per-block finding (a cited referent, a `[defect: <type>]` label, and a blank `Decision:`) and a `## Context consulted` section, minting no draft and moving no other checkbox; the follow-on validator step is a read-only check that exits `pending-remain` (exit 4) and writes nothing.
 - The step body decided it could not proceed (a `critical` blocker in Recipe 1's stop-and-ask outcome, the stale-report blocker in Recipe 3, the `review_pending` blockers in Recipes 6 and 9, Recipe 11's first run, Recipe 13's first run, Recipe 16's first run, and Recipe 19's first run, the invalid-input blocker in Recipes 12, 15, 17, and 20), appended the blocker to `open-questions.md`, and exited without recording completion — `pipeline-state.md` untouched.
 
 Failure modes — a missing or malformed `pipeline-state.md`, a requested step_id that does not appear in the recipe list, a missing step workflow file, a `required: true` precondition that resolves to no existing file (the dispatcher names the missing files and stops), or `/next-step` finding every step `[x]` (recipe complete) — should print a clear human-readable message and exit without modifying any project file. Surfacing one of those where a recipe does not expect it would mean the fixture is misconfigured or the dispatcher/orchestrator work has a defect; report it.

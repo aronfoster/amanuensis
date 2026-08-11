@@ -54,7 +54,12 @@ Do not read canon files during this step. If a fix requires canon clarification,
 
 Work unit by unit through the review units of `reviewer-actions.md`, consuming each unit's `Decision:` field. (The validator has already run — see Inputs — so every actionable unit holds a legal decision; the step never encounters a blank `Decision:`, because a blank on any unit blocked the step at validation.)
 
-For each unit whose `Decision:` is `FIX` or `FIX: [instruction]`:
+Before acting on a unit, read its **defect label** — the ` [defect: <type>]` tag on the violation line, where `<type>` ∈ {prose, storyboard, state, canon, missing-context} (the taxonomy and routing are defined in `agents/review-context.md`; this step reads the label, it does not re-derive it, and it reads no canon or state file to route). The label — not the decision token alone — determines where remediation goes, for **every** decision, `FIX` included:
+
+- A **prose**-defect unit — or a local unit carrying **no** `[defect: …]` tag, which is the pre-M16 Must-Contain / Must-Not-Contain / Canon-as-stated finding, a prose fix — decided `FIX` is applied to prose, as below.
+- A **state / storyboard / canon / missing-context** unit is **never applied to prose**, whether the human recorded `FIX` **or** `ESCALATE`. It is routed to its authoritative artifact via the `Escalated:`-style upstream-target block below, so a non-prose `FIX` cannot bypass the routing and edit the wrong artifact.
+
+For each unit whose `Decision:` is `FIX` or `FIX: [instruction]` **and whose defect label is `prose` (or absent)**:
 
 1. Locate the prose in `<latest-draft>` corresponding to the violation (the quote recorded in the report is the anchor).
 2. Apply the smallest local edit that resolves the violation. If the decision is `FIX: [instruction]`, follow the instruction — the token's payload, carried exactly as the report records it — exactly. If the decision is bare `FIX`, apply the obvious local edit implied by the violation type. `Decision-note:`, where present, is the human's rationale or clarification — available as context for the edit, never a machine-parsed instruction.
@@ -68,15 +73,15 @@ For each unit whose `Decision:` is `FIX` or `FIX: [instruction]`:
    - Prose after: "[revised quote]"
    ```
 
-For each unit whose `Decision:` is `ESCALATE`:
+For each unit routed upstream — decided `ESCALATE`, **or** decided `FIX` on a **non-prose** defect (`state` / `storyboard` / `canon` / `missing-context`):
 
 1. Do not modify the prose for this unit.
-2. Append an `Escalated:` block to `reviewer-actions.md`, which may name the unit's review-id alongside the item label:
+2. Append an `Escalated:` block to `reviewer-actions.md`, which may name the unit's review-id alongside the item label. The **Suggested upstream target** routes by the unit's defect type (per the taxonomy in `agents/review-context.md`):
 
    ```markdown
    #### Escalated: [Item label] (review-id: [review-id])
-   - Reason: [one line — why local edit cannot resolve this]
-   - Suggested upstream target: [storyboard block / canon file / open question]
+   - Reason: [one line — why local edit cannot resolve this; for a non-prose FIX, that the label routes it upstream]
+   - Suggested upstream target: [routed by defect type — storyboard → the storyboard block; state → continuity_update / revise (continuity), scene_knowledge_update / revise (knowledge), or the human who maintains reveals.md; canon → the named canon file; missing-context → an open question]
    ```
 
 For each unit whose `Decision:` is `SKIP`: leave the prose as-is and do not append any block. The human has accepted the violation.
@@ -91,7 +96,7 @@ For each unit whose `Decision:` is `SKIP`: leave the prose as-is and do not appe
 ## Outputs
 
 - `<chapter-folder>/drafts/<latest-attempt>/<next-draft>` — the full revised prose, written as the next versioned draft file. `<next-draft>` is the highest existing draft number + 1 (monotonic; per `agents/project-layouts.md`), not one greater than the draft read, so a branch rerun never collides with an existing file. The original `<latest-draft>` is not modified. All unchanged prose is copied through verbatim, with `FIX` edits applied in place. Block comment markers and scene breaks are preserved.
-- `<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md` — the same input file, with `Applied:` blocks appended for each `FIX` unit actioned and `Escalated:` blocks appended for each `ESCALATE` unit. Pre-existing content (the Phase 1 report, its `Reviewed-draft` header, the review-id anchors, and the human's `Decision:` / `Decision-note:` fields) is not modified; this step only appends. The apply log for this run lives here.
+- `<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md` — the same input file, with `Applied:` blocks appended for each **prose-defect** `FIX` unit actioned and `Escalated:` blocks appended for each unit routed upstream — every `ESCALATE` unit **and** every non-prose (`state` / `storyboard` / `canon` / `missing-context`) `FIX` unit, whose remediation goes to its authoritative artifact rather than to prose. Pre-existing content (the Phase 1 report, its `Reviewed-draft` header, the review-id anchors, and the human's `Decision:` / `Decision-note:` fields) is not modified; this step only appends. The apply log for this run lives here.
 - `<chapter-folder>/drafts/<latest-attempt>/draft-manifest.md` — append a per-version entry for `<next-draft>` after a successful prose write, following the schema in `agents/project-layouts.md`. `read_from` names the draft this step actually read (the active head, or the read-from override); `timestamp` is the write time (ISO 8601 with timezone offset); `review_gate` is this step's `review_required` value (`false`). Example:
 
   ```markdown

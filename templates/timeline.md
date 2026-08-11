@@ -20,7 +20,10 @@ Entries are ordered chronologically. Each carries:
 - `story-position:` — where the event is fixed in the story, canonical folder-style
   `<book-id>/<chapter-id>/<scene-id>` (short_story: `<scene-id>`). Pre-story events that
   predate any scene use `pre-story` and sort before the first scene.
-- `committed-in:` — the accepted draft that committed the event (draft-vNN.md), where one applies.
+- `committed-in:` — the accepted draft that committed the event, as its full
+  attempt-qualified path `<chapter-folder>/drafts/<attemptNN>/draft-vNN.md`, where one
+  applies (never a bare `draft-vNN.md` basename — basenames repeat across chapters and
+  attempts and would false-fresh on a collision). A pre-story event with no draft uses `—`.
 
 Non-destruction (see agents/characters.md): a corrected event is never silently overwritten.
 Move the superseded event to `## Corrected or superseded`, keeping its id, and record the
@@ -39,7 +42,7 @@ corrected event as its own new stamped entry under `## Events`.
 ### [Short label]
 - **id:** tl-02
 - **story-position:** book1/chapter01/scene03
-- **committed-in:** draft-v03.md
+- **committed-in:** plot/book1/chapter01/drafts/attempt01/draft-v03.md
 - **event:** [What happened, character-relative.]
 - **notes:** —
 
@@ -56,6 +59,6 @@ corrected event as a new entry under ## Events above.
 ### [Short label]
 - **id:** tl-02
 - **held:** book1/chapter01/scene03 to book1/chapter04/scene02
-- **committed-in:** draft-v09.md
+- **committed-in:** plot/book1/chapter01/drafts/attempt01/draft-v09.md
 - **superseded-by:** tl-06
 - **what changed:** [Brief explanation of the correction.]

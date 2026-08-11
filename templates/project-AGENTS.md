@@ -9,6 +9,7 @@ Use the reusable guidance in `amanuensis/agents/` for planning, drafting, and re
 - `canon/` — project-level world truth
 - `characters/` — character profiles, timelines, relationships, and knowledge state
 - `continuity/` — maintained objective continuity state (chronology, event staging, location, possession, condition, role, open threads)
+- `reveals.md` — story-level reveals ledger (human-authored planning; reveal buildup, landing, and concealed-until positions)
 - `locations/` — location references
 - `plot/` — book, chapter, storyboard, draft, and aftermath files
 - `voice.md` — project-root voice file read by drafting, prose pass, line pass, and metaphor workshop (start from `amanuensis/templates/voice.md`)
@@ -23,6 +24,8 @@ Use the reusable guidance in `amanuensis/agents/` for planning, drafting, and re
 - `amanuensis/agents/chapters.md` — use when creating or editing chapter files.
 - `amanuensis/agents/characters.md` — use when updating character state.
 - `amanuensis/agents/continuity.md` — use when maintaining objective continuity state.
+- `amanuensis/agents/review-context.md` — use when determining what context a review needs, or when reading a relational review's findings.
+- `amanuensis/agents/reveals.md` — use when authoring or consulting the reveals ledger.
 - `amanuensis/agents/steps/character-extraction.md` — use when bootstrapping character folders from the story plan and canon.
 - `amanuensis/agents/steps/scene-generation.md` — use when producing a chapter's `scene-list.md` from the plan, characters, and canon.
 - `amanuensis/agents/steps/storyboarding.md` — use when creating storyboard blocks.
