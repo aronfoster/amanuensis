@@ -21,6 +21,67 @@ Notes: Formerly M14. This remains intentionally tabled until selective execution
 
 ---
 
+## M18 — Review companion: OpenCode parity + override capture
+
+Bring the `amanuensis-review` companion to full host parity and give it the one
+human-decision surface it still lacks. Two now-unblocked Deferred items promoted together
+at triage (2026-08): **OpenCode parity for the companion** and **companion capture of
+stale-`Override:` blocks**. Bundled so the OpenCode adapter is written once already
+carrying the override surface, rather than porting Claude-first and re-opening the parity
+gap. Independent of M17 — it can proceed first.
+
+Today `install.sh` installs asymmetrically: Claude Code gets three dispatcher commands
+**and** the companion skill; OpenCode gets only the three dispatcher agents
+(`install.sh:79-93`). So an OpenCode user runs the full pipeline and all four review
+families but reviews them by hand — opening `reviewer-actions.md` / `metaphors.md`,
+hand-writing `Decision:` / `Selected:` fields, running the validator manually — with none
+of the guided queue, progress counts, fan-out, or two-round metaphor flow M10–M13 built.
+
+Done when: an OpenCode user can review any of the four artifact families through a
+companion at behavior/safety parity with the Claude Code skill; both hosts' companions can
+capture a human-stated stale-override into the review artifact without a hand-edit;
+`install.sh` installs the companion to both hosts; and the shared contracts
+(`agents/review-grammars.yaml`, `agents/review-validation.md`,
+`scripts/validate-review-artifact.sh`) are unchanged — both companions stay thin adapters
+over them.
+
+* [ ] M18.1 Port the companion to OpenCode as an explicitly-invoked agent
+  (`templates/dispatcher/.opencode/agents/amanuensis-review.md`), mirroring the Claude Code
+  skill's procedure, pacing controls, category/fan-out handling, two-round (metaphor)
+  handling, and hard rules. Behavior and safety checks match; activation need not (the M7.8
+  precedent) — Claude Code auto-activates the skill, OpenCode invokes the agent like
+  `run-step`.
+* [ ] M18.2 Wire `install.sh` to install the OpenCode companion alongside the existing
+  `.opencode/agents/` dispatcher agents, parallel to the Claude Code skill block
+  (`install.sh:82,114,130`).
+* [ ] M18.3 Define the companion override carve-out and implement it in the Claude Code
+  skill: capture a human-*stated* stale-override and write the `Override:` block into the
+  review artifact (the file the companion already writes), per the block shape and
+  recognition rules in `agents/steps/compliance-fix.md:118-138`. The companion originates
+  no override and states no decision the human did not — it captures, exactly as it does
+  `Decision:` fields. Update the companion hard rules to permit this one write; the current
+  confinement forbids touching artifact state (`SKILL.md:193-202`).
+* [ ] M18.4 Carry the override carve-out into the OpenCode companion (M18.1) so both hosts
+  land at parity, covering all four families' override paths (the `Override:` mechanism is
+  identical across the fix/apply steps).
+* [ ] M18.5 Smoke coverage: an OpenCode review round-trip for one family (report →
+  companion-captured decisions → fix consumes); and an override captured by the companion
+  (stale report → human authorizes → companion writes the `Override:` block → fix step
+  recognizes it and records it in its apply log).
+
+Notes: Promoted from Deferred at triage (2026-08). Preconditions were met by M13 — the
+companion contract is stable across all four families, including the two-round metaphor
+selection layer. The port is bounded because the companion is an explicit thin adapter
+(`SKILL.md:15`) over host-agnostic contracts that already exist; parity means the same
+behavior and safety checks, not identical activation (M7.8). Override capture (former
+Deferred item) is folded in here rather than shipped Claude-first, so both hosts reach
+parity in one pass. Not in scope: any change to the grammar/validator contracts, and any
+new review family. Recorded as a roadmap milestone; turn it into an active SPRINT.md via a
+planning pass when it is scheduled (M17's precedent: a forward milestone lives on the
+roadmap before it is sprinted).
+
+---
+
 ## Completed
 
 ### M1 — Pipeline step-list consistency
@@ -473,10 +534,16 @@ and step bodies consistently block, warn, or proceed according to declared rules
   source-specific, and recorded in the relevant artifact or manifest. No stale apply
   should happen silently.
 
-* [ ] M9.6 Update the dispatcher to surface stale/review blockers before loading the
-  requested step body when the precondition is machine-checkable. **Deferred out of
-  Sprint 14** to a follow-on: the checks stay in the step bodies until the state model
-  proves out (see the Sprint-14 note below and the Deferred list).
+* [x] M9.6 Update the dispatcher to surface stale/review blockers before loading the
+  requested step body when the precondition is machine-checkable. **Resolved as a
+  deliberate non-goal (triage, 2026-08):** enforcement stays in the step bodies and the
+  dispatcher stays thin by design (`agents/orchestrator.md:192`). The step bodies already
+  block on stale / review-pending inputs correctly and completely (`compliance-fix.md:126`;
+  the report→fix freshness invariant), so M9's enforcement goal is met; the dispatcher lift
+  would only surface the blocker earlier and would duplicate freshness logic into a second
+  place, against the thin-dispatcher principle. Declined, not deferred — so M9 is complete.
+  (If the dispatcher is ever grown past mechanical, this belongs with M16's deferred
+  scope/precedence lift as one "dispatcher enforcement" milestone, not on its own.)
 
 * [x] M9.7 Smoke coverage: verify stale report detection, reviewed-artifact detection,
   pending-review blocking or warning behavior, regeneration of a stale report against
@@ -501,7 +568,9 @@ No new frontmatter or manifest field: override is recorded in the consuming step
 log; `discarded`/`regenerated` name behavior that already ships. The one new step-body
 behavior is an explicit recorded-override branch in the four fix/apply steps. M9.6
 (dispatcher lift) is deferred so the model proves out in step bodies first; Sprint 14
-delivers M9.1–M9.5 and M9.7.
+delivers M9.1–M9.5 and M9.7. **Triage (2026-08): M9.6 is resolved as a deliberate
+non-goal** — the step-body state model proved out across M9–M16, and the lift was
+declined to keep the dispatcher thin, so M9 is complete (see the M9.6 line above).
 
 ---
 
@@ -630,52 +699,89 @@ Notes — planning inputs recorded ahead (Sprint 16 AI-first review), plus decis
 
 ## Deferred
 
-- dispatcher-level staleness/review lift (M9.6) — surface stale/review blockers before
-  loading the step body; deferred out of Sprint 14 until the step-body state model proves out
-- OpenCode parity for the `amanuensis-review` companion skill — M10.6 ships Claude Code
-  only (owner decision, Sprint 15); revisit once the skill's contract is stable
-- consumer-side CI lift for review-artifact validation — wire
-  `scripts/validate-review-artifact.sh` into the installed CI workflow once the
-  compliance slice proves out (M10 ships it agent-run only)
-- agentic fallback for review-artifact validation — if the strict script proves too
-  rigid against hand-edited artifacts in practice, front it with an agent-followed
-  procedure (Sprint 15 chose the script; owner decision). Note: the Sprint-16
-  AI-plus-human directive makes this less likely to be needed — the companion writes
-  canonical format, so hand-edit noise shrinks on the write path
-- companion-captured `Override:` blocks — the stale-override is a stated human
-  decision about artifact state, hand-written into the artifact today (the fix/apply
-  steps' Override sections; `agents/orchestrator.md`'s Artifact-state contract). Under
-  the AI-plus-human directive the companion is the natural capture surface; its write
-  surface currently excludes overrides. Revisit once M12–M13 land
+Triaged 2026-08 — grouped by disposition, with the rationale recorded so closed forks are
+not reopened.
+
+**Removed in this pass** (no longer belong on the list):
+
+- *scene knowledge update step* — shipped as `scene_knowledge_update` in M14/Sprint 19
+  (`agents/steps/scene-knowledge-update.md`); the entry was a stale leftover the M14 sweep
+  missed.
+- *dispatcher-level staleness/review lift (M9.6)* — resolved as a deliberate non-goal (see
+  the M9 section). The step bodies enforce staleness/review correctly and completely, so
+  the lift was declined to keep the dispatcher thin; M9 is now complete.
+- *consumer-side CI lift for review-artifact validation* — dropped. The
+  point-of-consumption gate already blocks invalid/stale/pending artifacts, and the
+  AI-plus-human write path shrank the hand-edit risk CI would catch; a real lift would also
+  have to exempt legitimate mid-review `pending` state, so it is not the trivial mirror of
+  `pipeline-state-check.yml` it looked like.
+- *OpenCode companion parity* and *companion-captured `Override:` blocks* — promoted
+  together to **M18**.
+
+### Now-actionable — precondition met, unscheduled
+
 - strip the validator's inert artifact-bulk machinery and the always-0
-  `inherited-by-bulk` ledger row once M12–M13 confirm no family defines artifact-level
-  bulk (retired for anti-AI in Sprint 16; the machinery currently doubles as the
-  stray-`BULK:`-header rejection path, which must survive any cleanup)
+  `inherited-by-bulk` ledger row — unblocked now that M13 confirmed no adopted family
+  defines artifact-level bulk. The machinery still doubles as the stray-`BULK:`-header
+  rejection path, which must survive the cleanup. Small; fold into a later slice.
+
+### Parked — rationale still holds
+
+- storyboard_review_fix apply step — makes `storyboard_review` more than advisory,
+  mirroring how `prose_pass` gained `prose_fix` (after M6 proved out). Affirmed at triage as
+  a real future increment.
+- derived reveals-ledger writer (`reveals_update`) — M16/Sprint 21 shipped the
+  human-authored, story-level `reveals.md` ledger and its read path (`storyboard_review`'s
+  setup-sufficiency + premature-disclosure checks); a *derived* writer that reconciles the
+  ledger from accepted storyboards/prose stays deferred, because a reveal is forward
+  authorial intent and `storyboard_review` is pre-draft — a writer feeding a ledger derived
+  from the same storyboards it then reviews would be near-circular. Revisit once a
+  non-circular basis exists.
+- agentic fallback for review-artifact validation — front the strict validator with an
+  agent-followed procedure only if it proves too rigid against hand-edited artifacts. The
+  Sprint-16 AI-plus-human directive makes this less likely to be needed — the companion
+  writes canonical format, so hand-edit noise shrinks on the write path.
 - compliance hand-edit-era residue — the blank `Decision-note:` slot emission and the
-  `### Summary` block's ledger-redundant `Review units emitted:` line (the
-  clean-block count and the pattern-level observation are *not* ledger-derivable and
-  stay). Cosmetic; fold into a later slice rather than churning the shipped M10
-  surface on its own
-- storyboard_review_fix apply step (after M6 proves out)
-- derived reveals-ledger writer (`reveals_update`) — M16 / Sprint 21 shipped the human-authored, story-level `reveals.md` ledger and its read path (`storyboard_review`'s setup-sufficiency + premature-disclosure checks); a *derived* writer that reconciles the ledger from accepted storyboards/prose stays deferred, because a reveal is forward authorial intent and `storyboard_review` is pre-draft — a writer that fed a ledger derived from the same storyboards it then reviews would be near-circular. Revisit once a non-circular basis exists (surfaced in M16 / Sprint 21)
-- scene knowledge update step
-- post-chapter update step
-- chapter selection for book/series ("which chapter is current?")
-- pre-writing pipeline (vague idea -> plan)
-- multi-host beyond Claude Code / OpenCode
-- per-attempt comparison tooling (revisit after M7's archive model)
-- multi-work concurrency
-- Cross-book `truth:` reference resolution (surfaced in Sprint 20 / M15 PR review) — `scene_knowledge_update`
-  reads only the current project-type `continuity/` file when writing a `truth: continuity/book-N.md#co-NN`
-  reference, so in a series an incorrect belief about a fact established in an earlier book falls back to
-  free-text `truth:` rather than resolving the qualified pointer. The reference is advisory with a correct
-  free-text fallback, so this is a series-only completeness refinement, not a bug: declare prior
-  `continuity/book-*.md` as optional inputs and search them before falling back. Couples naturally to M16
-  (bounded relational review already reads across books).
-- revise coverage of M14 temporal-state files (surfaced in Sprint 20 / M15 PR review) — M15's
-  `agents/revision.md` edit states the current-in-place / superseded-as-record discipline generally
-  for non-destructive temporal-state files, which covers character `knowledge/`/`timeline.md`/
-  `relationships.md` as well as `continuity/`; add a demonstration or smoke recipe exercising a
-  `revise` against an M14 `knowledge/`/`timeline.md` entry (correcting a current entry in place while
-  leaving a `## Lost or superseded` transition untouched) to prove the discipline holds for the M14
-  artifacts, not only continuity.
+  `### Summary` block's ledger-redundant `Review units emitted:` line (the clean-block count
+  and the pattern-level observation are *not* ledger-derivable and stay). Cosmetic; fold
+  into a later slice rather than churning the shipped M10 surface on its own.
+- revise coverage of M14 temporal-state files (surfaced in Sprint 20 / M15 PR review) — add
+  a demonstration or smoke recipe exercising a `revise` against an M14
+  `knowledge/`/`timeline.md` entry (correcting a current entry in place while leaving a
+  `## Lost or superseded` transition untouched), proving the discipline `agents/revision.md`
+  already states generally holds for the M14 artifacts, not only continuity. A test/demo
+  gap, not a functional one.
+- pre-writing pipeline (vague idea -> plan) — a front stage before the current pipeline.
+  Parked (not elevated to a stated ambition at triage).
+- per-attempt comparison tooling — revisit after M7/M8's archive model sees real use; no
+  demand signal yet.
+- multi-work concurrency — the orchestrator deliberately does not coordinate concurrent work
+  across chapters or works (`agents/orchestrator.md:189`); parked with no plan to change it.
+
+### Book/series rollout cluster — deferred together
+
+Book/series is not a near-term target (triage): only `short_story` is verified end-to-end.
+These three are the book/series gap and move together when it is prioritized.
+
+- chapter selection for book/series ("which chapter is current?") — the load-bearing one.
+  No step resolves the current chapter for `book`/`series`, so those project types are not
+  verified end-to-end (`agents/steps/scene-generation.md:76`,
+  `agents/orchestrator.md:146-148`). The orchestrator TODO parks it as "see it in practice
+  first"; revisit once more book/series material exists to design against.
+- post-chapter update step — partially subsumed: M14/M15 automated `knowledge/` and
+  `continuity/` at end-of-recipe, but `aftermath.md`, `timeline.md`, and `relationships.md`
+  still have no automated writer. The remainder is chapter-boundary work that overlaps the
+  "Chapter-boundary continuity" workflow backlog (`agents/workflows.md:116-121`), so it
+  couples to chapter selection.
+- cross-book `truth:` reference resolution (surfaced in Sprint 20 / M15 PR review) —
+  `scene_knowledge_update` reads only the current project-type `continuity/` file, so in a
+  series an incorrect belief about a fact established in an earlier book falls back to
+  free-text `truth:` instead of resolving the qualified `continuity/book-N.md#co-NN` pointer.
+  Advisory with a correct fallback, so a series-only completeness refinement, not a bug:
+  declare prior `continuity/book-*.md` as optional inputs and search them before falling
+  back. Couples to M16's cross-book read path.
+
+### Non-goals — not planned
+
+- multi-host beyond Claude Code / OpenCode — support for agents other than these two is out
+  of scope by owner direction.
