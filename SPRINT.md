@@ -182,14 +182,17 @@ The Sprint is complete when:
    scene/beat/attempt provenance + a short quote of the entry's own text — captured at the
    moment `compliance_report` already has the entry in hand, since `compliance_fix` cannot read
    canon files to reconstruct it later (`agents/steps/compliance-fix.md:51`).
-4. `agents/steps/compliance-fix.md`'s routing treats `[premise: unreviewed]` as an override:
-   **any** decision on a tagged unit — `FIX` included, regardless of defect label or its
-   absence — is routed upstream, never applied to prose, until the underlying entry is
-   confirmed. (Without this, a `FIX` on exactly the finding this milestone exists to catch —
-   a Check 3 escalation-path finding with no defect tag, or a Check 4 finding the taxonomy
-   labels `prose` because it doesn't yet know the canon it checked against is itself
-   unconfirmed — would still silently edit the draft to match an unconfirmed guess, the failure
-   M18 is for.) When routing such a unit, the `Escalated:` block names `/revise` against the
+4. `agents/steps/compliance-fix.md`'s routing treats `[premise: unreviewed]` as an override on
+   `FIX` and `ESCALATE` — regardless of defect label or its absence, both are routed upstream,
+   never applied to prose, until the underlying entry is confirmed. `SKIP` is untouched: it
+   already leaves prose as-is and appends no block (`agents/steps/compliance-fix.md:87`), so a
+   tagged unit's `SKIP` stays a fully resolved, terminal human disposition — the override does
+   not force it into an unwanted escalation. (Without the `FIX`/`ESCALATE` override, a `FIX` on
+   exactly the finding this milestone exists to catch — a Check 3 escalation-path finding with
+   no defect tag, or a Check 4 finding the taxonomy labels `prose` because it doesn't yet know
+   the canon it checked against is itself unconfirmed — would still silently edit the draft to
+   match an unconfirmed guess, the failure M18 is for.) When routing such a unit, the
+   `Escalated:` block names `/revise` against the
    specific unreviewed entry rather than the artifact class alone — using each system's actual
    locator: `continuity/`/`knowledge/`'s minted `co-NN`/`kn-NN` id, or `canon/generated/`'s
    self-contained `[ref: <referent>]` locator from item 3 above, copied verbatim into the
@@ -285,13 +288,20 @@ rediscover them.
   the taxonomy doesn't independently know that canon is itself unconfirmed. Without an override,
   a human deciding `FIX` on the exact finding this milestone exists to catch would still get a
   silent prose edit encoding the unconfirmed guess as accepted truth. So `[premise: unreviewed]`
-  is checked **before** the defect-label rule and, when present, routes the unit upstream
-  regardless of decision token or defect label — the same "never applied to prose" treatment a
-  non-prose-defect unit already gets. A `FIX` only reaches prose once the underlying entry is
-  confirmed (via `/revise`) and a regenerated report no longer carries the tag. Rejected: leave
-  `[premise: unreviewed]` as a passive, informational tag only (the original scoping) — it would
-  faithfully warn the human but not stop a `FIX` from silently encoding the unconfirmed guess,
-  which defeats the point of tagging it in the first place.
+  is checked **before** the defect-label rule and, when the decision is `FIX` or `ESCALATE`,
+  routes the unit upstream regardless of defect label — the same "never applied to prose"
+  treatment a non-prose-defect unit already gets. **`SKIP` is deliberately excluded from the
+  override** (surfaced at PR review, Codex PR-57 round 5): `SKIP` already leaves prose untouched
+  and appends no block — "the human has accepted the violation"
+  (`agents/steps/compliance-fix.md:87`) — a fully resolved, terminal disposition the human
+  explicitly chose; forcing it into the upstream-routing branch would override that choice and
+  emit an escalation the human never asked for, not fix a safety gap. A `FIX` only reaches prose
+  once the underlying entry is confirmed (via `/revise`) and a regenerated report no longer
+  carries the tag. Rejected: leave `[premise: unreviewed]` as a passive, informational tag only
+  (the original scoping) — it would faithfully warn the human but not stop a `FIX` from silently
+  encoding the unconfirmed guess, which defeats the point of tagging it in the first place.
+  Rejected: override every decision including `SKIP` (the round-4 fix's first, too-broad
+  phrasing) — `SKIP` carries no risk of silently trusting the premise, since it writes nothing.
 - **Detection is a read of a field already being resolved, not a new lookup pass — and it stays
   bounded to what's already resolved.** M16 already requires `compliance_report` to resolve each
   cited `continuity/`/`knowledge/` entry and each escalated-to canon file for the citation itself
@@ -466,11 +476,13 @@ teach `compliance_report` to tag a finding when its resolved referent is unrevie
   unconfirmed. Left as originally scoped, a human who decides `FIX` on exactly the finding this
   milestone exists to catch would still get a silent prose edit that encodes the unconfirmed
   guess as accepted truth — the precise failure mode M18 is for. So: **before** applying the
-  defect-label rule, check for `[premise: unreviewed]` on the violation line; if present, the
-  unit is always routed upstream — regardless of `Decision:` (`FIX` or `ESCALATE`) and
-  regardless of the defect label or its absence — exactly as a non-prose-defect unit already is.
-  Only once the underlying entry is confirmed (via `/revise`, which clears the tag on
-  regeneration) can a `FIX` on that unit reach a prose edit. When a unit routed upstream this
+  defect-label rule, check for `[premise: unreviewed]` on the violation line; if the decision is
+  `FIX` or `ESCALATE`, the unit is routed upstream — regardless of the defect label or its
+  absence — exactly as a non-prose-defect unit already is. `SKIP` is untouched by this override:
+  it already leaves prose as-is and appends no block (`:87`, "the human has accepted the
+  violation"), a fully resolved disposition that needs no escalation. Only once the underlying
+  entry is confirmed (via `/revise`, which clears the tag on regeneration) can a `FIX` on that
+  unit reach a prose edit. When a unit routed upstream this
   way (`ESCALATE`, a non-prose-defect `FIX`, or now a `[premise: unreviewed]`-tagged `FIX`)
   carries the tag, the `Escalated:` block's "Suggested upstream target" names `/revise` against
   the specific entry, reading the locator straight from the violation line's `[ref: <referent>]`
@@ -489,9 +501,10 @@ teach `compliance_report` to tag a finding when its resolved referent is unrevie
 
 **Done when.** `/revise` accepts a confirm-only request and flips the target entry's marker on
 either path; `compliance_report` tags a finding whose resolved referent is unreviewed;
-`compliance_fix` routes a `[premise: unreviewed]`-tagged unit upstream on **any** decision
-(`FIX` included, regardless of defect label) and names `/revise` against the specific entry
-when doing so — a `FIX` on such a unit never reaches a prose edit; all four `examples/review/`
+`compliance_fix` routes a `[premise: unreviewed]`-tagged unit upstream on `FIX` or `ESCALATE`
+regardless of defect label, and names `/revise` against the specific entry when doing so — a
+`FIX` on such a unit never reaches a prose edit, and `SKIP` is unaffected, keeping its existing
+no-write behavior; all four `examples/review/`
 fixtures validate identically to before this task.
 
 ---

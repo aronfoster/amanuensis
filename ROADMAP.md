@@ -112,14 +112,14 @@ distinctly when that resolved source's per-entry marker carries `unreviewed` —
 `canon_active` comparisons are out of reach by design (see scope note below) and
 `timeline.md`/`profile.md` citations are out of reach because `compliance_report` does not
 consult them at all (tracked, not silently dropped — see Deferred); and `compliance_fix` treats
-`[premise: unreviewed]` as an override on the ordinary defect-label routing — **any** decision on
-a tagged unit, `FIX` included regardless of defect label or its absence, is routed upstream and
-never applied to prose until the entry is confirmed, naming `/revise` against the specific
-unreviewed entry as the suggested upstream target and reading the locator straight off the
-violation line's tag (this step cannot read canon or state files) — `continuity/`/`knowledge/`'s
-minted `co-NN`/`kn-NN` id, or `canon/generated/`'s self-contained scene/beat/attempt-plus-quote
-locator that whichever check resolved it already wrote into the tag, since no minted id exists
-there.
+`[premise: unreviewed]` as an override on the ordinary defect-label routing for `FIX` and
+`ESCALATE` — regardless of defect label or its absence, both are routed upstream and never
+applied to prose until the entry is confirmed, naming `/revise` against the specific unreviewed
+entry as the suggested upstream target and reading the locator straight off the violation
+line's tag (this step cannot read canon or state files) — `continuity/`/`knowledge/`'s minted
+`co-NN`/`kn-NN` id, or `canon/generated/`'s self-contained scene/beat/attempt-plus-quote locator
+that whichever check resolved it already wrote into the tag, since no minted id exists there.
+`SKIP` is untouched by the override — it already writes nothing and needs no escalation.
 
 * [ ] M18.1 Design note: define the confirmation lifecycle once — `unreviewed` →
   `confirmed` (or corrected-and-confirmed) — in uniform terms across all five destinations'
@@ -163,8 +163,10 @@ there.
   that canon is itself unconfirmed). Left unchanged, a human deciding `FIX` on exactly the
   finding this milestone exists to catch would still get a silent prose edit encoding the
   unconfirmed guess as accepted truth. So: check for `[premise: unreviewed]` *before* the
-  defect-label rule; if present, route the unit upstream regardless of decision token or defect
-  label, exactly as a non-prose-defect unit already is. When routing such a unit, name `/revise`
+  defect-label rule; if the decision is `FIX` or `ESCALATE`, route the unit upstream regardless
+  of defect label, exactly as a non-prose-defect unit already is. `SKIP` is untouched — it
+  already writes nothing and appends no block, a fully resolved disposition the override must
+  not turn into an unwanted escalation. When routing such a unit, name `/revise`
   against the specific entry as the suggested target, reading the locator straight off the
   violation line's `[ref: <referent>]` tag rather than re-deriving it (this step cannot read
   canon or state files, `:51`) — `continuity/`/`knowledge/`'s minted `co-NN`/`kn-NN` id, or
@@ -237,9 +239,16 @@ a Check 4 finding whose prose contradicts what reads as "settled, valid" canon i
 scoped, `[premise: unreviewed]` was purely informational — a human deciding `FIX` on the exact
 finding this milestone exists to catch would still get a silent prose edit encoding the
 unconfirmed guess as accepted truth, defeating the milestone's purpose. M18.4 now makes
-`[premise: unreviewed]` an override, checked before the defect-label rule: **any** decision on a
-tagged unit is routed upstream, `FIX` included, regardless of defect label or its absence, until
-the entry is confirmed.
+`[premise: unreviewed]` an override, checked before the defect-label rule: a `FIX` or `ESCALATE`
+decision on a tagged unit is routed upstream regardless of defect label or its absence, until
+the entry is confirmed. (`SKIP` is excluded from the override — see round 5 below.)
+(8) **Refinement from PR review (Codex PR-57 round 5):** round 4's override was first phrased as
+"any decision," which would have forced a tagged unit's `SKIP` into an unwanted escalation.
+`SKIP` already leaves prose untouched and appends no block — "the human has accepted the
+violation" (`agents/steps/compliance-fix.md:87`), a fully resolved, terminal disposition the
+human explicitly chose, carrying no risk of silently trusting the premise since it writes
+nothing. M18.4 now scopes the override to `FIX` and `ESCALATE` only; `SKIP` keeps its existing
+behavior unchanged.
 
 ---
 
