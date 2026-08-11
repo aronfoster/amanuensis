@@ -165,7 +165,9 @@ The Sprint is complete when:
    must check, then obtains only the maintained state and named source evidence needed — M16.4); the
    **precedence** rule (review tiebreak storyboard > distilled state > raw source, atop authoring-authority
    canon > continuity — M16.5); the **defect taxonomy** (prose / storyboard / state / canon / missing-context,
-   each with which artifact owns the fix — M16.7); and the **project-scale/type gradation** (short_story
+   the label assigned by *which artifact is wrong under precedence* — so prose-vs-*valid*-state is a prose
+   defect, and "state" means the entry itself is stale or contradicts higher-precedence intent/canon — each
+   routing to the artifact that owns the fix — M16.7); and the **project-scale/type gradation** (short_story
    whole-work; book whole-chapter + prior state; series maintained-state + targeted retrieval, never a
    full-corpus reread — M16.8). It states once that relational findings stay per-block review units carrying a
    cited referent + a declared `## Context consulted` record, and references (does not restate) the M14/M15
@@ -174,10 +176,14 @@ The Sprint is complete when:
    defines the ledger: a **story-level, human-authored planning artifact** (`role: planning`, project-root
    `reveals.md`, **no pipeline writer**), distinct from the freeform book-level `continuity.md` risk notes
    (cross-referenced, not merged). Each entry carries `id` (`rv-NN`, minted once), the reveal content, a
-   `lands:` story-position (canonical folder-style, book-qualified for series so one ledger spans books), an
-   ordered `setup:` list of the buildup positions that establish it, and a `concealed-until:` position before
-   which the reader must not learn it — reusing the M14/M15 `id`/`story-position` idiom (referenced, not
-   restated). A new `templates/reveals.md` realizes the shape as legible Markdown. `reveals.md` appears in
+   `lands:` position, an ordered `setup:` list of the buildup positions that establish it, and a
+   `concealed-until:` position before which the reader must not learn it. These positions are
+   **block/beat-qualified** — the canonical folder-style `story-position` extended with the storyboard block
+   number (`<…scene-id>:block-NNN`, book-qualified for series so one ledger spans books) — because the
+   premature-disclosure guard (item 5) must order blocks *within* a scene: a bare `<scene-id>` gives every
+   block in the landing scene the same position, so an earlier block in that same scene could disclose the
+   secret without preceding the constraint. Reuses the M14/M15 `id`/`story-position` idiom plus the
+   `block-NNN` qualifier the `compliance:` review-ids already use (referenced, not restated). A new `templates/reveals.md` realizes the shape as legible Markdown. `reveals.md` appears in
    `agents/project-layouts.md` (all three project trees, with resolution rules) and in
    `templates/project-AGENTS.md` (Project Paths + Where To Look, adding `agents/review-context.md`,
    `agents/reveals.md`, and `reveals.md`).
@@ -208,13 +214,19 @@ The Sprint is complete when:
    **false-fresh on a collision** (`agents/characters.md:89`, `agents/steps/scene-knowledge-update.md:71`).
    M16 is the first step to make `knowledge/` an authoritative input for cross-chapter findings, so relying on
    the broken predicate would let prose be checked against a belief from a superseded draft. This Sprint
-   therefore applies the **same fix M15 shipped for `continuity/`**: qualify the knowledge entry's provenance
-   and freshness resolution by the **full attempt-qualified draft path**
-   (`<chapter-folder>/drafts/<attemptNN>/draft-vNN.md`), so an entry names one specific draft across chapters
-   *and* attempts (`agents/characters.md`'s temporal-state model and `agents/steps/scene-knowledge-update.md`'s
-   predicate are updated; the M14 templates gain the full-path `committed-in`/evidence form). This is the
-   minimal, already-specified repair — not a re-opening of M14 — and it de-risks M16's core dependency; the
-   consumer-side belt-and-suspenders (ambiguous entry → missing-context) in item 4 still holds if any entry
+   therefore applies the **same fix M15 shipped for `continuity/`**, on **both** the write side and the read
+   side: `scene_knowledge_update` **stamps** each new entry's (and transition's) provenance as the **full
+   attempt-qualified draft path** (`<chapter-folder>/drafts/<attemptNN>/draft-vNN.md`) — not the bare
+   `committed-in: <latest-draft>` it writes today, exactly as M15's `continuity_update` writes `evidence:` as a
+   full path — and the freshness predicate resolves against that full path, so an entry names one specific draft
+   across chapters *and* attempts. `agents/characters.md`'s temporal-state model, the M14 knowledge templates'
+   `committed-in` form, **and `agents/steps/scene-knowledge-update.md`'s stamping** are updated together;
+   otherwise unchanged is only the step's reconcile / non-destruction / `(story-position + fact)` matching logic
+   — **not** the provenance value it stamps (a repair that changed only the predicate while the writer kept
+   emitting bare basenames would leave every newly generated book/series entry ambiguous, which is the whole
+   defect). This is the minimal, already-specified repair — not a re-opening of M14's model — and it de-risks
+   M16's core dependency; the consumer-side belt-and-suspenders (ambiguous entry → missing-context) in item 4
+   still holds for any legacy entry written before the repair
    predates the repair.
 5. **`storyboard_review` reasons across chapters against the reveals ledger** (M16.3, M16.6). Its
    within-chapter-only scoping of the reveal-setup check (`agents/steps/storyboard-review.md:78`,`:115`) is
@@ -224,22 +236,27 @@ The Sprint is complete when:
      block, confirm its ledger entry's `setup:` positions are established, by **targeted lookup** of exactly
      those positions — never a full prior-storyboard rescan.
    - **Premature-disclosure guard (whole-range, every block).** A `concealed-until:` is an **active constraint
-     over a story-position range**, so it must be applied to **every reviewed block** whose position precedes
-     it — not only reveal-tagged blocks, and **not** by trusting a secret to have been redundantly copied into
-     that block's local `concealment_from_reader`. For each ledger secret still active at the current block
-     (position `< concealed-until:`), check whether the block discloses it; an ordinary beat that leaks a
-     ledger secret early is a finding even though the block is not itself a reveal. This is the story-level
+     over a block-qualified position range**, so it must be applied to **every reviewed block** whose
+     block-qualified position precedes it — not only reveal-tagged blocks, and **not** by trusting a secret to
+     have been redundantly copied into that block's local `concealment_from_reader`. Because `concealed-until:`
+     is block-qualified (`<…scene-id>:block-NNN`, item 3), "precedes" is well-defined **within** a scene as
+     well as across scenes — block 003 precedes a `concealed-until: …:block-004` where a bare `<scene-id>`
+     could not order them. For each ledger secret still active at the current block, check whether the block
+     discloses it; an ordinary beat that leaks a ledger secret early is a finding even though the block is not
+     itself a reveal. This is the story-level
      analog of M14's "prohibited from knowing" active reveal constraint, and it is bounded — O(active secrets ×
      blocks), not a corpus rescan.
    Findings cite the ledger entry (`reveals.md#rv-NN`) as the referent and declare context consulted; a ledger
    that under-specifies a reveal is labeled a **reveals-ledger defect**, not a storyboard defect. The step
    stays advisory / report-only (no fix step), and its within-chapter takeaway-support and takeaway/concealment
    checks are unchanged.
-6. **`compliance_fix` routes remediation by defect type** (M16.7). Its `ESCALATE` handling
-   (`agents/steps/compliance-fix.md:71-80`) is extended so a finding labeled state / storyboard / canon /
-   missing-context defect is directed to its authoritative artifact (the strengthened "Suggested upstream
-   target") rather than edited in prose; a prose-defect `FIX` is applied as today. The step's per-unit gate,
-   freshness check, validator call, and surgical-edit discipline are otherwise unchanged.
+6. **`compliance_fix` routes remediation by defect type, on every decision** (M16.7). It inspects each unit's
+   defect label for **all** decisions, not only `ESCALATE`: a **prose**-defect `FIX` is applied to prose as
+   today; a **state / storyboard / canon / missing-context** decision — whether recorded `ESCALATE` **or**
+   `FIX` — is directed to its authoritative artifact (the strengthened "Suggested upstream target",
+   `agents/steps/compliance-fix.md:71-80`) and **never** silently applied to prose, so a non-prose `FIX` cannot
+   bypass the routing and edit the wrong artifact. The step's per-unit gate, freshness check, validator call,
+   and surgical-edit discipline are otherwise unchanged.
 7. **The review-artifact grammar/validator change is additive and verified.** The updated
    `examples/review/reviewer-actions.md` fixture carries at least one relational finding (cited referent +
    defect-type label) and a `## Context consulted` section, and `scripts/validate-review-artifact.sh` run
@@ -361,15 +378,24 @@ don't rediscover them.
   material, `continuity/`, and `reveals.md` exist meaningfully only for `book`/`series`, so a `short_story`
   must not block on their absence — every new input is `required: false` (`NOTES.md:103-107`). This is the
   bounding mechanism that makes the review scale to a series.
-- **Defect type routes remediation (M16.7).** A relational finding is labeled **prose** (the prose is wrong —
-  `compliance_fix` edits it), **storyboard** (the beat's own spec under-specifies or misstates the fact —
-  route to the storyboard), **state** (the maintained `continuity/`/`knowledge/` entry is the authority the
-  prose contradicts — route there, or surface as an M15 continuity conflict), **canon** (settled canon is
-  contradicted — route to canon), or **missing-context** (the fact needed to judge is absent from every
-  consulted source — surface as an open question). `compliance_fix` directs a non-prose defect to its
-  authoritative artifact via the strengthened `ESCALATE` "Suggested upstream target"
-  (`agents/steps/compliance-fix.md:71-80`), never a prose edit. `NOTES.md:108-111` is the precedent ("Label
-  storyboard-defect vs prose-defect ... so the fix step is pointed at the storyboard, not the prose").
+- **Defect type is assigned by which artifact is wrong *under precedence*, and it routes remediation (M16.7).**
+  The label is not "which artifact does the prose disagree with" but "which artifact the precedence order says
+  is at fault." A finding is **prose** when the prose is the wrong one — including the common case where the
+  **storyboard intent and the maintained state agree** and only the prose diverges (this is a prose defect,
+  `compliance_fix` edits the prose, *not* a state defect); **storyboard** when the beat's own spec
+  under-specifies or misstates the fact; **state** when the maintained `continuity/`/`knowledge/` entry itself
+  is at fault — it is **derived-stale**, or it contradicts higher-precedence storyboard intent or canon — so
+  the entry, not the prose, must change (route there, or surface as an M15 continuity conflict); **canon** when
+  settled canon is contradicted; or **missing-context** when the fact needed to judge is absent from every
+  consulted source (surface as an open question). So prose-vs-*valid*-state is a **prose** defect; state is the
+  label only when the state entry is the thing that is stale or wrong. `NOTES.md:108-111` is the precedent
+  ("Label storyboard-defect vs prose-defect ... so the fix step is pointed at the storyboard, not the prose").
+- **`compliance_fix` routes on the defect label for *every* decision, not only `ESCALATE`.** The grammar still
+  lets a human record `FIX` on any unit, and applying a `FIX` to a **non-prose** defect would edit the wrong
+  artifact. So `compliance_fix` inspects each `FIX` unit's defect label: a **prose** `FIX` is applied to prose
+  as today; a **state / storyboard / canon / missing-context** `FIX` is **blocked or rerouted** to the
+  authoritative artifact (the same target the strengthened `ESCALATE` names, `agents/steps/compliance-fix.md:71-80`),
+  never silently applied to prose. The routing does not depend on the reviewer having chosen `ESCALATE`.
 - **Scene-blind sharding is forbidden for relational checks; parallelism is preserved where it is safe.**
   Splitting one chapter's continuity/recap/timeline check into scene-blind shards makes every cross-scene
   contradiction structurally invisible (`NOTES.md:42-46`,`:95-97`). Relational checks evaluate the chapter as
@@ -429,8 +455,10 @@ and realize the story-level reveals ledger as a defined, human-readable artifact
   - **Precedence (M16.5):** the review tiebreak (storyboard intent > distilled state > raw source; supplements
     never overrides — `NOTES.md:82-87`) and the authoring-authority order (canon > continuity —
     `agents/continuity.md`), and how they relate.
-  - **The defect taxonomy (M16.7):** prose / storyboard / state / canon / missing-context, each with the
-    artifact that owns the fix, per Conventions.
+  - **The defect taxonomy (M16.7):** prose / storyboard / state / canon / missing-context, the label assigned
+    by *which artifact is wrong under precedence* (prose-vs-valid-state is a prose defect; "state" means the
+    entry is stale or contradicts higher-precedence intent/canon), each routing to the artifact that owns the
+    fix — and `compliance_fix` routes on the label for every decision, `FIX` included, per Conventions.
   - **The project-scale/type gradation (M16.8):** short_story whole-work; book whole-chapter + prior state;
     series maintained-state + targeted retrieval, never full-corpus; new inputs `required: false` and
     project-type-aware.
@@ -439,8 +467,10 @@ and realize the story-level reveals ledger as a defined, human-readable artifact
     unit/anchor scheme; do not restate token sets.
 - Create `agents/reveals.md` (single source) defining the story-level reveals ledger per Definition-of-done
   item 3: a `role: planning`, human-authored, project-root `reveals.md` with `id` (`rv-NN`), reveal content,
-  `lands:`, ordered `setup:` positions, and `concealed-until:` — reusing the M14/M15 `id`/`story-position`
-  idiom (reference `agents/characters.md`'s temporal model; do not restate it). State once that it is distinct
+  and **block/beat-qualified** `lands:`, ordered `setup:` positions, and `concealed-until:` (the folder-style
+  `story-position` extended with `block-NNN`, so the guard can order blocks within a scene — item 3) — reusing
+  the M14/M15 `id`/`story-position` idiom plus the `compliance:` `block-NNN` qualifier (reference
+  `agents/characters.md`'s temporal model; do not restate it). State once that it is distinct
   from the book-level freeform `continuity.md` risk notes (`agents/books.md:59-66`), has **no pipeline writer**,
   and is consumed read-only by `storyboard_review`.
 - Create `templates/reveals.md` realizing the entry shape as legible Markdown (frontmatter `role: planning`,
@@ -494,13 +524,15 @@ grammar. Closes **M16.3**, **M16.6**, and the retrofit half of **M16.7**.
     chapters / files read.
   - Leave `review_required: true`, the `reviewer-actions.md` output path, and the `Reviewed-draft:` freshness
     stamp unchanged.
-- **Fold in the M14 knowledge-provenance repair** per Definition-of-done item 4a: qualify the knowledge
-  freshness/provenance resolution by the **full attempt-qualified draft path** (mirroring M15's `continuity/`
-  `evidence:` fix) in `agents/characters.md`'s temporal-state model and
-  `agents/steps/scene-knowledge-update.md`'s predicate, and update the M14 knowledge templates' `committed-in`
-  form. This changes the freshness-predicate *provenance wording* and templates only — **not**
-  `scene_knowledge_update`'s reconcile/write behavior, which stays M14's. It is the minimal fix already
-  specified on the Deferred list; remove that Deferred item at closeout. per Definition-of-done item 5: replace the
+- **Fold in the M14 knowledge-provenance repair** per Definition-of-done item 4a: make
+  `scene_knowledge_update` **stamp** each new entry's/transition's provenance as the **full attempt-qualified
+  draft path** (`<chapter-folder>/drafts/<attemptNN>/draft-vNN.md`, mirroring M15's `continuity_update`
+  `evidence:` write), and resolve the freshness predicate against that full path — updating
+  `agents/characters.md`'s temporal-state model, the M14 knowledge templates' `committed-in` form, **and the
+  writer's stamping in `agents/steps/scene-knowledge-update.md`** together. Unchanged is only the step's
+  reconcile / non-destruction / `(story-position + fact)` matching logic — **not** the provenance value it
+  stamps (leaving the writer emitting bare basenames would keep every new book/series entry ambiguous). It is
+  the minimal fix already specified on the Deferred list; remove that Deferred item at closeout. per Definition-of-done item 5: replace the
   within-chapter-only scoping of the reveal-setup check (`:78`,`:115`) with a `required: false` `reveals.md`
   input and the **two complementary checks** of item 5 — (i) **setup sufficiency**, by targeted lookup of each
   reveal's `setup:` positions (never a full prior-storyboard rescan); and (ii) a **premature-disclosure
@@ -510,10 +542,12 @@ grammar. Closes **M16.3**, **M16.6**, and the retrofit half of **M16.7**.
   (`reveals.md#rv-NN`) and declare context consulted; label an under-specified ledger a **reveals-ledger
   defect**. Keep the takeaway-support and takeaway/concealment checks and the advisory/report-only nature
   unchanged.
-- **Route `agents/steps/compliance-fix.md` by defect type** per Definition-of-done item 6: extend the
-  `ESCALATE` handling (`:71-80`) so a state/storyboard/canon/missing-context defect is directed to its
-  authoritative artifact (the strengthened "Suggested upstream target"), while a prose-defect `FIX` is applied
-  as today. Leave the per-unit gate, freshness check, validator call, and surgical discipline unchanged.
+- **Route `agents/steps/compliance-fix.md` by defect type on every decision** per Definition-of-done item 6:
+  inspect each unit's defect label for **all** decisions (not only `ESCALATE`). A prose-defect `FIX` is applied
+  as today; a state/storyboard/canon/missing-context decision — recorded `ESCALATE` **or** `FIX` — is directed
+  to its authoritative artifact (the strengthened "Suggested upstream target", `:71-80`) and never applied to
+  prose, so a non-prose `FIX` cannot edit the wrong artifact. Leave the per-unit gate, freshness check,
+  validator call, and surgical discipline unchanged.
 - **Keep the grammar/validator change additive** per Definition-of-done item 7: update
   `examples/review/reviewer-actions.md` with a relational finding (cited referent + defect label) and a
   `## Context consulted` section, run `scripts/validate-review-artifact.sh` over it, and confirm exit 0 / the
@@ -570,7 +604,8 @@ of **M16**.
 - Cross-file consistency read: `agents/review-context.md`, `agents/reveals.md`, `templates/reveals.md`, the two
   retrofitted steps, `compliance_fix`, `agents/workflows.md`, the layouts, and the adapter agree on the
   classification, the precedence order, the referent-citation and `## Context consulted` forms, the defect
-  taxonomy, the reveals-ledger `rv-NN`/`lands`/`setup`/`concealed-until` shape, and the tiered scope — no
+  taxonomy, the reveals-ledger `rv-NN`/`lands`/`setup`/`concealed-until` shape (block-qualified positions),
+  and the tiered scope — no
   drift, no restated model or grammar; the demonstration and smoke fixtures match the template shapes and the
   `compliance:` family grammar.
 - Update `ROADMAP.md`: check M16.1–M16.9 only after Tasks 1–2 pass verification; **remove** the "story-level
@@ -607,11 +642,12 @@ M16.1–M16.9, the removed Deferred items, and the SPRINT task boxes reflect com
   this Sprint changes no knowledge-step write behavior.
 - **The book-level freeform `continuity.md` and the derived `continuity/`/`knowledge/` write behavior.**
   `continuity.md` risk notes (`agents/books.md:59-66`) stay freeform, book-level, distinct from `reveals.md`;
-  the M15 `continuity_update` writer is unchanged, and `scene_knowledge_update`'s **reconcile/write behavior**
-  is unchanged — M16 is their *reader*. The one exception is narrow and named: the folded-in M14
-  knowledge-provenance repair (item 4a) qualifies `scene_knowledge_update`'s **freshness-predicate provenance
-  wording** and the M14 knowledge templates by the full attempt-qualified path, so a `knowledge/` entry
-  M16 consumes cannot be false-fresh. It changes no `knowledge/` *write* behavior.
+  the M15 `continuity_update` writer is unchanged, and `scene_knowledge_update`'s **reconcile / non-destruction /
+  matching logic** is unchanged — M16 is their *reader*. The one exception is narrow and named: the folded-in
+  M14 knowledge-provenance repair (item 4a) makes `scene_knowledge_update` **stamp** the full attempt-qualified
+  provenance path (instead of a bare basename) and updates the freshness predicate and M14 templates to match,
+  so a `knowledge/` entry M16 consumes cannot be false-fresh. That is the *only* change to the knowledge
+  writer, and it changes what it stamps, not what/when it reconciles or writes.
 - **Dispatcher-level scope/context enforcement.** The retrieval and precedence live in the step bodies and
   `agents/review-context.md`; lifting any of it into the dispatcher is a deferred follow-on, exactly as
   dispatcher-level artifact staleness is (`agents/orchestrator.md:187`).
