@@ -85,7 +85,7 @@ Freshness of a knowledge entry is a **derived predicate**, never a stored field 
 
 The full rule lives in `agents/characters.md` (**## Temporal character-state model**, "Freshness is derived, never stored"); this step computes the predicate but does not restate the model. Correction of a stale entry is the rerun-reconcile above: a rerun against the current active head reconciles what the accepted prose committed and — when the fact **changed** — appends the correction as a transition, or — when the fact is **unchanged** but its provenance points at a superseded attempt — **restamps its `committed-in` in place** (a provenance refresh; see Idempotency). Either way a rerun clears the stale bit without leaving the fact stranded.
 
-**Dispatcher-level staleness detection is out of scope** — a deferred follow-on, exactly as dispatcher-level artifact staleness is (`agents/orchestrator.md:187`). This step defines the predicate; nothing walks the character tree to enforce it.
+**Dispatcher-level staleness detection is out of scope** — a deliberate non-goal, exactly as dispatcher-level artifact staleness is (`agents/orchestrator.md:187`). This step defines the predicate; nothing walks the character tree to enforce it.
 
 ## Outputs
 

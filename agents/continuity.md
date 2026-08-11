@@ -207,5 +207,5 @@ model. A change to a **non-prose evidence source (storyboard, canon) or an earli
 entry** does not flip a derived bit — it is handled by **rerun-reconcile** (re-running
 `continuity_update` re-confirms each fact against the current prose and canon and surfaces any new
 contradiction as a conflict) and by M16 review, not by a stored dependency graph. Proactive /
-dispatcher-level detection is a deferred follow-on, exactly as dispatcher-level artifact staleness
+dispatcher-level detection is a deliberate non-goal, exactly as dispatcher-level artifact staleness
 is (`agents/orchestrator.md`).

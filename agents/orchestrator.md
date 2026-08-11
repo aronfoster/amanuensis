@@ -18,7 +18,7 @@ The terms this contract uses:
 
 - **runnable** — every `required: true` precondition of the step resolves to at least one existing file.
 - **blocked** — not runnable; at least one required precondition is missing. The dispatcher reports what's missing and stops without loading the step body.
-- **stale** — a side artifact whose `Reviewed-draft:` stamp names a draft other than the current `<latest-draft>` (which resolves via the active head, so a stamp naming an abandoned draft is stale); the derived complement of `fresh`. Detected by the consuming step body at step start, not by the dispatcher (dispatcher-level staleness detection is a deferred follow-on).
+- **stale** — a side artifact whose `Reviewed-draft:` stamp names a draft other than the current `<latest-draft>` (which resolves via the active head, so a stamp naming an abandoned draft is stale); the derived complement of `fresh`. Detected by the consuming step body at step start, not by the dispatcher (dispatcher-level staleness detection is a deliberate non-goal — the dispatcher stays thin by design).
 - **fresh** — a side artifact whose `Reviewed-draft:` stamp equals the current `<latest-draft>` (the active head); the derived complement of `stale`.
 - **superseded** — a draft carrying a `superseded_by:` stamp in the manifest, and any side artifact stamped against one.
 - **active** — the draft named by the attempt manifest's `Active-head:` pointer — what `<latest-draft>` resolves to — and the side artifacts stamped against it.
@@ -30,7 +30,7 @@ The terms this contract uses:
 - **discarded** — the prior run's findings against a superseded draft, dropped when a report-emitting step overwrites its artifact on regeneration (because their prose anchors no longer apply). Names existing behavior, not new.
 - **regenerated** — a report re-emitted against the current active head (the stale-blocker recovery path), overwriting the stale artifact with a fresh stamp. Names existing behavior, not new.
 - **recommended next** — the first non-`[x]` step in the recipe list.
-- **override** — a recorded, source-specific, human-visible decision to proceed against a `stale` artifact despite the staleness, delivered by this milestone; it names the specific artifact and the draft mismatch and is written into the consuming step's apply log. An override authorizes consuming an artifact despite a known *state* problem; it does **not** supply missing editorial intent, so it does not apply to `review_pending` (which is resolved by adding review evidence, see that term). Absent a recorded override, the step blocks to `open-questions.md` and the human resolves it there. Dispatcher-level override lifting remains a deferred follow-on.
+- **override** — a recorded, source-specific, human-visible decision to proceed against a `stale` artifact despite the staleness, delivered by this milestone; it names the specific artifact and the draft mismatch and is written into the consuming step's apply log. An override authorizes consuming an artifact despite a known *state* problem; it does **not** supply missing editorial intent, so it does not apply to `review_pending` (which is resolved by adding review evidence, see that term). Absent a recorded override, the step blocks to `open-questions.md` and the human resolves it there. Dispatcher-level override lifting is a deliberate non-goal — the dispatcher stays thin by design.
 
 ## Step workflow contract
 
@@ -184,7 +184,7 @@ The stale-report exit is a human decision point, not an automatic recovery. The 
 
 - It does check that every `required: true` precondition of the selected step resolves to an existing file at dispatch — and, when a read-from draft is given, that the named draft exists in the latest attempt and the step declares a `prose_draft` precondition. That is the extent of its validation.
 - It does not validate that human review has occurred.
-- It does not detect staleness at the dispatcher level, and the dispatcher records no overrides. Upstream changes that should invalidate downstream artifacts are detected by the consuming step bodies via `Reviewed-draft:` stamps; override definition and recording in the step bodies and their apply logs is delivered by this milestone, while lifting machine-checkable staleness detection and override handling into the dispatcher is a deferred follow-on.
+- It does not detect staleness at the dispatcher level, and the dispatcher records no overrides. Upstream changes that should invalidate downstream artifacts are detected by the consuming step bodies via `Reviewed-draft:` stamps; override definition and recording in the step bodies and their apply logs is delivered by this milestone, while lifting machine-checkable staleness detection and override handling into the dispatcher is a deliberate non-goal: the dispatcher stays thin by design and enforcement lives in the step bodies (ROADMAP M9.6). It would be taken up only as part of a broader dispatcher-enforcement milestone (with M16's deferred scope/precedence lift), never on its own.
 - It does not enforce the recipe as the only order — the recipe is the recommended path, and any listed step whose required preconditions exist may be invoked.
 - It does not coordinate concurrent work across multiple chapters or works.
 - It does not produce reports or summaries of what it did.
