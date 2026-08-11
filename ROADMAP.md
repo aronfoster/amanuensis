@@ -68,6 +68,84 @@ planning pass when it is scheduled.
 
 ---
 
+## M18 — Unreviewed generated-state confirmation
+
+Close the loop `agents/update-rules.md`'s Rule 1 promises but never wires up: permitted
+invention "is recorded into the appropriate canonical files so it stops being a guess and
+becomes reviewable truth" (`:23-27`) — but nothing ever reviews it. Three systems already
+write an `unreviewed` marker and stop: the M3 capture agent stamps `canon/generated/*`
+entries `status: invented, unreviewed`; M15's `continuity_update` stamps new
+`continuity/` entries `- **review:** unreviewed` (`agents/steps/continuity-update.md:65`);
+M14's `scene_knowledge_update` stamps new `knowledge/` entries the same way
+(`agents/steps/scene-knowledge-update.md:61`). None has a confirmation workflow. An entry
+sits flagged indefinitely until something downstream trips over it — and M16's retrofitted
+`compliance_report` (`agents/steps/compliance-report.md` Checks 3–4) can cite one of these
+as if it were settled truth, producing an overconfident finding instead of a hedged one.
+
+This is not hypothetical: it is what happened on `the-course-he-kept`. Reviewer-actions.md's
+`block-015-v02` (and, by the same mechanism, `block-011-v01`) reports "INCONSISTENT (canon)"
+against a voyage-timeline figure — but that figure is not settled canon. It is the drafter's
+own invention, sitting in `canon/generated/attempt02-voyage-log.md` under scene 8, tagged
+`invented, unreviewed` with the drafter's own flag: *"storyboard says only 'for weeks' —
+adjust if canon fixes the interval differently."* The checker contradicted the prose against
+its own unconfirmed guess and reported it with the same confidence as a real violation. The
+human reviewer has outside knowledge that could confirm or correct that entry — `/revise`
+(`agents/revision.md`) already provides exactly the in-session, human-present mechanism to do
+so (`:32`, `:34`: "runs with the human present: ask directly"; "fix the source of truth
+first... `canon/` file") — but nothing points the reviewer at it from inside the finding, and
+`/revise` itself never flips the entry's marker even when it corrects the value.
+
+Done when: a compliance finding whose cited referent carries an `unreviewed` marker is
+flagged distinctly from a finding against settled truth, across all three systems
+uniformly (`canon/generated/*`, `continuity/`, `knowledge/`); `compliance_fix`'s
+already-defect-type-aware escalation routing (`agents/steps/compliance-fix.md:57-85`) names
+`/revise` against the specific unreviewed entry as the suggested upstream target; and
+`/revise` can confirm an unreviewed entry as correct or correct it, flipping its provenance
+marker either way, without disturbing the non-destructive current-vs-record discipline
+`agents/revision.md` already states.
+
+* [ ] M18.1 Design note: define the confirmation lifecycle once — `unreviewed` →
+  `confirmed` (or corrected-and-confirmed) — in uniform terms across the three marker
+  systems' differing surface forms (`status: invented, unreviewed` vs. `- **review:**
+  unreviewed`), and the citation rule `compliance_report` follows to detect one. Single-source
+  it by extending `agents/update-rules.md` (Rule 1) rather than restating per-file.
+* [ ] M18.2 Extend `agents/revision.md`: a confirm-only invocation (human reviews an entry,
+  agrees, no content change) alongside the existing correct-and-change flow: either path
+  flips the cited entry's provenance marker to confirmed on write. Preserve the current-state-
+  vs-record distinction already stated there (`:24`) — a confirmation is an in-place update to
+  a current-state entry, never a fabricated transition.
+* [ ] M18.3 Retrofit `compliance_report` Checks 3 (Canon) and 4 (Relational): when a finding's
+  cited referent (`canon_active`, a named `canon/**` file, or a `continuity/`/`knowledge/`
+  entry) carries an unreviewed marker, tag the finding distinctly from a settled-truth
+  citation — an unconfirmed premise is not the same confidence as a real violation.
+* [ ] M18.4 Retrofit `compliance_fix`'s upstream-target routing: when a routed finding's
+  referent is unreviewed, name `/revise` against that specific entry as the suggested target,
+  not just "the canon file" in the abstract.
+* [ ] M18.5 Smoke/demo coverage: a synthetic fixture exercising an unreviewed-premise finding
+  flagged distinctly, `ESCALATE` routing naming `/revise`, and `/revise`'s confirm and
+  correct-and-confirm paths each flipping the marker.
+
+Notes: Sprint 22 plans M18 (see SPRINT.md). Locked at planning (2026-08-11, prompted by a
+live `amanuensis-review` companion session on `the-course-he-kept`): (1) **scope is
+unified across all three unreviewed-marker systems**, not `canon/generated/` alone —
+rejected: ship `canon/generated/` first and extend to `continuity/`/`knowledge/` in later
+sprints (the M10→M11–M13 precedent), because the three systems share identical marker shape
+and `compliance_report`'s relational checks already read all three, so a narrow fix would
+leave the same failure mode live on two of the three inputs it consults. (2) **`/revise` is
+extended to own the write**, confirm and correct alike — rejected: teach `compliance_fix`
+to write the confirmation itself (keeps the write inside the review-decision flow, but widens
+`compliance_fix`'s write surface beyond the draft + `reviewer-actions.md` it touches today,
+and duplicates a write path `/revise` already owns for exactly this class of file). (3) **This
+sprint is definitional only** — no live application against `the-course-he-kept`'s actual
+`canon/generated/attempt02-voyage-log.md` entries or regeneration of its `reviewer-actions.md`;
+that stays a follow-up the human runs afterward, once `/revise`'s confirm path and the
+sharpened routing exist to run it through. The parked `reviewer-actions.md` review session
+predating this milestone resumes separately. Related Deferred item: "revise coverage of M14
+temporal-state files" (below) is a demonstration gap for `/revise`'s *existing* discipline;
+M18.2 adds new behavior and is tracked here, not there.
+
+---
+
 ## Completed
 
 ### M1 — Pipeline step-list consistency
