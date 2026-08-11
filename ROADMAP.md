@@ -68,6 +68,249 @@ planning pass when it is scheduled.
 
 ---
 
+## M18 — Unreviewed generated-state confirmation
+
+Close the loop `agents/update-rules.md`'s Rule 1 promises but never wires up: permitted
+invention "is recorded into the appropriate canonical files so it stops being a guess and
+becomes reviewable truth" (`:23-27`) — but nothing ever reviews it. **Five** destinations
+already write an `unreviewed` marker and stop: the M3 capture agent stamps `canon/generated/*`
+entries `status: invented, unreviewed`, and stamps character `timeline.md` (fact-type `event`)
+and `profile.md` (fact-type `identity`) entries the same way
+(`agents/capture/capture-agent.md`'s routing table and Write discipline section); M15's
+`continuity_update` stamps new `continuity/` entries `- **review:** unreviewed`
+(`agents/steps/continuity-update.md:65`); M14's `scene_knowledge_update` stamps new
+`knowledge/` entries the same way (`agents/steps/scene-knowledge-update.md:61`). None has a
+confirmation workflow. An entry sits flagged indefinitely until something downstream trips
+over it — and M16's retrofitted `compliance_report` (`agents/steps/compliance-report.md`
+Checks 3–4) can cite a `canon/**`/`continuity/`/`knowledge/` entry it consults as if it were
+settled truth, producing an overconfident finding instead of a hedged one. (`compliance_report`
+does not read `timeline.md`/`profile.md` at all today — see the scope note below.)
+
+This is not hypothetical: it is what happened on `the-course-he-kept`. Reviewer-actions.md's
+`block-015-v02` (and, by the same mechanism, `block-011-v01`) reports "INCONSISTENT (canon)"
+against a voyage-timeline figure — but that figure is not settled canon. It is the drafter's
+own invention, sitting in `canon/generated/attempt02-voyage-log.md` under scene 8, tagged
+`invented, unreviewed` with the drafter's own flag: *"storyboard says only 'for weeks' —
+adjust if canon fixes the interval differently."* The checker contradicted the prose against
+its own unconfirmed guess and reported it with the same confidence as a real violation. The
+human reviewer has outside knowledge that could confirm or correct that entry — `/revise`
+(`agents/revision.md`) already provides exactly the in-session, human-present mechanism to do
+so (`:32`, `:34`: "runs with the human present: ask directly"; "fix the source of truth
+first... `canon/` file") — but nothing points the reviewer at it from inside the finding, and
+`/revise` itself never flips the entry's marker even when it corrects the value.
+
+Done when: `/revise` can confirm-or-correct an unreviewed entry across **all five**
+destinations (`canon/generated/*`, `characters/<id>/timeline.md`, `characters/<id>/profile.md`,
+`continuity/`, `knowledge/`), flipping its provenance marker either way via a write it actually
+performs (a confirm-only request still runs `/revise`'s Apply step, with the marker flip as its
+only edit — skipping it would report success while writing nothing), **reachably from both
+installed host adapters** (Claude Code and OpenCode), not only from the canonical contract they
+point at, without disturbing the non-destructive current-vs-record discipline
+`agents/revision.md` already states; a
+`compliance_report` finding whose check actually resolved a `canon/**` file (via Check 3's own
+Canon-check escalation path, **or** Check 4's separate Canon-consistency sub-check, which
+escalates to a named canon file the same way) or a `continuity/`/`knowledge/` entry is flagged
+distinctly when that resolved source's per-entry marker carries `unreviewed` — bare
+`canon_active` comparisons are out of reach by design (see scope note below) and
+`timeline.md`/`profile.md` citations are out of reach because `compliance_report` does not
+consult them at all (tracked, not silently dropped — see Deferred); and `compliance_fix` treats
+`[premise: unreviewed]` as an override on the ordinary defect-label routing for `FIX` and
+`ESCALATE` — regardless of defect label or its absence, both are routed upstream and never
+applied to prose until the entry is confirmed, naming `/revise` against the specific unreviewed
+entry as the suggested upstream target and reading the locator straight off the violation
+line's tag (this step cannot read canon or state files) — `continuity/`/`knowledge/`'s minted
+`co-NN`/`kn-NN` id, or `canon/generated/`'s self-contained scene/beat/attempt-plus-quote locator
+that whichever check resolved it already wrote into the tag, since no minted id exists there.
+`SKIP` is untouched by the override — it already writes nothing and needs no escalation.
+
+* [ ] M18.1 Design note: define the confirmation lifecycle once — `unreviewed` →
+  `confirmed` (or corrected-and-confirmed) — in uniform terms across all five destinations'
+  differing surface forms (`status: invented, unreviewed` vs. `- **review:** unreviewed`), and
+  the citation rule `compliance_report` follows to detect one *where it already resolves a
+  marker-bearing source* (see scope note). Single-source it by extending
+  `agents/update-rules.md` (Rule 1) rather than restating per-file.
+* [ ] M18.2 Extend `agents/revision.md`: a confirm-only invocation (human reviews an entry,
+  agrees, no content change) alongside the existing correct-and-change flow, covering all five
+  destinations — `canon/generated/*`, `timeline.md`, `profile.md`, `continuity/`, `knowledge/`
+  (all already in `/revise`'s edit scope, `:13`). The confirm-only path skips only step 3
+  (nothing to fix); it still runs step 6 (Apply) — `/revise`'s sole write operation — with the
+  marker flip as its only edit, so the request actually writes something rather than reporting
+  success with no change. Preserve the current-state-vs-record distinction already stated there
+  (`:24`) — a confirmation is an in-place update to a current-state entry, never a fabricated
+  transition. Reconcile with `## Consequences the command accepts` (`:43`), which states "a
+  revision never touches freshness or review state" — that sentence means the
+  `Reviewed-draft:`/review-gate concept from `agents/orchestrator.md`'s Artifact-state contract,
+  not the per-entry `unreviewed`/`confirmed` marker this milestone adds (an unfortunate naming
+  collision, sharpest for `continuity/`/`knowledge/`'s literal `- **review:**` field); add one
+  clarifying sentence there distinguishing the two, so the contract does not simultaneously
+  require and appear to forbid the same write. Update both installed `/revise` host adapters
+  (`templates/dispatcher/.claude/commands/revise.md`,
+  `templates/dispatcher/.opencode/agents/revise.md`) to acknowledge the confirm-only shape: as
+  written, both frame every request as a correction ("what is wrong and what should be true
+  instead," "restate old truth → new truth") with no mention that confirming an entry with no
+  change is a distinct, legal request — leaving the mechanism defined but practically
+  unreachable through the actual installed command.
+* [ ] M18.3 Retrofit `compliance_report` Checks 3 (Canon) and 4 (Relational): when a check
+  actually resolves a named `canon/**` file — Check 3's own Canon-check escalation path, **or**
+  Check 4's separate Canon-consistency sub-check, which escalates the same way (both fire only
+  when `canon_active` is insufficient) — or a `continuity/`/`knowledge/` entry via Check 4's
+  targeted retrieval, and that resolved entry's **per-entry** marker (never a `canon/generated/`
+  file's own file-level frontmatter `status:`, which this milestone never reads or writes for
+  any entry) is unreviewed, tag the finding distinctly from a settled-truth citation. For a
+  `canon/generated/` referent specifically (no minted id, reached by either check's canon-file
+  escalation), the violation line ends up with exactly one self-contained `[ref:
+  canon/generated/<file>#<scene-beat-attempt> "<quote>"]` tag — appended fresh for Check 3
+  (which carries no `[ref:]` today) or enriched in place for Check 4 (which already carries a
+  `canon/<file>` + quote `[ref:]` on every relational finding per M16, so this must replace that
+  value, not duplicate the tag) — built at report time, since `compliance_fix` cannot read canon
+  files to reconstruct it later (`agents/steps/compliance-fix.md:51`) and the report's `##
+  Context consulted` section records only the file path, not the entry (`:178-186`). Update the
+  step doc's own tag-format contract (`:113`, "the local findings (Checks 1–3) do not carry the
+  tag") to carve out Check 3's escalation-path exception, so its generation instructions don't
+  contradict what this milestone requires it to produce. Bare `canon_active` comparisons (either
+  check's common, non-escalated path) are explicitly out of scope:
+  `agents/storyboard-schema.md:110-112` requires `canon_active` to hold an extracted rule, "not
+  a file path, not a summary of a source document," so there is no source to check a marker
+  against until the check escalates — forcing provenance back into `canon_active` would fight
+  that schema decision, not fix a bug in it. `timeline.md`/`profile.md` are out of scope for
+  this task (`compliance_report` has no input reading them — see Deferred).
+* [ ] M18.4 Retrofit `compliance_fix`'s routing so `[premise: unreviewed]` overrides the
+  ordinary defect-label rule for `FIX`, not only for units already routed upstream. Today, `FIX`
+  goes straight to a prose edit whenever the defect label is `prose` or absent
+  (`agents/steps/compliance-fix.md:59`) — exactly the common shape of a tagged finding (a Check
+  3 escalation-path finding carries no defect tag; a Check 4 finding whose prose contradicts
+  what reads as "settled, valid" canon is labeled `prose`, since the taxonomy doesn't yet know
+  that canon is itself unconfirmed). Left unchanged, a human deciding `FIX` on exactly the
+  finding this milestone exists to catch would still get a silent prose edit encoding the
+  unconfirmed guess as accepted truth. So: check for `[premise: unreviewed]` *before* the
+  defect-label rule; if the decision is `FIX` or `ESCALATE`, route the unit upstream regardless
+  of defect label, exactly as a non-prose-defect unit already is. `SKIP` is untouched — it
+  already writes nothing and appends no block, a fully resolved disposition the override must
+  not turn into an unwanted escalation. When routing such a unit, name `/revise`
+  against the specific entry as the suggested target, reading the locator straight off the
+  violation line's `[ref: <referent>]` tag rather than re-deriving it (this step cannot read
+  canon or state files, `:51`) — `continuity/`/`knowledge/`'s minted `co-NN`/`kn-NN` id, or
+  `canon/generated/`'s self-contained file+provenance+quote locator that M18.3 now writes into
+  the tag — not just "the canon file" in the abstract.
+* [ ] M18.5 Smoke/demo coverage: a synthetic fixture exercising an unreviewed-premise finding
+  flagged distinctly (via a resolved `canon/**`/`continuity/`/`knowledge/` source, not bare
+  `canon_active`), `ESCALATE` routing naming `/revise` with each system's actual locator shape,
+  `/revise`'s confirm and correct-and-confirm paths each flipping the marker — including at
+  least one `timeline.md` or `profile.md` entry to prove the extended `/revise` scope — and the
+  closing step this mechanism hands off to: a `compliance_report` re-run against the confirmed
+  state, showing the loop actually closes (no finding, or a fresh untagged one the human can
+  `FIX` normally) rather than treating the marker flip as the end of the round trip.
+
+Notes: Sprint 22 plans M18 (see SPRINT.md). Locked at planning (2026-08-11, prompted by a
+live `amanuensis-review` companion session on `the-course-he-kept`): (1) **scope is
+unified across all unreviewed-marker systems**, not `canon/generated/` alone —
+rejected: ship `canon/generated/` first and extend to the others in later
+sprints (the M10→M11–M13 precedent), because these systems share identical marker shape
+and `compliance_report`'s relational checks already read several of them, so a narrow fix would
+leave the same failure mode live on the rest. (2) **`/revise` is
+extended to own the write**, confirm and correct alike — rejected: teach `compliance_fix`
+to write the confirmation itself (keeps the write inside the review-decision flow, but widens
+`compliance_fix`'s write surface beyond the draft + `reviewer-actions.md` it touches today,
+and duplicates a write path `/revise` already owns for exactly this class of file). (3) **This
+sprint is definitional only** — no live application against `the-course-he-kept`'s actual
+`canon/generated/attempt02-voyage-log.md` entries or regeneration of its `reviewer-actions.md`;
+that stays a follow-up the human runs afterward, once `/revise`'s confirm path and the
+sharpened routing exist to run it through. The parked `reviewer-actions.md` review session
+predating this milestone resumes separately. Related Deferred item: "revise coverage of M14
+temporal-state files" (below) is a demonstration gap for `/revise`'s *existing* discipline;
+M18.2 adds new behavior and is tracked here, not there. (4) **Scope corrections from PR review
+(Codex PR-57 round 1):** the original planning pass undercounted the marker destinations (missed
+`timeline.md`/`profile.md`, capture-agent-routed alongside `canon/generated/`) and overstated
+`compliance_report`'s reach (implied `canon_active` itself could be marker-checked, and implied
+a uniform "file + entry id" locator when `canon/generated/` mints no entry id). `/revise`'s
+confirm-or-correct scope is widened to all five destinations (M18.2, M18.5); `compliance_report`
+detection (M18.3) stays scoped to sources it actually resolves — `timeline.md`/`profile.md`
+detection is not built this milestone (added to Deferred below, not silently dropped), and
+`canon_active`'s own schema constraint is documented as a deliberate boundary, not a defect.
+(5) **Further corrections from PR review (Codex PR-57 round 2):** two more confirmed gaps.
+First, `compliance_fix` is forbidden from reading canon files (`agents/steps/compliance-fix.md:51`)
+and the report's `## Context consulted` section names only a file path, never a specific entry's
+provenance or text — so a `canon/generated/` locator has nowhere to come from at fix time unless
+`compliance_report` writes the complete locator (file + scene/beat/attempt + quote) into the
+violation line's `[ref: <referent>]` tag itself, at report time, while it still has the entry in
+hand; M18.3/M18.4 now specify this explicitly rather than leaving the locator's origin
+unspecified. Second, `canon/generated/*` files carry the marker at **two levels** — a file-level
+frontmatter `status:` written once at file creation, and a per-entry inline tag on every captured
+fact (`agents/capture/capture-agent.md:62-76`,`:93-96`) — and the real multi-entry
+`attempt02-voyage-log.md` fixture has both, with many independently-confirmable entries under one
+file status. Flipping the file-level status on one entry's confirmation would misrepresent every
+sibling entry as confirmed; this milestone therefore scopes detection and confirmation to the
+per-entry inline tag exclusively, for every `canon/generated/` entry — the file-level `status:`
+is never read or written by this mechanism, for any entry, confirmed or not (an aggregate rule
+was considered and rejected as unneeded complexity for a field no consumer reads).
+(6) **Further corrections from PR review (Codex PR-57 round 3):** two more confirmed gaps.
+First, Check 4 has its **own** canon-file escalation — its Canon-consistency sub-check
+(`agents/steps/compliance-report.md:153`) opens a named `canon/**` file exactly like Check 3's
+Canon check does, when `canon_active` is insufficient — which the plan had scoped the
+marker/locator handling away from, leaving the relational path able to reproduce the milestone's
+motivating failure. M18.3/M18.4 now cover both escalation points identically. Second, the
+`/revise` confirm-only procedure as planned skipped step 6 (Apply) — `/revise`'s sole write
+operation (`agents/revision.md:37`) — alongside step 3, which would perform no write at all and
+could report success while leaving the entry unreviewed. M18.2 now skips only step 3; step 6
+still runs, with the marker flip as its only edit.
+(7) **Further correction from PR review (Codex PR-57 round 4) — the most safety-critical one:**
+`compliance_fix`'s existing defect-label rule sends `FIX` straight to a prose edit whenever the
+label is `prose` or absent (`agents/steps/compliance-fix.md:59`) — exactly the common shape of a
+`[premise: unreviewed]`-tagged finding (a Check 3 escalation-path finding carries no defect tag;
+a Check 4 finding whose prose contradicts what reads as "settled, valid" canon is labeled
+`prose`, since the taxonomy doesn't independently know that canon is unconfirmed). As originally
+scoped, `[premise: unreviewed]` was purely informational — a human deciding `FIX` on the exact
+finding this milestone exists to catch would still get a silent prose edit encoding the
+unconfirmed guess as accepted truth, defeating the milestone's purpose. M18.4 now makes
+`[premise: unreviewed]` an override, checked before the defect-label rule: a `FIX` or `ESCALATE`
+decision on a tagged unit is routed upstream regardless of defect label or its absence, until
+the entry is confirmed. (`SKIP` is excluded from the override — see round 5 below.)
+(8) **Refinement from PR review (Codex PR-57 round 5):** round 4's override was first phrased as
+"any decision," which would have forced a tagged unit's `SKIP` into an unwanted escalation.
+`SKIP` already leaves prose untouched and appends no block — "the human has accepted the
+violation" (`agents/steps/compliance-fix.md:87`), a fully resolved, terminal disposition the
+human explicitly chose, carrying no risk of silently trusting the premise since it writes
+nothing. M18.4 now scopes the override to `FIX` and `ESCALATE` only; `SKIP` keeps its existing
+behavior unchanged.
+(9) **Further correction from PR review (Codex PR-57 round 6):** `agents/revision.md` is the
+canonical contract, but a real `/revise` invocation loads a host adapter first — and both
+installed adapters (`templates/dispatcher/.claude/commands/revise.md`,
+`templates/dispatcher/.opencode/agents/revise.md`) frame every request as a correction, with no
+mention that a confirm-only request is a distinct, legal shape. Extending only the canonical
+contract, as originally scoped, would have left the mechanism real but practically unreachable
+through the actual installed command. M18.2 now updates both adapters with a minimal
+acknowledgment of the confirm-only shape, pointing at the contract's `## Invocation` section for
+it, rather than restating the full contract in each.
+(10) **Further corrections from PR review (Codex PR-57 round 7):** three more confirmed gaps.
+First, `agents/revision.md:43`'s "a revision never touches freshness or review state" collides
+in wording with this milestone's own `- **review:**` marker field on `continuity/`/`knowledge/`
+entries — the sentence means the `Reviewed-draft:`/review-gate concept from
+`agents/orchestrator.md`'s Artifact-state contract, an unrelated thing, but left unreconciled
+the completed contract would simultaneously require and appear to forbid the same write. M18.2
+now adds one clarifying sentence at `:43` distinguishing the two. Second, the Out-of-scope
+framing "OpenCode parity for `/revise` or the compliance steps" directly contradicted round 6's
+own fix, which does touch the OpenCode `/revise` adapter — narrowed to name only the unrelated
+`amanuensis-review` companion skill (M17's domain) as out of scope. Third, the plan treated the
+`/revise` marker flip as the end of the round trip for a `FIX`-decided unit, but a marker flip
+alone doesn't correct prose that still contradicts the (now-confirmed) canon — M18.5's
+demonstration now closes the loop with a `compliance_report` re-run against the confirmed state,
+showing the escalation's job was to route and unblock the decision, not apply the eventual prose
+fix itself.
+(11) **Further corrections from PR review (Codex PR-57 round 8):** two more confirmed gaps, both
+in the `[ref:]`-tagging mechanics. First, `agents/steps/compliance-report.md:113` states "the
+local findings (Checks 1–3) do not carry the tag" — a sentence M18.3's Check-3 tagging directly
+contradicts without updating it, so the step doc's own generation instructions could tell a
+future implementer to omit the very tags this milestone requires; M18.3 now includes updating
+that sentence to carve out Check 3's escalation-path exception. Second, Check 4 already carries
+a `[ref: <referent>]` tag on every relational finding per M16 — for a canon-file citation,
+already in the `canon/<file>` + quote form (`:113`) — so instructing it to "append" a second,
+richer `[ref:]` tag for an unreviewed `canon/generated/` entry would leave two tags on one line,
+ambiguous about which `compliance_fix` should use. M18.3/M18.4 now distinguish the two paths:
+Check 3 (no existing tag) gets one appended; Check 4 (existing tag) has its `<referent>`
+enriched in place with the fuller locator — one `[ref:]` tag per violation line, always.
+
+---
+
 ## Completed
 
 ### M1 — Pipeline step-list consistency
@@ -691,6 +934,15 @@ Notes — planning inputs recorded ahead (Sprint 16 AI-first review), plus decis
   `inherited-by-bulk` ledger row — unblocked now that M13 confirmed no adopted family
   defines artifact-level bulk. The machinery still doubles as the stray-`BULK:`-header
   rejection path, which must survive the cleanup. Small; fold into a later slice.
+- `compliance_report` consultation of `characters/<id>/timeline.md` / `profile.md` for
+  unreviewed-premise detection (surfaced in M18 planning / Codex PR-57 review) —
+  `compliance_report` has no input reading either file today, so M18's `[premise: unreviewed]`
+  tagging (M18.3) cannot reach the two capture-agent-routed destinations `/revise` can already
+  confirm (M18.2). Not a functional bug in M18 as scoped — `timeline.md`/`profile.md` facts
+  aren't consulted by any check yet, so there is nothing to falsely over-trust — but closing it
+  fully needs `compliance_report` to gain those as new relational inputs, which M18 deliberately
+  left out to stay a retrofit of existing resolution rather than a new-input expansion. Revisit
+  once there's a concrete relational check that would consult them.
 
 ### Parked
 
