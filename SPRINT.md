@@ -92,6 +92,32 @@ this.
   unreviewed` marker for every capture destination — no per-entry `id` field of any kind. A
   `continuity/`/`knowledge/` entry can be routed by its minted id; a `canon/generated/` entry
   cannot, so routing there needs a different locator (see Conventions).
+- **`canon/generated/*` files carry the marker at two levels — file frontmatter and per-entry —
+  and only the per-entry level is the one that matters for detection or confirmation.**
+  `agents/capture/capture-agent.md:62-76` defines a file-level `status: invented, unreviewed`
+  frontmatter block, written once when the file is created; its Output contract (`:93-96`)
+  separately requires *every* captured entry to carry its own provenance annotation and
+  `invented, unreviewed` tag. The real `canon/generated/attempt02-voyage-log.md` fixture that
+  motivated this Sprint has both forms and many independently-invented entries under one file
+  status. A file-level flip on one entry's confirmation would misrepresent every other entry in
+  the file as confirmed; a per-entry-only flip leaves the file-level status permanently
+  `unreviewed` even once every entry is confirmed, which no consumer reads anyway. Detection and
+  confirmation must operate on the per-entry inline tag only (see Conventions) — the file-level
+  `status:` is written once at file creation and is not part of this Sprint's confirmation
+  lifecycle at all.
+- **`compliance_fix` is forbidden from reading canon files, and the report's own `## Context
+  consulted` section only records a file path — so a canon/generated locator must be built at
+  report time, inside the violation line itself, or `compliance_fix` cannot construct it.**
+  `agents/steps/compliance-fix.md:51` states plainly: "Do not read canon files during this
+  step" — confirmed again at `:57`, which says the step "reads no canon or state file to route."
+  Its `Escalated:` block is built solely from the violation line's tags. `compliance_report`'s
+  `## Context consulted` section (`agents/steps/compliance-report.md:178-186`) records only the
+  consulted file's path and a one-line gloss (e.g. `canon/resonance.md (Resonance lag rule)`) —
+  never a specific entry's scene/beat/attempt or its text. So the scene/beat/attempt-plus-quote
+  locator this Sprint's routing needs for `canon/generated/` (no minted id — see above) has
+  nowhere to come from at fix time unless `compliance_report` puts the complete, self-contained
+  locator on the violation line itself, at the moment it already has the entry's text in hand
+  (see Conventions and Task 2).
 - **`compliance_fix`'s escalation routing is already defect-type-aware — it just names the
   artifact class, not the concrete action.** Non-prose decisions are routed via an `Escalated:`
   block naming a "Suggested upstream target" by defect type — `storyboard` → the storyboard
@@ -138,16 +164,22 @@ The Sprint is complete when:
    write, without disturbing the current-state-vs-record distinction already stated there.
 3. `agents/steps/compliance-report.md` Checks 3 and 4 tag a finding distinctly when the check
    actually resolved a named `canon/**` file (Check 3's escalation path) or a `continuity/`/
-   `knowledge/` entry (Check 4) that carries an unreviewed marker — an unconfirmed premise reads
-   differently from a settled-truth citation. Bare `canon_active` comparisons (Check 3's
-   non-escalated common path) are explicitly not tagged, since `canon_active` holds no
-   resolvable source per `agents/storyboard-schema.md:110-112`; `timeline.md`/`profile.md`
-   citations are not tagged either, since `compliance_report` has no input reading them.
+   `knowledge/` entry (Check 4) whose **per-entry** marker (not any file-level status) is
+   unreviewed — an unconfirmed premise reads differently from a settled-truth citation. Bare
+   `canon_active` comparisons (Check 3's non-escalated common path) are explicitly not tagged,
+   since `canon_active` holds no resolvable source per `agents/storyboard-schema.md:110-112`;
+   `timeline.md`/`profile.md` citations are not tagged either, since `compliance_report` has no
+   input reading them. For a `canon/generated/` referent (no minted id), the violation line's
+   `[ref: <referent>]` tag itself carries the complete locator — file path + the entry's
+   scene/beat/attempt provenance + a short quote of the entry's own text — captured at the
+   moment `compliance_report` already has the entry in hand, since `compliance_fix` cannot read
+   canon files to reconstruct it later (`agents/steps/compliance-fix.md:51`).
 4. `agents/steps/compliance-fix.md`'s upstream-target routing names `/revise` against the
    specific unreviewed entry when a routed finding's referent is unreviewed, rather than naming
    the artifact class alone — using each system's actual locator: `continuity/`/`knowledge/`'s
-   minted `co-NN`/`kn-NN` id, or `canon/generated/`'s file path + scene/beat/attempt provenance
-   + a quoted snippet (no minted id exists there).
+   minted `co-NN`/`kn-NN` id, or `canon/generated/`'s self-contained `[ref: <referent>]` locator
+   from item 3 above, copied verbatim into the `Escalated:` block without re-deriving it (the
+   step never reads canon files itself).
 5. A synthetic fixture demonstrates the full round trip: an unreviewed-premise finding tagged
    distinctly (via a resolved `canon/**` or `continuity/`/`knowledge/` source), `ESCALATE`
    routing naming `/revise` with the correct locator shape for that system, and `/revise`'s
@@ -206,15 +238,25 @@ rediscover them.
   `corrected`) — no consumer needs the distinction, since `/revise`'s existing report (step 8,
   `agents/revision.md:39`) already names what changed when something did.
 - **Finding-tag convention: `[premise: unreviewed]`, appended only when the check actually
-  resolved a marker-bearing source.** Rides the same violation line as the existing
-  `[defect: <type>] [ref: <referent>]` tag from M16, appended after it, only on a Check 4
-  finding, or a Check 3 finding that took the escalation path, whose resolved source carries the
-  marker. **Never** on a Check 3 finding decided from bare `canon_active` — that field has no
-  resolvable source per `agents/storyboard-schema.md:110-112`, so there is nothing to tag; this
-  is a deliberate scope boundary, not a gap to close by adding provenance to `canon_active`
-  (rejected — see below). Local checks (1–2) never carry it either — they don't cite maintained
-  state or named canon files. This is additive text inside the grammar's existing `^- ` item
-  line, so no grammar or validator change is needed (see Background).
+  resolved a marker-bearing source — and for `canon/generated/`, paired with a self-contained
+  `[ref: <referent>]` tag, since nothing downstream can re-derive one.** Rides the same
+  violation line as the existing `[defect: <type>] [ref: <referent>]` tag from M16, appended
+  after it, only on a Check 4 finding, or a Check 3 finding that took the escalation path, whose
+  resolved source's **per-entry** marker (never a file-level status — see Background) is
+  unreviewed. Check 4 findings already carry `[ref: <referent>]` per M16, naming the
+  `continuity/`/`knowledge/` entry's minted id. Check 3's escalation path carries no `[ref:]`
+  tag today, and `canon/generated/` mints no id to put in one — so this Sprint adds one: when
+  Check 3's escalation path resolves an unreviewed `canon/generated/` entry, the violation line
+  gets `[ref: canon/generated/<file>#<scene-beat-attempt> "<short quote>"]`, self-contained
+  because `compliance_fix` cannot read canon files to reconstruct it later
+  (`agents/steps/compliance-fix.md:51`) and the report's `## Context consulted` section records
+  only the file path, not the entry (`agents/steps/compliance-report.md:178-186`). **Never** on
+  a Check 3 finding decided from bare `canon_active` — that field has no resolvable source per
+  `agents/storyboard-schema.md:110-112`, so there is nothing to tag; this is a deliberate scope
+  boundary, not a gap to close by adding provenance to `canon_active` (rejected — see below).
+  Local checks (1–2) never carry it either — they don't cite maintained state or named canon
+  files. This is additive text inside the grammar's existing `^- ` item line, so no grammar or
+  validator change is needed (see Background).
 - **Detection is a read of a field already being resolved, not a new lookup pass — and it stays
   bounded to what's already resolved.** M16 already requires `compliance_report` to resolve each
   cited `continuity/`/`knowledge/` entry and each escalated-to canon file for the citation itself
@@ -225,17 +267,34 @@ rediscover them.
   is not retrofitted to carry provenance (that fights `agents/storyboard-schema.md`'s explicit
   "not a file path" design), and `compliance_report` does not gain `timeline.md`/`profile.md` as
   new inputs this Sprint (tracked as a Deferred follow-on instead — see Out of scope).
-- **`canon/generated/` routing uses provenance + a quoted snippet, not a minted entry id.**
-  `continuity/`/`knowledge/` entries route by their existing `co-NN`/`kn-NN` id. `canon/generated/`
-  entries have no equivalent id (`agents/capture/capture-agent.md:55-76` mints none), so
-  `compliance_fix`'s routing (M18.4) and the `/revise` invocation it suggests name the file path
-  plus the entry's existing scene/beat/attempt provenance and a short quote of the entry's own
-  text — precise enough to disambiguate within a chronologically-ordered generated-canon file
-  without inventing new write-side machinery. Rejected: mint a durable id for every
-  `canon/generated/` entry (`agents/capture/capture-agent.md`'s own alternative) — a real option,
-  but it changes the capture agent's write shape and entry format, which is a larger, separate
-  change this Sprint's "reuse existing mechanism" framing deliberately avoids; revisit if the
-  quote+provenance locator proves too ambiguous in practice.
+- **`canon/generated/` routing uses provenance + a quoted snippet, built once at report time,
+  not a minted entry id.** `continuity/`/`knowledge/` entries route by their existing
+  `co-NN`/`kn-NN` id. `canon/generated/` entries have no equivalent id
+  (`agents/capture/capture-agent.md:55-76` mints none), so `compliance_report` (which already
+  has the entry's text in hand at the point it resolves the citation) writes the locator — file
+  path + scene/beat/attempt provenance + a short quote — directly into the violation line's
+  `[ref: <referent>]` tag (see Finding-tag convention above); `compliance_fix` then copies that
+  tag verbatim into its `Escalated:` block rather than re-deriving anything, consistent with it
+  never reading canon files (`agents/steps/compliance-fix.md:51`). Precise enough to disambiguate
+  within a chronologically-ordered generated-canon file without inventing new write-side
+  machinery. Rejected: mint a durable id for every `canon/generated/` entry
+  (`agents/capture/capture-agent.md`'s own alternative) — a real option, but it changes the
+  capture agent's write shape and entry format, which is a larger, separate change this Sprint's
+  "reuse existing mechanism" framing deliberately avoids; revisit if the quote+provenance locator
+  proves too ambiguous in practice.
+- **Detection and confirmation for `canon/generated/` are per-entry only; the file-level
+  frontmatter `status:` is never read or written by this mechanism.** A `canon/generated/` file
+  carries a marker at two levels (see Background): file-level frontmatter, written once at file
+  creation, and a per-entry inline tag on every captured fact. Checking or flipping the
+  file-level status would either falsely mark unconfirmed sibling entries as confirmed (if one
+  entry's confirmation flipped it) or leave a fully-confirmed file permanently `unreviewed` at
+  the file level (if it only ever flips per-entry) — an ambiguity with no consumer that needs
+  resolving, since nothing reads the file-level status once per-entry detection exists. So this
+  Sprint scopes both `compliance_report`'s detection (M18.3) and `/revise`'s confirm-or-correct
+  flip (M18.2) to the per-entry inline tag exclusively, for `canon/generated/`; the file-level
+  `status:` field is untouched and out of scope entirely. Rejected: an aggregate rule (e.g. flip
+  the file-level status once every entry is confirmed) — adds a sweep-and-check step no consumer
+  needs, for a field nothing reads.
 - **Timeline.md/profile.md are in `/revise`'s confirmation scope but not `compliance_report`'s
   detection scope this Sprint — tracked, not silently dropped.** `/revise` already edits
   character files in place (`agents/revision.md:13`), so extending its confirm-or-correct
@@ -270,13 +329,15 @@ profile.md`, `continuity/`, `knowledge/`) — the marker vocabulary, the citatio
   not hidden" paragraph) with a short **Confirmation** subsection stating: the marker
   vocabulary locked in Conventions above (`unreviewed` → `confirmed`, surface form per
   destination, including `timeline.md`/`profile.md`'s inline tag shape per
-  `agents/capture/capture-agent.md`); that confirmation happens via `/revise` (either path —
-  confirm-only or correct-and-confirm) for all five destinations; and that a `compliance_report`
-  finding is tagged `[premise: unreviewed]` per the Conventions above **only** when the check
-  actually resolved a marker-bearing `canon/**` file or `continuity/`/`knowledge/` entry —
-  stating explicitly that bare `canon_active` citations and `timeline.md`/`profile.md` citations
-  are out of that detection's reach this Sprint, so a later reader doesn't assume the tag is
-  comprehensive.
+  `agents/capture/capture-agent.md`); that for `canon/generated/*` specifically, detection and
+  confirmation act on each entry's own inline tag only — never the file-level frontmatter
+  `status:`, which this lifecycle does not read or write, for any entry, confirmed or not; that
+  confirmation happens via `/revise` (either path — confirm-only or correct-and-confirm) for all
+  five destinations; and that a `compliance_report` finding is tagged `[premise: unreviewed]`
+  per the Conventions above **only** when the check actually resolved a marker-bearing
+  `canon/**` file or `continuity/`/`knowledge/` entry — stating explicitly that bare
+  `canon_active` citations and `timeline.md`/`profile.md` citations are out of that detection's
+  reach this Sprint, so a later reader doesn't assume the tag is comprehensive.
 - Do not restate the per-system marker mechanics (`canon/generated/*`'s frontmatter status,
   `timeline.md`/`profile.md`'s inline tag, `continuity/`/`knowledge/`'s `- **review:**` field) —
   those stay defined where M3/M14/M15 already define them; this task adds only the confirmation
@@ -316,24 +377,36 @@ teach `compliance_report` to tag a finding when its resolved referent is unrevie
     entry's marker to `confirmed` (per Task 1's vocabulary) as part of the same edit (or, for
     confirm-only, as the sole edit) — stated as a new sentence in `## Edit scope` or `##
     Procedure` step 6, wherever it reads most naturally alongside the existing in-place-edit
-    language at `:13`,`:24`. Covers all five destinations' surface forms (frontmatter `status:`,
-    inline tag, or `- **review:**` field, per destination).
+    language at `:13`,`:24`. Covers each destination's per-entry surface form — `timeline.md`/
+    `profile.md`/`canon/generated/`'s inline tag, `continuity/`/`knowledge/`'s `- **review:**`
+    field. For `canon/generated/` specifically, flip only the confirmed entry's own inline tag;
+    never touch the file-level frontmatter `status:` (per the Conventions above — it is outside
+    this Sprint's confirmation lifecycle entirely, for any entry, confirmed or not).
   - Do not touch the transition-structure prohibitions at `:22` — a confirmation is a
     current-state-entry update, never a fabricated `## Superseded` / `## Lost or superseded`
     transition.
 - **Retrofit `agents/steps/compliance-report.md`:**
   - In Check 3 (Canon, `:135-141`), only on its **escalation path** — when `canon_active` is
-    insufficient and the check opens a named `canon/**` file — read that file's marker. Do
-    **not** add any lookup on the common, non-escalated path (bare `canon_active` comparison):
-    per `agents/storyboard-schema.md:110-112`, `canon_active` holds an extracted rule, never a
-    file path, so there is nothing there to resolve a marker from.
+    insufficient and the check opens a named `canon/**` file — read that file's **per-entry**
+    marker for the specific entry the prose is checked against (never the file-level frontmatter
+    `status:` — see Background/Conventions). Do **not** add any lookup on the common,
+    non-escalated path (bare `canon_active` comparison): per
+    `agents/storyboard-schema.md:110-112`, `canon_active` holds an extracted rule, never a file
+    path, so there is nothing there to resolve a marker from.
   - In Check 4 (Relational, `:143-157`), when the check resolves a cited `continuity/`/
     `knowledge/` entry per the provenance resolution already required at `:149`, read that
     entry's marker.
-  - In both cases, if the resolved source's marker is `unreviewed`, append `[premise:
+  - In both cases, if the resolved entry's marker is `unreviewed`, append `[premise:
     unreviewed]` to the violation line, after the existing `[defect: <type>] [ref: <referent>]`
     tag where present (Check 4) or standing alone (Check 3's escalation path, which carries no
     defect tag today).
+  - **For Check 3's escalation path specifically**, also append a `[ref: <referent>]` tag naming
+    the self-contained locator — `canon/generated/<file>#<scene-beat-attempt> "<short quote of
+    the entry's own text>"` — built now, while the entry is in hand, because `compliance_fix`
+    cannot read canon files to build this later (`agents/steps/compliance-fix.md:51`) and the
+    `## Context consulted` section records only the file path, not the entry
+    (`agents/steps/compliance-report.md:178-186`). Check 4 already carries `[ref:]` naming the
+    `continuity/`/`knowledge/` entry's minted id per M16 — no change needed there.
   - No change to Checks 1–2 (Must-Contain, Must-Not-Contain) — they don't cite maintained state
     or named canon files. No new inputs are added to read `timeline.md` or `profile.md` — those
     stay outside this task (see Conventions and Out of scope).
@@ -342,12 +415,13 @@ teach `compliance_report` to tag a finding when its resolved referent is unrevie
 - **Retrofit `agents/steps/compliance-fix.md`'s escalation routing (`:57-85`):** when a unit
   routed upstream (`ESCALATE`, or a non-prose `FIX`) carries the `[premise: unreviewed]` tag on
   its violation line, the `Escalated:` block's "Suggested upstream target" names `/revise`
-  against the specific entry, using the locator that actually exists for that source: for a
-  `continuity/`/`knowledge/` referent, the minted `co-NN`/`kn-NN` id read from the `[ref:
-  <referent>]` tag already present; for a `canon/generated/` referent (reached only via Check
-  3's escalation path, which carries no `[ref:]` tag today), the named canon file's path plus
-  the entry's scene/beat/attempt provenance and a short quote of its text, per the Conventions'
-  locator convention — never claim a "file + entry id" for `canon/generated/`, which mints no id.
+  against the specific entry, reading the locator straight from the violation line's `[ref:
+  <referent>]` tag — never re-deriving it, since this step cannot read canon or state files
+  (`:51`): for a `continuity/`/`knowledge/` referent, the minted `co-NN`/`kn-NN` id; for a
+  `canon/generated/` referent (Check 3's escalation path only), the self-contained file +
+  scene/beat/attempt + quote locator Check 3 now writes into the tag (Task 2's
+  `compliance-report.md` bullet above) — never claim a "file + entry id" for `canon/generated/`,
+  which mints no id.
 - **Verify the grammar/validator are untouched:** run
   `sh scripts/validate-review-artifact.sh examples/review/reviewer-actions.md
   agents/review-grammars.yaml` (and the other three fixtures) after the retrofit and confirm
@@ -373,16 +447,22 @@ sweep, and close the milestone. Closes **M18.5** and the residual of **M18**.
 - Add a synthetic fixture (a small hand-authored chapter-folder slice, not a full project —
   mirror the scale of `examples/relational-review/` from Sprint 21) covering the two paths that
   actually get built:
-  - A `canon/generated/` entry stamped `unreviewed`, cited by a Check 3 finding that took the
-    escalation path (not a bare `canon_active` finding — those never tag), showing the
-    `[premise: unreviewed]` tag and the `Escalated:` block routing to `/revise` by file +
-    scene/beat/attempt provenance + quote (no entry id).
+  - A `canon/generated/` file with **at least two entries** (mirroring the real multi-entry
+    `attempt02-voyage-log.md`), one stamped `unreviewed` and cited by a Check 3 finding that
+    took the escalation path (not a bare `canon_active` finding — those never tag). Show: the
+    violation line's `[premise: unreviewed]` tag and its self-contained `[ref:
+    canon/generated/<file>#<scene-beat-attempt> "<quote>"]` tag; the `Escalated:` block copying
+    that locator verbatim (no re-derivation, no canon-file read); and — after a `/revise`
+    confirm-only pass on that one entry — that its per-entry inline tag flips to confirmed while
+    both the file-level frontmatter `status:` and the sibling (still-unreviewed) entry's inline
+    tag are visibly unchanged, proving per-entry-only scope.
   - A `continuity/` **or** `knowledge/` entry stamped `- **review:** unreviewed`, cited by a
     Check 4 finding, showing the same tag and an `Escalated:` block routing to `/revise` by its
     minted `co-NN`/`kn-NN` id. Note in the README that `compliance_report`'s detection logic is
     identical in shape across `canon/**` and `continuity/`/`knowledge/`; only the locator differs.
-  - A worked `/revise` confirm-only pass and a separate correct-and-confirm pass against two of
-    the fixture's entries, each showing the marker flip.
+  - A worked `/revise` correct-and-confirm pass against the `continuity/`/`knowledge/` entry
+    (distinct from the `canon/generated/` confirm-only pass above), showing both the value
+    correction and the marker flip together.
   - A worked `/revise` confirm-only pass against a `timeline.md` **or** `profile.md` entry,
     invoked directly (not via a compliance finding, since `compliance_report` never reaches
     these) — proving `/revise`'s extended scope independent of the detection gap the README
@@ -438,6 +518,13 @@ M18.1–M18.5 and the SPRINT task boxes reflect completed work.
   provenance+quote locator (Conventions), but it changes `agents/capture/capture-agent.md`'s
   write shape — larger and separate from this Sprint's reuse-existing-mechanism scope. Revisit
   if the quote+provenance locator proves too ambiguous in practice.
+- **An aggregate or file-level confirmation status for `canon/generated/*` files.** Surfaced at
+  PR review (Codex PR-57): a multi-entry generated-canon file carries a marker at both the
+  file-frontmatter and per-entry level (Background), and this Sprint deliberately does not try
+  to keep them in sync — detection and confirmation are per-entry only, and the file-level
+  `status:` is untouched permanently, by any entry's confirmation (Conventions). Rejected:
+  derive the file-level status from its entries' state (e.g. "confirmed" once all are
+  confirmed) — adds a sweep no consumer needs, for a field nothing reads.
 - **OpenCode parity for `/revise` or the compliance steps.** Unrelated to and untouched by this
   Sprint; OpenCode companion parity is tracked separately under M17.
 - **Dispatcher-level detection of unreviewed entries.** Matches the standing dispatcher-stays-

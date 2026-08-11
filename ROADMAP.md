@@ -130,19 +130,27 @@ attempt provenance plus a quoted snippet where no id exists.
 * [ ] M18.3 Retrofit `compliance_report` Checks 3 (Canon) and 4 (Relational): when a check
   actually resolves a named `canon/**` file or a `continuity/`/`knowledge/` entry — Check 3's
   escalation path (fired only when `canon_active` is insufficient) or Check 4's targeted
-  retrieval — and that resolved source carries an unreviewed marker, tag the finding distinctly
-  from a settled-truth citation. Bare `canon_active` comparisons (Check 3's common, non-escalated
-  path) are explicitly out of scope: `agents/storyboard-schema.md:110-112` requires
-  `canon_active` to hold an extracted rule, "not a file path, not a summary of a source
-  document," so there is no source to check a marker against until the check escalates —
-  forcing provenance back into `canon_active` would fight that schema decision, not fix a bug in
-  it. `timeline.md`/`profile.md` are out of scope for this task (`compliance_report` has no
-  input reading them — see Deferred).
+  retrieval — and that resolved entry's **per-entry** marker (never a `canon/generated/` file's
+  own file-level frontmatter `status:`, which this milestone never reads or writes for any
+  entry) is unreviewed, tag the finding distinctly from a settled-truth citation. For a
+  `canon/generated/` referent specifically (no minted id, Check 3's escalation path only), also
+  write a self-contained `[ref: canon/generated/<file>#<scene-beat-attempt> "<quote>"]` tag onto
+  the violation line at report time — `compliance_fix` cannot read canon files to reconstruct
+  this later (`agents/steps/compliance-fix.md:51`) and the report's `## Context consulted`
+  section records only the file path, not the entry (`:178-186`). Bare `canon_active`
+  comparisons (Check 3's common, non-escalated path) are explicitly out of scope:
+  `agents/storyboard-schema.md:110-112` requires `canon_active` to hold an extracted rule, "not
+  a file path, not a summary of a source document," so there is no source to check a marker
+  against until the check escalates — forcing provenance back into `canon_active` would fight
+  that schema decision, not fix a bug in it. `timeline.md`/`profile.md` are out of scope for
+  this task (`compliance_report` has no input reading them — see Deferred).
 * [ ] M18.4 Retrofit `compliance_fix`'s upstream-target routing: when a routed finding's
-  referent is unreviewed, name `/revise` against that specific entry as the suggested target —
-  `continuity/`/`knowledge/` by their minted `co-NN`/`kn-NN` id, `canon/generated/` by file +
-  scene/beat/attempt provenance + a quoted snippet of the entry (no minted id exists there,
-  `agents/capture/capture-agent.md:55-76`) — not just "the canon file" in the abstract.
+  referent is unreviewed, name `/revise` against that specific entry as the suggested target,
+  reading the locator straight off the violation line's `[ref: <referent>]` tag rather than
+  re-deriving it (this step cannot read canon or state files, `:51`) — `continuity/`/
+  `knowledge/`'s minted `co-NN`/`kn-NN` id, or `canon/generated/`'s self-contained
+  file+provenance+quote locator that M18.3 now writes into the tag — not just "the canon file"
+  in the abstract.
 * [ ] M18.5 Smoke/demo coverage: a synthetic fixture exercising an unreviewed-premise finding
   flagged distinctly (via a resolved `canon/**`/`continuity/`/`knowledge/` source, not bare
   `canon_active`), `ESCALATE` routing naming `/revise` with each system's actual locator shape,
@@ -167,7 +175,7 @@ sharpened routing exist to run it through. The parked `reviewer-actions.md` revi
 predating this milestone resumes separately. Related Deferred item: "revise coverage of M14
 temporal-state files" (below) is a demonstration gap for `/revise`'s *existing* discipline;
 M18.2 adds new behavior and is tracked here, not there. (4) **Scope corrections from PR review
-(Codex PR-57):** the original planning pass undercounted the marker destinations (missed
+(Codex PR-57 round 1):** the original planning pass undercounted the marker destinations (missed
 `timeline.md`/`profile.md`, capture-agent-routed alongside `canon/generated/`) and overstated
 `compliance_report`'s reach (implied `canon_active` itself could be marker-checked, and implied
 a uniform "file + entry id" locator when `canon/generated/` mints no entry id). `/revise`'s
@@ -175,6 +183,22 @@ confirm-or-correct scope is widened to all five destinations (M18.2, M18.5); `co
 detection (M18.3) stays scoped to sources it actually resolves — `timeline.md`/`profile.md`
 detection is not built this milestone (added to Deferred below, not silently dropped), and
 `canon_active`'s own schema constraint is documented as a deliberate boundary, not a defect.
+(5) **Further corrections from PR review (Codex PR-57 round 2):** two more confirmed gaps.
+First, `compliance_fix` is forbidden from reading canon files (`agents/steps/compliance-fix.md:51`)
+and the report's `## Context consulted` section names only a file path, never a specific entry's
+provenance or text — so a `canon/generated/` locator has nowhere to come from at fix time unless
+`compliance_report` writes the complete locator (file + scene/beat/attempt + quote) into the
+violation line's `[ref: <referent>]` tag itself, at report time, while it still has the entry in
+hand; M18.3/M18.4 now specify this explicitly rather than leaving the locator's origin
+unspecified. Second, `canon/generated/*` files carry the marker at **two levels** — a file-level
+frontmatter `status:` written once at file creation, and a per-entry inline tag on every captured
+fact (`agents/capture/capture-agent.md:62-76`,`:93-96`) — and the real multi-entry
+`attempt02-voyage-log.md` fixture has both, with many independently-confirmable entries under one
+file status. Flipping the file-level status on one entry's confirmation would misrepresent every
+sibling entry as confirmed; this milestone therefore scopes detection and confirmation to the
+per-entry inline tag exclusively, for every `canon/generated/` entry — the file-level `status:`
+is never read or written by this mechanism, for any entry, confirmed or not (an aggregate rule
+was considered and rejected as unneeded complexity for a field no consumer reads).
 
 ---
 
