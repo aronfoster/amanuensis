@@ -4,6 +4,7 @@ review_required: true
 inputs:
   - <chapter-folder>/storyboards/*-storyboard.md
   - <chapter-folder>/scene-list.md
+  - reveals.md
 outputs:
   - <chapter-folder>/storyboards/storyboard-review.md
 preconditions:
@@ -15,6 +16,10 @@ preconditions:
     kind: source
     required: true
     review_sensitive: false
+  - path: reveals.md
+    kind: source
+    required: false
+    review_sensitive: false
 ---
 
 See `agents/orchestrator.md` for the step workflow contract.
@@ -23,14 +28,15 @@ See `agents/orchestrator.md` for the step workflow contract.
 
 ## Purpose
 
-Flag where a chapter's storyboard blocks under-serve the reader: takeaways the storyboard does not support, reveals with no prior setup, and takeaways that contradict their own concealment. This step is read-only, report-only, and advisory: it produces a per-block report for a human to read. It runs after `storyboarding` and before `drafting`. It is purely diagnostic — it proposes no fixes and there is no paired fix step (a `storyboard_review_fix` is a future milestone); the human reads the report and revises the storyboards by hand.
+Flag where a chapter's storyboard blocks under-serve the reader: takeaways the storyboard does not support, reveals with no prior setup, blocks that disclose a reveal before its concealment window, and takeaways that contradict their own concealment. The reveal checks reason **across chapters** against the story-level `reveals.md` ledger (`agents/reveals.md`). This step is read-only, report-only, and advisory: it produces a per-block report for a human to read. It runs after `storyboarding` and before `drafting`. It is purely diagnostic — it proposes no fixes and there is no paired fix step (a `storyboard_review_fix` is a future milestone); the human reads the report and revises the storyboards by hand.
 
 ## Inputs
 
 - `<chapter-folder>/storyboards/*-storyboard.md` — all storyboard blocks for the chapter. The block fields drive the three checks below: `reader_takeaway` for all three; the `beat` description, `must_preserve`, `canon_active`, and character-state fields for takeaway support; `concealment_from_reader` for setup and consistency.
-- `<chapter-folder>/scene-list.md` — read only for canonical scene/beat ordering and scene-level reveal intent. It anchors the reveal-setup check's ordering of blocks.
+- `<chapter-folder>/scene-list.md` — read only for canonical scene/beat ordering and scene-level reveal intent. It anchors the reveal checks' ordering of blocks.
+- `reveals.md` — the project-root, human-authored, story-level reveals ledger (`agents/reveals.md`): the `id`-bearing index of forward reveals with their `lands:` / `setup:` / `concealed-until:` block-qualified positions. Consumed **read-only** by the two reveal checks (Check 2) via targeted lookup of named entries and positions, per `agents/review-context.md` — not a corpus scan. `required: false` and project-type-aware: a story-level ledger exists meaningfully only where reveals span the work, so a project without one does not block.
 
-Do not read any other files. In particular, do not read any draft — none exists at this stage — and do not consult source canon files: each block's fields are self-contained for what this step evaluates. A field that is missing or unparseable is a storyboard defect to note, not a reason to reach for source files.
+Beyond these, do not read a draft — none exists at this stage — and do not consult source canon files: each storyboard block's fields plus the ledger are what this step evaluates against. A field that is missing or unparseable is a storyboard defect to note, not a reason to reach for source files.
 
 ## Behavior
 
@@ -55,11 +61,14 @@ If a block has any finding, record only the findings — not the passing checks:
 ```markdown
 ### Block NNN
 - UNSUPPORTED (reader_takeaway): [beat] — [takeaway] has no on-page support in the beat's content
-- UNSETUP (reveal): [beat] — depends on [understanding] with no prior setup in the chapter
+- UNSETUP (reveal): [beat] — reveal rv-NN's `setup:` position [pos] is not established. [defect: storyboard] [ref: reveals.md#rv-NN]
+- PREMATURE (reveal): [beat] — block discloses reveal rv-NN before its `concealed-until:` [pos]. [defect: storyboard] [ref: reveals.md#rv-NN]
 - CONTRADICTION (reader_takeaway vs concealment_from_reader): [beat] — takeaway "[…]" requires naming what concealment forbids "[…]"
 ```
 
-Use only the finding types that apply. Do not record passing checks alongside findings. Do not include a draft-version stamp of any kind (there is no draft to stamp) and do not add any FIX/SKIP/ESCALATE annotation grammar — this report is advisory-only and no consumer for annotations exists.
+Use only the finding types that apply. Do not record passing checks alongside findings. Do not include a draft-version stamp of any kind (there is no draft to stamp) and do not add any FIX/SKIP/ESCALATE annotation grammar or `<!-- review-id: ... -->` anchors — this report is advisory-only and no consumer for annotations exists.
+
+A reveal finding (Check 2) carries the greppable trailing tag ` [defect: <type>] [ref: reveals.md#rv-NN]` on its finding line (the canonical surface form of `agents/review-context.md`): a leaking or ill-ordered *storyboard* is `[defect: storyboard]` (it violates the higher-precedence reveal plan — never a "ledger is wrong" defect), and only the *plan itself* being wrong — a ledger entry internally inconsistent or contradicting canon — is `[defect: state]` (the `reveals.md` member of the maintained-state type), routed to the human who maintains the ledger. The takeaway checks (1 and 3) do not carry the tag.
 
 Work block by block. Do not collapse findings across blocks.
 
@@ -69,13 +78,15 @@ Source fields: `reader_takeaway`, checked against the `beat` description, `must_
 
 For each block, confirm the beat's own content gives the drafter the material to land the block's `reader_takeaway`. If the takeaway asserts an understanding the beat provides no on-page support for, record an `UNSUPPORTED` finding. If supported, do not record it.
 
-#### Check 2: Reveal setup
+#### Check 2: Reveal setup and premature disclosure
 
-Source fields: `reader_takeaway`, `beat_type`, `concealment_from_reader`, ordered by `scene-list.md` scene order then `beat_index`.
+Source: the storyboard blocks (`reader_takeaway`, `beat_type`, `concealment_from_reader`) and `reveals.md` (each entry's `lands:` / `setup:` / `concealed-until:` block-qualified positions), ordered by `scene-list.md` scene order then `beat_index`. The strategy and precedence are single-sourced in `agents/review-context.md` (reveal-timing carve-out: **canon > `reveals.md` > storyboard > prose**) and the ledger schema in `agents/reveals.md`; neither is restated here. This check reasons **across chapters** against the story-level ledger — it is no longer chapter-scoped. Two complementary sub-checks run, so the review is blind to neither direction of a reveal failure:
 
-For each block whose `reader_takeaway` depends on the reader already understanding something — including every `beat_type: reveal` block — confirm that an earlier block establishes that understanding (via its `reader_takeaway` or content) and that the depended-on fact is not still listed under `concealment_from_reader` at that earlier point. If no prior setup exists, record an `UNSETUP` finding. If setup exists, do not record it.
+**(i) Setup sufficiency (targeted).** For each block that is a `beat_type: reveal` (or whose `reader_takeaway` depends on prior understanding), look up its ledger entry and confirm the entry's `setup:` positions are established — by **targeted lookup of exactly those positions**, never a full prior-storyboard rescan. If a `setup:` position is not established, record an `UNSETUP (reveal)` finding citing the ledger entry (`reveals.md#rv-NN`).
 
-This check is within-chapter only. Cross-chapter and story-level reveal tracking are deferred; do not reason about blocks outside the current chapter.
+**(ii) Premature-disclosure guard (whole-range, every block).** A `concealed-until:` is an **active constraint over a block-qualified position range**, and it applies to **every** reviewed block whose block-qualified position precedes it — **not only reveal-tagged blocks**, and **not** by trusting the block's local `concealment_from_reader` to redundantly carry the secret. For each ledger secret still active at the current block (the block's position precedes the secret's `concealed-until:`), check whether the block discloses it; if an ordinary beat leaks a ledger secret early, record a `PREMATURE (reveal)` finding — even though the block is not itself a reveal. Because positions are block-qualified (`<…scene-id>:block-NNN`), "precedes" is well-defined **within** a scene as well as across scenes — block 003 precedes a `concealed-until: …:block-004`. The guard is bounded: O(active secrets × blocks), not a corpus rescan.
+
+Both sub-checks label a leaking or ill-ordered *storyboard* `[defect: storyboard]` (the storyboard violates the higher-precedence reveal plan; the guard must not be talked out of the finding by relaxing the plan). Only the *plan itself* being wrong — a ledger entry internally inconsistent or contradicting canon — is `[defect: state]` against `reveals.md`, routed to the human who maintains the ledger.
 
 #### Check 3: Takeaway/concealment consistency guard
 
@@ -92,6 +103,7 @@ After all blocks, append a summary:
 
 - Unsupported takeaways: N
 - Reveals without setup: N
+- Premature disclosures: N
 - Takeaway/concealment contradictions: N
 - Blocks fully clean: N of N
 
@@ -100,9 +112,19 @@ After all blocks, append a summary:
 
 Do not propose fixes. The summary observation is a diagnostic, not a recommendation. This step never rewrites a storyboard block: it is read-only over the storyboards it reviews.
 
+After the summary, append a report-level section — headed exactly `## Context consulted` — naming the specific ledger entries (and the positions) this run consulted for the reveal checks, the canonical audit surface of `agents/review-context.md`:
+
+```markdown
+## Context consulted
+
+- reveals.md#rv-02 (setup positions scene01:block-003, scene02:block-005; concealed-until scene04:block-002)
+```
+
+If no ledger was present or consulted, record a single `## Context consulted` heading with a `- none` line.
+
 ## Outputs
 
-- `<chapter-folder>/storyboards/storyboard-review.md` — the advisory report. One `## Storyboard Review — [chapter/scene id], [date]` header per run, one `### Block NNN` entry per storyboard block (either a single `CLEAN` line or a list of findings), and a `### Summary` block per run tallying findings by check and noting any pattern-level observation. It is written beside the storyboards it reviews because no `drafts/<latest-attempt>/` folder exists yet — the other report steps write into a draft attempt folder because they review a draft; this step runs before any draft attempt exists. The file is the human review artifact: the human reads it and revises the storyboards by hand before `drafting`.
+- `<chapter-folder>/storyboards/storyboard-review.md` — the advisory report. One `## Storyboard Review — [chapter/scene id], [date]` header per run, one `### Block NNN` entry per storyboard block (either a single `CLEAN` line or a list of findings; reveal findings carry the ` [defect: <type>] [ref: reveals.md#rv-NN]` tag and reason cross-chapter against the ledger), a `### Summary` block per run tallying findings by check and noting any pattern-level observation, and a report-level `## Context consulted` section naming the `reveals.md` entries the reveal checks consulted. It is written beside the storyboards it reviews because no `drafts/<latest-attempt>/` folder exists yet — the other report steps write into a draft attempt folder because they review a draft; this step runs before any draft attempt exists. The file is the human review artifact: the human reads it and revises the storyboards by hand before `drafting`.
 
 ## Anti-Patterns
 
@@ -110,9 +132,9 @@ Do not propose fixes. The summary observation is a diagnostic, not a recommendat
 
 **Recording passing checks.** Clean checks are not recorded. A block entry is either one line (`CLEAN`) or a list of findings only. Passing items alongside findings inflate the file and defeat the purpose of the format.
 
-**Consulting files not listed as inputs.** If a block's fields are too thin to evaluate a check, that is a storyboard defect. Note it; do not reach for canon source files.
+**Consulting files not listed as inputs.** If a block's fields are too thin to evaluate a check, that is a storyboard defect. Note it; do not reach for canon source files or a draft (none exists). `reveals.md` is a consulted input for the reveal checks; no other source file is.
 
-**Reasoning across chapters.** The reveal-setup check is within-chapter only. A takeaway that depends on setup from another chapter is out of scope for this step.
+**Rescanning the prior storyboard corpus.** The reveal checks reason across chapters, but by **targeted lookup** against `reveals.md` — a reveal's named `setup:` positions, a secret's `concealed-until:` range — never a full re-read of every prior block. Setup sufficiency fetches exactly the named `setup:` positions; the premature-disclosure guard walks only the active secrets against the blocks in their range (O(active secrets × blocks)).
 
 **Adding a draft-version stamp or annotation grammar.** Neither applies to a pre-draft advisory report: there is no draft to stamp against, and no fix step exists to consume annotations.
 

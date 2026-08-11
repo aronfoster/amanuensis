@@ -184,7 +184,11 @@ Freshness is a **derived predicate**, never a stored field and never swept — t
 (`agents/characters.md`, "Freshness is derived, never stored"), applied to `continuity/`. A
 continuity entry is:
 
-- **derived-stale** iff its `committed-in` draft is outside the active head's lineage; and
+- **derived-stale** iff its stamped attempt is not the source chapter's `<latest-attempt>` **or** its
+  draft is outside that attempt's active-head lineage — the predicate is **latest-attempt-qualified**:
+  an entry stamped in a **superseded (non-latest) attempt is stale** even though it still resolves "in
+  lineage" against that superseded attempt's own frozen manifest, the same precision applied to the
+  M14 predicate (`agents/characters.md`, "Freshness is derived, never stored"); and
 - **derived-unsupported** iff its `evidence:` pointer no longer resolves in the active prose.
 
 Both are resolved against the manifest and prose identified by the entry's **full evidence path**

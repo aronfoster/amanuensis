@@ -8,7 +8,11 @@ Each entry is one discrete fact. The `### heading` is a short searchable label.
 - `id:` — durable, file-scoped, minted once, never changed (kn-01, kn-02, …).
 - `story-position:` — where the fact was acquired, canonical folder-style
   `<book-id>/<chapter-id>/<scene-id>` (short_story: `<scene-id>`).
-- `committed-in:` — the accepted draft that committed the fact (draft-vNN.md).
+- `committed-in:` — the accepted draft that committed the fact, as its full
+  attempt-qualified path `<chapter-folder>/drafts/<attemptNN>/draft-vNN.md`
+  (never a bare `draft-vNN.md` basename — basenames repeat across chapters and
+  attempts and would false-fresh on a collision; the same shape
+  `templates/continuity-book.md` uses for `evidence:`).
 - `basis:` — how the character holds it: witnessed | told | inferred. A remembered
   fact is one witnessed at its source scene and still held.
 
@@ -31,7 +35,7 @@ does not affect reveal timing.
 ### [Short label, e.g. "Duchess Mathilde attended ch1 luncheon"]
 - **id:** kn-01
 - **story-position:** book1/chapter01/scene02
-- **committed-in:** draft-v03.md
+- **committed-in:** plot/book1/chapter01/drafts/attempt01/draft-v03.md
 - **basis:** witnessed
 - **fact:** [One or two sentences stating the fact precisely.]
 - **notes:** [Optional. Cross-references, caveats, or downstream implications.]
@@ -45,7 +49,7 @@ does not affect reveal timing.
 ### [Short label]
 - **id:** kn-02
 - **story-position:** book1/chapter02/scene01
-- **committed-in:** draft-v03.md
+- **committed-in:** plot/book1/chapter02/drafts/attempt01/draft-v03.md
 - **basis:** inferred
 - **suspicion:** [What they think is true, and why.]
 - **notes:** —
@@ -59,7 +63,7 @@ does not affect reveal timing.
 ### [Short label]
 - **id:** kn-03
 - **story-position:** book1/chapter02/scene04
-- **committed-in:** draft-v03.md
+- **committed-in:** plot/book1/chapter02/drafts/attempt01/draft-v03.md
 - **basis:** told
 - **belief:** [What they believe.]
 - **truth:** [What is actually true, for continuity tracking. May optionally carry a QUALIFIED
@@ -90,6 +94,6 @@ the corrected state is recorded as a new stamped entry, with a new id, in the se
 - **id:** kn-03
 - **formerly:** believes incorrectly
 - **held:** book1/chapter02/scene04 to book1/chapter06/scene03
-- **committed-in:** draft-v11.md
+- **committed-in:** plot/book1/chapter02/drafts/attempt01/draft-v11.md
 - **superseded-by:** kn-07
 - **what changed:** [Brief explanation of the correction.]

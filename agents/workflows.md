@@ -45,6 +45,8 @@ After completing all storyboard blocks for a scene, produce a **knowledge delta*
 
 Use the folder-style scene citation: `[from <book-id>/<chapter-id>/<scene-id>]` (for example, `[from book1/chapter02/scene03]`). For `short_story` projects — no book, no chapter subdivision — it reduces to `[from <scene-id>]` (for example, `[from scene03]`). Include the scene reference so the source is traceable if the storyboard changes later. Attach the delta to the storyboard output. Do not apply it to character knowledge files yet — that happens after drafting.
 
+**Reveals ledger.** The human-authored, story-level `reveals.md` (`agents/reveals.md`) indexes forward reveals — each with its `lands:` / `setup:` / `concealed-until:` block-qualified positions — as a `role: planning`, project-root artifact with **no pipeline writer** (a reveal is forward authorial intent, and `storyboard_review` runs pre-draft, so there is nothing accepted to derive it from). It is kept **distinct** from the book-level freeform `continuity.md` risk notes (`agents/books.md:59-66`), cross-referenced not merged. For projects on the orchestrator, [`steps/storyboard-review.md`](steps/storyboard-review.md) consumes it **read-only** pre-draft, reasoning **across chapters** to check each reveal's **setup sufficiency** (its `setup:` positions are established) and to **guard against premature disclosure** (no reviewed block leaks a ledger secret before its `concealed-until:`).
+
 ## Workflow: drafting
 
 Follow `steps/drafting.md`. The drafting step is a chapter coordinator: it dispatches per-scene subagents (each treating its storyboard blocks as production notes for a single dramatic arc and pacing against the arc, not beat boundaries), then assembles their per-scene files into one chapter draft and one notes file for the attempt.
@@ -60,6 +62,8 @@ Review the drafted prose and fix any deviations from storyboard requirements (es
 * Record risks in the relevant continuity or open questions file
 
 This is a **human** reveal-timing / consistency-risk pass whose notes live in the book-level `continuity.md` planning file (`role: planning`) — distinct from the maintained, derived objective-continuity state in `continuity/` (`role: derived_state`) that the automated `continuity_update` step writes (see "Workflow: continuity update" below). The two are not the same file and are not conflated.
+
+For projects on the orchestrator, the **automated** relational continuity review is realized by the retrofitted [`steps/compliance-report.md`](steps/compliance-report.md) — the bounded relational review. It reads the drafted prose against the maintained `continuity/` state, the `characters/<id>/knowledge/` files, and named `canon/` files via targeted retrieval (never a full corpus re-read), emitting per-block relational findings with cited referents and defect-type labels plus a `## Context consulted` record, under the precedence and defect taxonomy of [`review-context.md`](review-context.md). Reveal-timing across chapters is additionally checked pre-draft by `storyboard_review` against `reveals.md` (see "Workflow: storyboarding"). The book-level freeform `continuity.md` risk notes above stay a **human** planning artifact (`role: planning`, `agents/books.md:59-66`), distinct from the derived `continuity/` state and from the automated review.
 
 ## Workflow: continuity update
 
