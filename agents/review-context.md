@@ -123,7 +123,10 @@ the artifact that owns the fix:
   because the ledger *outranks* storyboards: a **reveals-ledger defect** is the plan being wrong on its
   own terms (internally inconsistent, or contradicting canon), **not** a storyboard disagreeing with it
   (that is a storyboard defect).
-- **canon** — settled canon is contradicted.
+- **canon** — the settled **canon artifact itself** is at fault: internally contradictory, or a rule
+  the prose exposes as needing revision — routed to the canon file / the human, never edited in prose.
+  Prose that merely contradicts *valid* settled canon is **not** a canon defect but a **prose** defect
+  (canon outranks, so the prose is the wrong one and `compliance_fix` corrects the prose to conform).
 - **missing-context** — the fact needed to judge is absent from every consulted source (surface as an
   open question).
 
