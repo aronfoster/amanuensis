@@ -8,27 +8,14 @@ are sequenced, not parallel, so it is never edited by two at once.
 
 ---
 
-## M17 — Reverse ingestion: existing prose into Amanuensis
-
-Ingest a finished work into Amanuensis artifacts (characters, scene-list, storyboards, overview, temporal character state, and objective continuity state), chunked to fit context. Design-gated.
-
-Done when: a single existing chapter or short story ingests into a valid project structure that the forward pipeline's downstream steps can consume, including the temporal-state and bounded-review systems established by M14–M16.
-
-* [ ] M17.1 Design note (blocking): split reverse ingestion into smaller milestones. Candidate areas: prose chunking and source maps; character/entity extraction from prose; scene reconstruction; storyboard reconstruction; overview synthesis; canon reconciliation; temporal-state reconstruction; continuity reconciliation; reverse-to-forward bridge.
-* [ ] M17.2+ Implementation tasks opened from the approved design note.
-
-Notes: Formerly M14. This remains intentionally tabled until selective execution, artifact lineage, temporal state, and bounded relational review are stable enough to support reverse-generated artifacts.
-
----
-
-## M18 — Review companion: OpenCode parity + override capture
+## M17 — Review companion: OpenCode parity + override capture
 
 Bring the `amanuensis-review` companion to full host parity and give it the one
 human-decision surface it still lacks. Two now-unblocked Deferred items promoted together
 at triage (2026-08): **OpenCode parity for the companion** and **companion capture of
 stale-`Override:` blocks**. Bundled so the OpenCode adapter is written once already
 carrying the override surface, rather than porting Claude-first and re-opening the parity
-gap. Independent of M17 — it can proceed first.
+gap.
 
 Today `install.sh` installs asymmetrically: Claude Code gets three dispatcher commands
 **and** the companion skill; OpenCode gets only the three dispatcher agents
@@ -45,26 +32,26 @@ capture a human-stated stale-override into the review artifact without a hand-ed
 `scripts/validate-review-artifact.sh`) are unchanged — both companions stay thin adapters
 over them.
 
-* [ ] M18.1 Port the companion to OpenCode as an explicitly-invoked agent
+* [ ] M17.1 Port the companion to OpenCode as an explicitly-invoked agent
   (`templates/dispatcher/.opencode/agents/amanuensis-review.md`), mirroring the Claude Code
   skill's procedure, pacing controls, category/fan-out handling, two-round (metaphor)
   handling, and hard rules. Behavior and safety checks match; activation need not (the M7.8
   precedent) — Claude Code auto-activates the skill, OpenCode invokes the agent like
   `run-step`.
-* [ ] M18.2 Wire `install.sh` to install the OpenCode companion alongside the existing
+* [ ] M17.2 Wire `install.sh` to install the OpenCode companion alongside the existing
   `.opencode/agents/` dispatcher agents, parallel to the Claude Code skill block
   (`install.sh:82,114,130`).
-* [ ] M18.3 Define the companion override carve-out and implement it in the Claude Code
+* [ ] M17.3 Define the companion override carve-out and implement it in the Claude Code
   skill: capture a human-*stated* stale-override and write the `Override:` block into the
   review artifact (the file the companion already writes), per the block shape and
   recognition rules in `agents/steps/compliance-fix.md:118-138`. The companion originates
   no override and states no decision the human did not — it captures, exactly as it does
   `Decision:` fields. Update the companion hard rules to permit this one write; the current
   confinement forbids touching artifact state (`SKILL.md:193-202`).
-* [ ] M18.4 Carry the override carve-out into the OpenCode companion (M18.1) so both hosts
+* [ ] M17.4 Carry the override carve-out into the OpenCode companion (M17.1) so both hosts
   land at parity, covering all four families' override paths (the `Override:` mechanism is
   identical across the fix/apply steps).
-* [ ] M18.5 Smoke coverage: an OpenCode review round-trip for one family (report →
+* [ ] M17.5 Smoke coverage: an OpenCode review round-trip for one family (report →
   companion-captured decisions → fix consumes); and an override captured by the companion
   (stale report → human authorizes → companion writes the `Override:` block → fix step
   recognizes it and records it in its apply log).
@@ -77,8 +64,7 @@ behavior and safety checks, not identical activation (M7.8). Override capture (f
 Deferred item) is folded in here rather than shipped Claude-first, so both hosts reach
 parity in one pass. Not in scope: any change to the grammar/validator contracts, and any
 new review family. Recorded as a roadmap milestone; turn it into an active SPRINT.md via a
-planning pass when it is scheduled (M17's precedent: a forward milestone lives on the
-roadmap before it is sprinted).
+planning pass when it is scheduled.
 
 ---
 
@@ -699,34 +685,23 @@ Notes — planning inputs recorded ahead (Sprint 16 AI-first review), plus decis
 
 ## Deferred
 
-Triaged 2026-08 — grouped by disposition, with the rationale recorded so closed forks are
-not reopened.
-
-**Removed in this pass** (no longer belong on the list):
-
-- *scene knowledge update step* — shipped as `scene_knowledge_update` in M14/Sprint 19
-  (`agents/steps/scene-knowledge-update.md`); the entry was a stale leftover the M14 sweep
-  missed.
-- *dispatcher-level staleness/review lift (M9.6)* — resolved as a deliberate non-goal (see
-  the M9 section). The step bodies enforce staleness/review correctly and completely, so
-  the lift was declined to keep the dispatcher thin; M9 is now complete.
-- *consumer-side CI lift for review-artifact validation* — dropped. The
-  point-of-consumption gate already blocks invalid/stale/pending artifacts, and the
-  AI-plus-human write path shrank the hand-edit risk CI would catch; a real lift would also
-  have to exempt legitimate mid-review `pending` state, so it is not the trivial mirror of
-  `pipeline-state-check.yml` it looked like.
-- *OpenCode companion parity* and *companion-captured `Override:` blocks* — promoted
-  together to **M18**.
-
-### Now-actionable — precondition met, unscheduled
+### Now-actionable
 
 - strip the validator's inert artifact-bulk machinery and the always-0
   `inherited-by-bulk` ledger row — unblocked now that M13 confirmed no adopted family
   defines artifact-level bulk. The machinery still doubles as the stray-`BULK:`-header
   rejection path, which must survive the cleanup. Small; fold into a later slice.
 
-### Parked — rationale still holds
+### Parked
 
+- reverse ingestion (existing prose into Amanuensis) — ingest a finished work into
+  Amanuensis artifacts (characters, scene-list, storyboards, overview, temporal character
+  state, objective continuity state), chunked to fit context. Design-gated: blocked on a
+  design note that splits it into smaller milestones (prose chunking + source maps,
+  character/entity extraction, scene and storyboard reconstruction, overview synthesis,
+  canon reconciliation, temporal-state and continuity reconstruction, reverse-to-forward
+  bridge). The temporal-state and bounded-review systems it depends on (M14–M16) are now in
+  place, so the tabling reason is largely met; parked pending prioritization.
 - storyboard_review_fix apply step — makes `storyboard_review` more than advisory,
   mirroring how `prose_pass` gained `prose_fix` (after M6 proved out). Affirmed at triage as
   a real future increment.
@@ -758,7 +733,7 @@ not reopened.
 - multi-work concurrency — the orchestrator deliberately does not coordinate concurrent work
   across chapters or works (`agents/orchestrator.md:189`); parked with no plan to change it.
 
-### Book/series rollout cluster — deferred together
+### Book/series
 
 Book/series is not a near-term target (triage): only `short_story` is verified end-to-end.
 These three are the book/series gap and move together when it is prioritized.
@@ -781,7 +756,7 @@ These three are the book/series gap and move together when it is prioritized.
   declare prior `continuity/book-*.md` as optional inputs and search them before falling
   back. Couples to M16's cross-book read path.
 
-### Non-goals — not planned
+### Non-goals
 
 - multi-host beyond Claude Code / OpenCode — support for agents other than these two is out
   of scope by owner direction.
