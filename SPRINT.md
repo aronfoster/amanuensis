@@ -182,12 +182,18 @@ The Sprint is complete when:
    scene/beat/attempt provenance + a short quote of the entry's own text — captured at the
    moment `compliance_report` already has the entry in hand, since `compliance_fix` cannot read
    canon files to reconstruct it later (`agents/steps/compliance-fix.md:51`).
-4. `agents/steps/compliance-fix.md`'s upstream-target routing names `/revise` against the
-   specific unreviewed entry when a routed finding's referent is unreviewed, rather than naming
-   the artifact class alone — using each system's actual locator: `continuity/`/`knowledge/`'s
-   minted `co-NN`/`kn-NN` id, or `canon/generated/`'s self-contained `[ref: <referent>]` locator
-   from item 3 above, copied verbatim into the `Escalated:` block without re-deriving it (the
-   step never reads canon files itself).
+4. `agents/steps/compliance-fix.md`'s routing treats `[premise: unreviewed]` as an override:
+   **any** decision on a tagged unit — `FIX` included, regardless of defect label or its
+   absence — is routed upstream, never applied to prose, until the underlying entry is
+   confirmed. (Without this, a `FIX` on exactly the finding this milestone exists to catch —
+   a Check 3 escalation-path finding with no defect tag, or a Check 4 finding the taxonomy
+   labels `prose` because it doesn't yet know the canon it checked against is itself
+   unconfirmed — would still silently edit the draft to match an unconfirmed guess, the failure
+   M18 is for.) When routing such a unit, the `Escalated:` block names `/revise` against the
+   specific unreviewed entry rather than the artifact class alone — using each system's actual
+   locator: `continuity/`/`knowledge/`'s minted `co-NN`/`kn-NN` id, or `canon/generated/`'s
+   self-contained `[ref: <referent>]` locator from item 3 above, copied verbatim into the
+   `Escalated:` block without re-deriving it (the step never reads canon files itself).
 5. A synthetic fixture demonstrates the full round trip: an unreviewed-premise finding tagged
    distinctly (via a resolved `canon/**` or `continuity/`/`knowledge/` source), `ESCALATE`
    routing naming `/revise` with the correct locator shape for that system, and `/revise`'s
@@ -269,6 +275,23 @@ rediscover them.
   — see below). Local checks (1–2) never carry it either — they don't cite maintained state or
   named canon files. This is additive text inside the grammar's existing `^- ` item line, so no
   grammar or validator change is needed (see Background).
+- **`[premise: unreviewed]` overrides ordinary defect-label routing for `FIX` — surfaced at PR
+  review (Codex PR-57), this is the property the milestone actually exists to guarantee.**
+  `compliance_fix`'s existing rule sends `FIX` straight to a prose edit whenever the unit's
+  defect label is `prose` or absent (`agents/steps/compliance-fix.md:59`) — and that is exactly
+  the common shape of a tagged finding: a Check 3 escalation-path finding carries no defect tag
+  at all, and a Check 4 finding whose prose contradicts what the taxonomy reads as "settled,
+  valid" canon is explicitly labeled `prose` (`agents/steps/compliance-report.md:153`), because
+  the taxonomy doesn't independently know that canon is itself unconfirmed. Without an override,
+  a human deciding `FIX` on the exact finding this milestone exists to catch would still get a
+  silent prose edit encoding the unconfirmed guess as accepted truth. So `[premise: unreviewed]`
+  is checked **before** the defect-label rule and, when present, routes the unit upstream
+  regardless of decision token or defect label — the same "never applied to prose" treatment a
+  non-prose-defect unit already gets. A `FIX` only reaches prose once the underlying entry is
+  confirmed (via `/revise`) and a regenerated report no longer carries the tag. Rejected: leave
+  `[premise: unreviewed]` as a passive, informational tag only (the original scoping) — it would
+  faithfully warn the human but not stop a `FIX` from silently encoding the unconfirmed guess,
+  which defeats the point of tagging it in the first place.
 - **Detection is a read of a field already being resolved, not a new lookup pass — and it stays
   bounded to what's already resolved.** M16 already requires `compliance_report` to resolve each
   cited `continuity/`/`knowledge/` entry and each escalated-to canon file for the citation itself
@@ -432,16 +455,31 @@ teach `compliance_report` to tag a finding when its resolved referent is unrevie
     stay outside this task (see Conventions and Out of scope).
   - No change to the `### Summary` or `## Context consulted` sections beyond what already names
     the consulted entries — the tag lives on the violation line only.
-- **Retrofit `agents/steps/compliance-fix.md`'s escalation routing (`:57-85`):** when a unit
-  routed upstream (`ESCALATE`, or a non-prose `FIX`) carries the `[premise: unreviewed]` tag on
-  its violation line, the `Escalated:` block's "Suggested upstream target" names `/revise`
-  against the specific entry, reading the locator straight from the violation line's `[ref:
-  <referent>]` tag — never re-deriving it, since this step cannot read canon or state files
-  (`:51`): for a `continuity/`/`knowledge/` referent, the minted `co-NN`/`kn-NN` id; for a
-  `canon/generated/` referent (from either check's canon-file escalation — Check 3's Canon check
-  or Check 4's Canon-consistency sub-check), the self-contained file + scene/beat/attempt +
-  quote locator now written into the tag by whichever check resolved it (Task 2's
-  `compliance-report.md` bullet above) — never claim a "file + entry id" for `canon/generated/`,
+- **Retrofit `agents/steps/compliance-fix.md`'s routing (`:57-85`) so `[premise: unreviewed]`
+  overrides the ordinary defect-label routing for `FIX`, not just for units already routed
+  upstream.** As written today, the defect-label rule (`:59`) sends `FIX` straight to a prose
+  edit whenever the label is `prose` **or absent** — and that is exactly the common case for a
+  unit carrying `[premise: unreviewed]`: a Check 3 escalation-path finding carries no defect tag
+  at all, and a Check 4 finding whose prose contradicts what looks like "settled, valid" canon
+  is explicitly labeled `prose` by the taxonomy (`:153` of `compliance-report.md`) — the
+  taxonomy's own labeling logic doesn't yet know the canon it just checked against is itself
+  unconfirmed. Left as originally scoped, a human who decides `FIX` on exactly the finding this
+  milestone exists to catch would still get a silent prose edit that encodes the unconfirmed
+  guess as accepted truth — the precise failure mode M18 is for. So: **before** applying the
+  defect-label rule, check for `[premise: unreviewed]` on the violation line; if present, the
+  unit is always routed upstream — regardless of `Decision:` (`FIX` or `ESCALATE`) and
+  regardless of the defect label or its absence — exactly as a non-prose-defect unit already is.
+  Only once the underlying entry is confirmed (via `/revise`, which clears the tag on
+  regeneration) can a `FIX` on that unit reach a prose edit. When a unit routed upstream this
+  way (`ESCALATE`, a non-prose-defect `FIX`, or now a `[premise: unreviewed]`-tagged `FIX`)
+  carries the tag, the `Escalated:` block's "Suggested upstream target" names `/revise` against
+  the specific entry, reading the locator straight from the violation line's `[ref: <referent>]`
+  tag — never re-deriving it, since this step cannot read canon or state files (`:51`): for a
+  `continuity/`/`knowledge/` referent, the minted `co-NN`/`kn-NN` id; for a `canon/generated/`
+  referent (from either check's canon-file escalation — Check 3's Canon check or Check 4's
+  Canon-consistency sub-check), the self-contained file + scene/beat/attempt + quote locator now
+  written into the tag by whichever check resolved it (Task 2's `compliance-report.md` bullet
+  above) — never claim a "file + entry id" for `canon/generated/`,
   which mints no id.
 - **Verify the grammar/validator are untouched:** run
   `sh scripts/validate-review-artifact.sh examples/review/reviewer-actions.md
@@ -451,8 +489,10 @@ teach `compliance_report` to tag a finding when its resolved referent is unrevie
 
 **Done when.** `/revise` accepts a confirm-only request and flips the target entry's marker on
 either path; `compliance_report` tags a finding whose resolved referent is unreviewed;
-`compliance_fix` names `/revise` against the specific entry when routing such a finding
-upstream; all four `examples/review/` fixtures validate identically to before this task.
+`compliance_fix` routes a `[premise: unreviewed]`-tagged unit upstream on **any** decision
+(`FIX` included, regardless of defect label) and names `/revise` against the specific entry
+when doing so — a `FIX` on such a unit never reaches a prose edit; all four `examples/review/`
+fixtures validate identically to before this task.
 
 ---
 
@@ -475,9 +515,13 @@ sweep, and close the milestone. Closes **M18.5** and the residual of **M18**.
     marker/locator handling via its own, separate canon-file escalation — the fixture need not
     duplicate both, since the mechanism is check-agnostic once a canon file is opened. Show: the
     violation line's `[premise: unreviewed]` tag and its self-contained `[ref:
-    canon/generated/<file>#<scene-beat-attempt> "<quote>"]` tag; the `Escalated:` block copying
-    that locator verbatim (no re-derivation, no canon-file read); and — after a `/revise`
-    confirm-only pass on that one entry — that its per-entry inline tag flips to confirmed while
+    canon/generated/<file>#<scene-beat-attempt> "<quote>"]` tag — with **no** `[defect: …]` tag,
+    since Check 3's escalation path carries none; a human `Decision: FIX` on that unit still
+    produces an `Escalated:` block, **not** a prose edit — the core safety property this Sprint
+    exists to demonstrate, since the unit's absent defect label would otherwise route `FIX`
+    straight to prose; the `Escalated:` block copying the locator verbatim (no re-derivation, no
+    canon-file read); and — after a `/revise` confirm-only pass on that one entry — that its
+    per-entry inline tag flips to confirmed while
     both the file-level frontmatter `status:` and the sibling (still-unreviewed) entry's inline
     tag are visibly unchanged, proving per-entry-only scope.
   - A `continuity/` **or** `knowledge/` entry stamped `- **review:** unreviewed`, cited by a
