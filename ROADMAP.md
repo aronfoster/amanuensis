@@ -101,18 +101,23 @@ first... `canon/` file") — but nothing points the reviewer at it from inside t
 
 Done when: `/revise` can confirm-or-correct an unreviewed entry across **all five**
 destinations (`canon/generated/*`, `characters/<id>/timeline.md`, `characters/<id>/profile.md`,
-`continuity/`, `knowledge/`), flipping its provenance marker either way, without disturbing the
+`continuity/`, `knowledge/`), flipping its provenance marker either way via a write it actually
+performs (a confirm-only request still runs `/revise`'s Apply step, with the marker flip as its
+only edit — skipping it would report success while writing nothing), without disturbing the
 non-destructive current-vs-record discipline `agents/revision.md` already states; a
-`compliance_report` finding whose check actually resolved a `canon/**` file (via Check 3's
-escalation path or Check 4's targeted retrieval) or a `continuity/`/`knowledge/` entry is
-flagged distinctly when that resolved source carries an `unreviewed` marker — bare `canon_active`
-comparisons are out of reach by design (see scope note below) and `timeline.md`/`profile.md`
-citations are out of reach because `compliance_report` does not consult them at all (tracked,
-not silently dropped — see Deferred); and `compliance_fix`'s already-defect-type-aware
-escalation routing (`agents/steps/compliance-fix.md:57-85`) names `/revise` against the specific
-unreviewed entry as the suggested upstream target, using each system's actual locator —
-`continuity/`/`knowledge/`'s minted `co-NN`/`kn-NN` id, or `canon/generated/`'s scene/beat/
-attempt provenance plus a quoted snippet where no id exists.
+`compliance_report` finding whose check actually resolved a `canon/**` file (via Check 3's own
+Canon-check escalation path, **or** Check 4's separate Canon-consistency sub-check, which
+escalates to a named canon file the same way) or a `continuity/`/`knowledge/` entry is flagged
+distinctly when that resolved source's per-entry marker carries `unreviewed` — bare
+`canon_active` comparisons are out of reach by design (see scope note below) and
+`timeline.md`/`profile.md` citations are out of reach because `compliance_report` does not
+consult them at all (tracked, not silently dropped — see Deferred); and `compliance_fix`'s
+already-defect-type-aware escalation routing (`agents/steps/compliance-fix.md:57-85`) names
+`/revise` against the specific unreviewed entry as the suggested upstream target, reading the
+locator straight off the violation line's tag (this step cannot read canon or state files) —
+`continuity/`/`knowledge/`'s minted `co-NN`/`kn-NN` id, or `canon/generated/`'s self-contained
+scene/beat/attempt-plus-quote locator that whichever check resolved it already wrote into the
+tag, since no minted id exists there.
 
 * [ ] M18.1 Design note: define the confirmation lifecycle once — `unreviewed` →
   `confirmed` (or corrected-and-confirmed) — in uniform terms across all five destinations'
@@ -123,27 +128,30 @@ attempt provenance plus a quoted snippet where no id exists.
 * [ ] M18.2 Extend `agents/revision.md`: a confirm-only invocation (human reviews an entry,
   agrees, no content change) alongside the existing correct-and-change flow, covering all five
   destinations — `canon/generated/*`, `timeline.md`, `profile.md`, `continuity/`, `knowledge/`
-  (all already in `/revise`'s edit scope, `:13`). Either path flips the cited entry's provenance
-  marker to confirmed on write. Preserve the current-state-vs-record distinction already stated
-  there (`:24`) — a confirmation is an in-place update to a current-state entry, never a
-  fabricated transition.
+  (all already in `/revise`'s edit scope, `:13`). The confirm-only path skips only step 3
+  (nothing to fix); it still runs step 6 (Apply) — `/revise`'s sole write operation — with the
+  marker flip as its only edit, so the request actually writes something rather than reporting
+  success with no change. Preserve the current-state-vs-record distinction already stated there
+  (`:24`) — a confirmation is an in-place update to a current-state entry, never a fabricated
+  transition.
 * [ ] M18.3 Retrofit `compliance_report` Checks 3 (Canon) and 4 (Relational): when a check
-  actually resolves a named `canon/**` file or a `continuity/`/`knowledge/` entry — Check 3's
-  escalation path (fired only when `canon_active` is insufficient) or Check 4's targeted
-  retrieval — and that resolved entry's **per-entry** marker (never a `canon/generated/` file's
-  own file-level frontmatter `status:`, which this milestone never reads or writes for any
-  entry) is unreviewed, tag the finding distinctly from a settled-truth citation. For a
-  `canon/generated/` referent specifically (no minted id, Check 3's escalation path only), also
-  write a self-contained `[ref: canon/generated/<file>#<scene-beat-attempt> "<quote>"]` tag onto
-  the violation line at report time — `compliance_fix` cannot read canon files to reconstruct
-  this later (`agents/steps/compliance-fix.md:51`) and the report's `## Context consulted`
-  section records only the file path, not the entry (`:178-186`). Bare `canon_active`
-  comparisons (Check 3's common, non-escalated path) are explicitly out of scope:
-  `agents/storyboard-schema.md:110-112` requires `canon_active` to hold an extracted rule, "not
-  a file path, not a summary of a source document," so there is no source to check a marker
-  against until the check escalates — forcing provenance back into `canon_active` would fight
-  that schema decision, not fix a bug in it. `timeline.md`/`profile.md` are out of scope for
-  this task (`compliance_report` has no input reading them — see Deferred).
+  actually resolves a named `canon/**` file — Check 3's own Canon-check escalation path, **or**
+  Check 4's separate Canon-consistency sub-check, which escalates the same way (both fire only
+  when `canon_active` is insufficient) — or a `continuity/`/`knowledge/` entry via Check 4's
+  targeted retrieval, and that resolved entry's **per-entry** marker (never a `canon/generated/`
+  file's own file-level frontmatter `status:`, which this milestone never reads or writes for
+  any entry) is unreviewed, tag the finding distinctly from a settled-truth citation. For a
+  `canon/generated/` referent specifically (no minted id, reached by either check's canon-file
+  escalation), also write a self-contained `[ref: canon/generated/<file>#<scene-beat-attempt>
+  "<quote>"]` tag onto the violation line at report time — `compliance_fix` cannot read canon
+  files to reconstruct this later (`agents/steps/compliance-fix.md:51`) and the report's `##
+  Context consulted` section records only the file path, not the entry (`:178-186`). Bare
+  `canon_active` comparisons (either check's common, non-escalated path) are explicitly out of
+  scope: `agents/storyboard-schema.md:110-112` requires `canon_active` to hold an extracted
+  rule, "not a file path, not a summary of a source document," so there is no source to check a
+  marker against until the check escalates — forcing provenance back into `canon_active` would
+  fight that schema decision, not fix a bug in it. `timeline.md`/`profile.md` are out of scope
+  for this task (`compliance_report` has no input reading them — see Deferred).
 * [ ] M18.4 Retrofit `compliance_fix`'s upstream-target routing: when a routed finding's
   referent is unreviewed, name `/revise` against that specific entry as the suggested target,
   reading the locator straight off the violation line's `[ref: <referent>]` tag rather than
@@ -199,6 +207,16 @@ sibling entry as confirmed; this milestone therefore scopes detection and confir
 per-entry inline tag exclusively, for every `canon/generated/` entry — the file-level `status:`
 is never read or written by this mechanism, for any entry, confirmed or not (an aggregate rule
 was considered and rejected as unneeded complexity for a field no consumer reads).
+(6) **Further corrections from PR review (Codex PR-57 round 3):** two more confirmed gaps.
+First, Check 4 has its **own** canon-file escalation — its Canon-consistency sub-check
+(`agents/steps/compliance-report.md:153`) opens a named `canon/**` file exactly like Check 3's
+Canon check does, when `canon_active` is insufficient — which the plan had scoped the
+marker/locator handling away from, leaving the relational path able to reproduce the milestone's
+motivating failure. M18.3/M18.4 now cover both escalation points identically. Second, the
+`/revise` confirm-only procedure as planned skipped step 6 (Apply) — `/revise`'s sole write
+operation (`agents/revision.md:37`) — alongside step 3, which would perform no write at all and
+could report success while leaving the entry unreviewed. M18.2 now skips only step 3; step 6
+still runs, with the marker flip as its only edit.
 
 ---
 
