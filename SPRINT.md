@@ -460,7 +460,7 @@ depends on both), so run them in order rather than in parallel. Capture the Spri
 
 ### Task 1 — The review-context model, the audit, and the reveals-ledger artifact
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Define the local/bounded-window/relational classification, the minimum-context strategy, the
 referent-identification and retrieval rule, the precedence order, the defect taxonomy, and the project-scale
@@ -528,7 +528,7 @@ per file.
 
 ### Task 2 — Retrofit the two relational reviews and the fix routing
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Reframe `compliance_report` into the bounded relational review reading prose against `continuity/` +
 `knowledge/` + canon with precedence, cited referents, declared context, and defect labels (resolving
@@ -614,7 +614,7 @@ surfaces are untouched.
 
 ### Task 3 — Demonstration, smoke coverage, verification, and close-out
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Prove the bounded relational review against the `NOTES.md` failure set end-to-end, give it a
 runnable smoke recipe, run the verification sweep, and close the milestone. Closes **M16.9** and the residual

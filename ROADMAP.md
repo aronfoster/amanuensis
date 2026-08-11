@@ -60,15 +60,15 @@ Review scope must be determined by the defect being checked. Local prose-quality
 
 Done when: a review of a bounded prose unit can detect contradictions whose evidence lies elsewhere in the chapter, an earlier chapter, or an earlier book; each finding identifies the conflicting evidence and the context consulted; and the process does not require loading the complete series.
 
-* [ ] M16.1 Classify existing review responsibilities as local, bounded-window, or relational, and define the minimum valid context strategy for each class.
-* [ ] M16.2 Audit pipeline steps whose responsibilities include continuity, canon, reveal timing, character knowledge, chronology, recollection, quotation, summary, or recap fidelity.
-* [ ] M16.3 Remove instructions and evaluation partitioning that make relational defects structurally invisible, including block-isolated or scene-blind review where broader comparison is required.
-* [ ] M16.4 Define how a review identifies relevant characters, events, facts, constraints, and back-references, then obtains only the maintained state and source evidence needed to evaluate them.
-* [ ] M16.5 Establish precedence and conflict handling among the current storyboard, maintained character state, objective continuity state, canon, and raw prose. Broader context must supplement local intent without silently overriding it.
-* [ ] M16.6 Require relational findings to identify both the reviewed prose location and the conflicting or supporting referent, and require reports to declare the material context actually consulted.
-* [ ] M16.7 Distinguish prose defects from storyboard, state, canon, and missing-context defects so remediation is directed at the authoritative artifact.
-* [ ] M16.8 Define graceful behavior for project scale and project type: short stories may use whole-work context where practical, books may use whole-chapter context plus prior state, and series must not depend on full-corpus rereads.
-* [ ] M16.9 Demonstrate the model against representative failures involving cross-scene chronology, character knowledge, reveal timing, recalled event staging, and recap fidelity.
+* [x] M16.1 Classify existing review responsibilities as local, bounded-window, or relational, and define the minimum valid context strategy for each class.
+* [x] M16.2 Audit pipeline steps whose responsibilities include continuity, canon, reveal timing, character knowledge, chronology, recollection, quotation, summary, or recap fidelity.
+* [x] M16.3 Remove instructions and evaluation partitioning that make relational defects structurally invisible, including block-isolated or scene-blind review where broader comparison is required.
+* [x] M16.4 Define how a review identifies relevant characters, events, facts, constraints, and back-references, then obtains only the maintained state and source evidence needed to evaluate them.
+* [x] M16.5 Establish precedence and conflict handling among the current storyboard, maintained character state, objective continuity state, canon, and raw prose. Broader context must supplement local intent without silently overriding it.
+* [x] M16.6 Require relational findings to identify both the reviewed prose location and the conflicting or supporting referent, and require reports to declare the material context actually consulted.
+* [x] M16.7 Distinguish prose defects from storyboard, state, canon, and missing-context defects so remediation is directed at the authoritative artifact.
+* [x] M16.8 Define graceful behavior for project scale and project type: short stories may use whole-work context where practical, books may use whole-chapter context plus prior state, and series must not depend on full-corpus rereads.
+* [x] M16.9 Demonstrate the model against representative failures involving cross-scene chronology, character knowledge, reveal timing, recalled event staging, and recap fidelity.
 
 Notes: Findings remain attached to stable per-block review units where the existing review grammar requires it. Their relational nature is represented by cited referents and declared context, not by abandoning the existing review-unit scheme. Parallel execution is acceptable only where it preserves the relationships needed by the check.
 
@@ -657,8 +657,7 @@ Notes — planning inputs recorded ahead (Sprint 16 AI-first review), plus decis
   stay). Cosmetic; fold into a later slice rather than churning the shipped M10
   surface on its own
 - storyboard_review_fix apply step (after M6 proves out)
-- story-level reveals ledger with buildup (couples to continuity review; matters for book/series) — **scheduled into M16 / Sprint 21** as a human-authored, story-level `reveals.md` planning artifact consumed by the retrofitted `storyboard_review`; remove from this list at Sprint-21 closeout
-- continuity review step — **realized in M16 / Sprint 21 inside the retrofitted `compliance_report`** (the bounded relational review that reads prose against `continuity/` + `knowledge/`), not as a separate step; remove from this list at Sprint-21 closeout
+- derived reveals-ledger writer (`reveals_update`) — M16 / Sprint 21 shipped the human-authored, story-level `reveals.md` ledger and its read path (`storyboard_review`'s setup-sufficiency + premature-disclosure checks); a *derived* writer that reconciles the ledger from accepted storyboards/prose stays deferred, because a reveal is forward authorial intent and `storyboard_review` is pre-draft — a writer that fed a ledger derived from the same storyboards it then reviews would be near-circular. Revisit once a non-circular basis exists (surfaced in M16 / Sprint 21)
 - scene knowledge update step
 - post-chapter update step
 - chapter selection for book/series ("which chapter is current?")
@@ -666,16 +665,6 @@ Notes — planning inputs recorded ahead (Sprint 16 AI-first review), plus decis
 - multi-host beyond Claude Code / OpenCode
 - per-attempt comparison tooling (revisit after M7's archive model)
 - multi-work concurrency
-- M14 knowledge-freshness per source chapter and attempt (surfaced in Sprint 20 / M15 PR review) — **folded into M16 / Sprint 21** (Codex PR-54 review: M16 is the first step to make `knowledge/` authoritative input for cross-chapter findings, so it must not build on the false-fresh predicate; remove from this list at Sprint-21 closeout) — the
-  knowledge-freshness predicate as written (`agents/characters.md:89`,
-  `agents/steps/scene-knowledge-update.md:71`) says "the attempt manifest" without disambiguating which
-  chapter's *or* attempt's. For `book`/`series`, `knowledge/book-N.md` aggregates entries across chapters
-  *and* attempts whose `draft-vNN.md` basenames repeat, so an entry's bare `committed-in: draft-vNN.md`
-  names no single file; comparing against the invoked chapter/attempt's lineage can falsely mark a prior
-  entry stale or — worse — falsely fresh on a basename collision. Masked today because M14's demo is a
-  single-chapter, single-attempt `short_story`. M15 resolves this for `continuity/` by making `evidence:`
-  a full attempt-qualified draft path; apply the same fix to the M14 knowledge predicate (qualify its
-  provenance/resolution by the full draft path).
 - Cross-book `truth:` reference resolution (surfaced in Sprint 20 / M15 PR review) — `scene_knowledge_update`
   reads only the current project-type `continuity/` file when writing a `truth: continuity/book-N.md#co-NN`
   reference, so in a series an incorrect belief about a fact established in an earlier book falls back to
