@@ -103,8 +103,10 @@ Done when: `/revise` can confirm-or-correct an unreviewed entry across **all fiv
 destinations (`canon/generated/*`, `characters/<id>/timeline.md`, `characters/<id>/profile.md`,
 `continuity/`, `knowledge/`), flipping its provenance marker either way via a write it actually
 performs (a confirm-only request still runs `/revise`'s Apply step, with the marker flip as its
-only edit — skipping it would report success while writing nothing), without disturbing the
-non-destructive current-vs-record discipline `agents/revision.md` already states; a
+only edit — skipping it would report success while writing nothing), **reachably from both
+installed host adapters** (Claude Code and OpenCode), not only from the canonical contract they
+point at, without disturbing the non-destructive current-vs-record discipline
+`agents/revision.md` already states; a
 `compliance_report` finding whose check actually resolved a `canon/**` file (via Check 3's own
 Canon-check escalation path, **or** Check 4's separate Canon-consistency sub-check, which
 escalates to a named canon file the same way) or a `continuity/`/`knowledge/` entry is flagged
@@ -135,7 +137,13 @@ that whichever check resolved it already wrote into the tag, since no minted id 
   marker flip as its only edit, so the request actually writes something rather than reporting
   success with no change. Preserve the current-state-vs-record distinction already stated there
   (`:24`) — a confirmation is an in-place update to a current-state entry, never a fabricated
-  transition.
+  transition. Update both installed `/revise` host adapters
+  (`templates/dispatcher/.claude/commands/revise.md`,
+  `templates/dispatcher/.opencode/agents/revise.md`) to acknowledge the confirm-only shape: as
+  written, both frame every request as a correction ("what is wrong and what should be true
+  instead," "restate old truth → new truth") with no mention that confirming an entry with no
+  change is a distinct, legal request — leaving the mechanism defined but practically
+  unreachable through the actual installed command.
 * [ ] M18.3 Retrofit `compliance_report` Checks 3 (Canon) and 4 (Relational): when a check
   actually resolves a named `canon/**` file — Check 3's own Canon-check escalation path, **or**
   Check 4's separate Canon-consistency sub-check, which escalates the same way (both fire only
@@ -249,6 +257,15 @@ violation" (`agents/steps/compliance-fix.md:87`), a fully resolved, terminal dis
 human explicitly chose, carrying no risk of silently trusting the premise since it writes
 nothing. M18.4 now scopes the override to `FIX` and `ESCALATE` only; `SKIP` keeps its existing
 behavior unchanged.
+(9) **Further correction from PR review (Codex PR-57 round 6):** `agents/revision.md` is the
+canonical contract, but a real `/revise` invocation loads a host adapter first — and both
+installed adapters (`templates/dispatcher/.claude/commands/revise.md`,
+`templates/dispatcher/.opencode/agents/revise.md`) frame every request as a correction, with no
+mention that a confirm-only request is a distinct, legal shape. Extending only the canonical
+contract, as originally scoped, would have left the mechanism real but practically unreachable
+through the actual installed command. M18.2 now updates both adapters with a minimal
+acknowledgment of the confirm-only shape, pointing at the contract's `## Invocation` section for
+it, rather than restating the full contract in each.
 
 ---
 

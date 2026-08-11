@@ -143,6 +143,17 @@ this.
   is the same shape of in-place update, just without a content change. None of this needs to be
   invented; `/revise` needs one additional invocation shape (confirm-only, no content change)
   and one additional side effect (flip the marker) on both its existing and new paths.
+- **`agents/revision.md` is the canonical contract, but a real `/revise` invocation loads a host
+  adapter first — and both adapters currently frame every request as a correction.**
+  `agents/revision.md` itself says "a host command (the `/revise` slash command in Claude Code;
+  the `revise` agent in OpenCode) whose thin adapters point here." Those adapters —
+  `templates/dispatcher/.claude/commands/revise.md` and
+  `templates/dispatcher/.opencode/agents/revise.md` — summarize the change description as "what
+  is wrong and what should be true instead" and their procedure summary opens "Restate the
+  change as old truth → new truth," with no acknowledgment that a confirm-only request (no
+  change, just marking an entry reviewed) is a distinct, legal shape. Extending only the
+  canonical contract would leave the mechanism real but practically unreachable through the
+  actual installed command — see Conventions and Task 2.
 - **The grammar and validator are out of this Sprint's touch set.** The new finding tag rides
   inside the existing violation line's free text, exactly as M16's `[defect:][ref:]` tag does
   (`agents/review-grammars.yaml`'s `compliance:` family keys off `^- ` item lines and the
@@ -167,7 +178,11 @@ The Sprint is complete when:
    confirmed) alongside its existing correct-and-change flow, covering all five destinations —
    `canon/generated/*`, `characters/<id>/timeline.md`, `characters/<id>/profile.md`,
    `continuity/`, `knowledge/` — and both paths flip the cited entry's provenance marker on
-   write, without disturbing the current-state-vs-record distinction already stated there.
+   write, without disturbing the current-state-vs-record distinction already stated there. Both
+   installed `/revise` host adapters (`templates/dispatcher/.claude/commands/revise.md`,
+   `templates/dispatcher/.opencode/agents/revise.md`) acknowledge the confirm-only shape exists,
+   so a real invocation actually reaches it rather than being steered toward the correction
+   procedure by the adapter's own framing.
 3. `agents/steps/compliance-report.md` Checks 3 and 4 tag a finding distinctly when the check
    actually resolved a named `canon/**` file (Check 3's own escalation path, **or** Check 4's
    Canon-consistency sub-check, which escalates to a named canon file the same way) or a
@@ -206,10 +221,12 @@ The Sprint is complete when:
 6. Verification passes: `agents/review-grammars.yaml` and `scripts/validate-review-artifact.sh`
    are byte-for-byte unchanged; the four families' fixtures under `examples/review/` are
    byte-for-byte unchanged; no pipeline step is added or removed and `pipeline-state.md` /
-   `examples/smoke/pipeline-state.md` are untouched; no change lands outside the four touched
+   `examples/smoke/pipeline-state.md` are untouched; no change lands outside the six touched
    docs (`agents/update-rules.md`, `agents/revision.md`,
-   `agents/steps/compliance-report.md`, `agents/steps/compliance-fix.md`) plus the new fixture
-   and `ROADMAP.md`/`SPRINT.md`.
+   `agents/steps/compliance-report.md`, `agents/steps/compliance-fix.md`,
+   `templates/dispatcher/.claude/commands/revise.md`,
+   `templates/dispatcher/.opencode/agents/revise.md`) plus the new fixture and
+   `ROADMAP.md`/`SPRINT.md`.
 7. `the-course-he-kept`'s actual `canon/generated/attempt02-voyage-log.md` and
    `reviewer-actions.md` are untouched by this Sprint (locked scope decision 3) — confirmed by
    `git diff --stat` against the project repo showing no changes there.
@@ -399,10 +416,10 @@ one place; nothing downstream needs to re-derive them.
 
 - [ ] Todo
 
-**Goal.** Give `/revise` a confirm-only path and a marker-flipping side effect on both paths;
-teach `compliance_report` to tag a finding when its resolved referent is unreviewed; teach
-`compliance_fix`'s escalation routing to name `/revise` against the specific entry. Closes
-**M18.2**, **M18.3**, **M18.4**.
+**Goal.** Give `/revise` a confirm-only path and a marker-flipping side effect on both paths,
+reachable through both installed host adapters; teach `compliance_report` to tag a finding when
+its resolved referent is unreviewed; teach `compliance_fix`'s escalation routing to name
+`/revise` against the specific entry. Closes **M18.2**, **M18.3**, **M18.4**.
 
 **Requirements.**
 
@@ -432,6 +449,23 @@ teach `compliance_report` to tag a finding when its resolved referent is unrevie
   - Do not touch the transition-structure prohibitions at `:22` — a confirmation is a
     current-state-entry update, never a fabricated `## Superseded` / `## Lost or superseded`
     transition.
+- **Update both installed `/revise` host adapters so the confirm-only invocation is actually
+  reachable, not just defined in the contract they point at** (surfaced at PR review, Codex
+  PR-57 round 6). `templates/dispatcher/.claude/commands/revise.md` and
+  `templates/dispatcher/.opencode/agents/revise.md` are what a real `/revise` invocation
+  actually loads first; both currently frame every request as a correction — "the change
+  description in prose: what is wrong and what should be true instead," and a procedure summary
+  opening "Restate the change as old truth → new truth" — with no mention that a confirm-only
+  request is a distinct, legal shape. Left as originally scoped (touching only
+  `agents/revision.md`), a human confirming a generated-canon entry as correct would hit an
+  adapter prompt that expects a replacement value, and might follow the correction procedure
+  instead of the marker-only Apply flow M18.2 defines, even though the canonical contract itself
+  is correct. Add one sentence to each adapter's request-framing line and procedure-step-1
+  summary acknowledging the confirm-only shape and pointing at `agents/revision.md`'s
+  `## Invocation` section for it — minimal, since "this prompt is a thin adapter... the contract
+  governs" is already each adapter's own stated relationship to `agents/revision.md`, and the
+  fix only needs to stop the summary itself from omitting a legal request shape, not restate the
+  full contract.
 - **Retrofit `agents/steps/compliance-report.md`:**
   - In Check 3 (Canon, `:135-141`), only on its **escalation path** — when `canon_active` is
     insufficient and the check opens a named `canon/**` file — read that file's **per-entry**
@@ -500,12 +534,12 @@ teach `compliance_report` to tag a finding when its resolved referent is unrevie
   existing violation lines, per the Conventions above.
 
 **Done when.** `/revise` accepts a confirm-only request and flips the target entry's marker on
-either path; `compliance_report` tags a finding whose resolved referent is unreviewed;
-`compliance_fix` routes a `[premise: unreviewed]`-tagged unit upstream on `FIX` or `ESCALATE`
-regardless of defect label, and names `/revise` against the specific entry when doing so — a
-`FIX` on such a unit never reaches a prose edit, and `SKIP` is unaffected, keeping its existing
-no-write behavior; all four `examples/review/`
-fixtures validate identically to before this task.
+either path, reachably from both installed host adapters (not just the canonical contract);
+`compliance_report` tags a finding whose resolved referent is unreviewed; `compliance_fix`
+routes a `[premise: unreviewed]`-tagged unit upstream on `FIX` or `ESCALATE` regardless of
+defect label, and names `/revise` against the specific entry when doing so — a `FIX` on such a
+unit never reaches a prose edit, and `SKIP` is unaffected, keeping its existing no-write
+behavior; all four `examples/review/` fixtures validate identically to before this task.
 
 ---
 
@@ -551,8 +585,10 @@ sweep, and close the milestone. Closes **M18.5** and the residual of **M18**.
   Place it under `examples/` with a README, clearly marked as an example per `AGENTS.md:22-26`.
 - Run the verification sweep: `git diff --stat` against the captured Sprint-start SHA shows
   changes confined to `agents/update-rules.md`, `agents/revision.md`,
-  `agents/steps/compliance-report.md`, `agents/steps/compliance-fix.md`, the new fixture
-  directory, `ROADMAP.md`, and `SPRINT.md` — nothing else; `agents/review-grammars.yaml` and
+  `agents/steps/compliance-report.md`, `agents/steps/compliance-fix.md`,
+  `templates/dispatcher/.claude/commands/revise.md`,
+  `templates/dispatcher/.opencode/agents/revise.md`, the new fixture directory, `ROADMAP.md`,
+  and `SPRINT.md` — nothing else; `agents/review-grammars.yaml` and
   `scripts/validate-review-artifact.sh` show no diff; the four `examples/review/` fixtures show
   no diff; `pipeline-state.md` and `examples/smoke/pipeline-state.md` show no diff; both
   `scripts/check-pipeline-state.sh` modes still pass.
