@@ -152,9 +152,10 @@ Established by inspection during planning, with file:line cites; tasks should no
 The Sprint is complete when:
 
 1. ROADMAP.md tasks M16.1–M16.9 are checked; M17 is untouched. The M16 section Notes carry the Sprint-21
-   planning addendum (already appended at planning). The Deferred "story-level reveals ledger with buildup"
-   and "continuity review step" items are **removed** (each realized here), and any newly-surfaced follow-ups
-   are added to the Deferred list; nothing else outside M16 changes.
+   planning addendum (already appended at planning). The Deferred "story-level reveals ledger with buildup",
+   "continuity review step", and "M14 knowledge-freshness per source chapter and attempt" items are **removed**
+   (each realized/folded-in here), and any newly-surfaced follow-ups are added to the Deferred list; nothing
+   else outside M16 (save the named, folded-in M14 knowledge-provenance repair, item 4a) changes.
 2. **The review-context model is defined and single-sourced in a new `agents/review-context.md`** (parallel
    to `agents/continuity.md` and `agents/canon.md`), covering: the **local / bounded-window / relational**
    classification and the minimum-valid-context strategy per class (M16.1); the **audit** — a table naming
@@ -189,21 +190,51 @@ The Sprint is complete when:
    named canon files — and: (a) consults the maintained state + targeted retrieval of named referents for its
    relational checks (canon consistency, `concealment_from_characters` vs. maintained knowledge, and the
    continuity fact-classes — chronology, event-staging, possession, role, location, physical-condition,
-   open-thread — including recalled-event-staging and recap fidelity); (b) applies the precedence rule; (c)
+   open-thread — including recalled-event-staging and recap fidelity), **resolving each `knowledge/` entry by
+   unambiguous provenance** (its `story-position` for point-in-time reconstruction, and its full
+   attempt-qualified draft path for freshness — the M14 knowledge-provenance repair folded in below, item 4a)
+   and treating any entry whose currency cannot be unambiguously resolved as **missing-context** (surfaced,
+   never silently trusted), so a false-fresh knowledge entry can never silently produce a character-knowledge
+   finding; (b) applies the precedence rule; (c)
    emits each relational finding as a per-block review unit **citing its conflicting/supporting referent**
    (`continuity/…#co-NN` / `knowledge/…#kn-NN` / a canon file + quote) and **labeling its defect type**; and
    (d) writes a report-level `## Context consulted` section naming the specific state entries / chapters /
    files read. The Must-Contain local checks and the existing anchor/`Decision:` review-unit scheme are
    preserved; `review_required: true` and the `reviewer-actions.md` output path are unchanged.
+4a. **The M14 knowledge-provenance repair is folded in, because M16 is its first real consumer.** The deferred
+   M14 item (`ROADMAP.md` Deferred, "M14 knowledge-freshness per source chapter and attempt") records that the
+   knowledge freshness predicate resolves `committed-in: draft-vNN.md` by a **bare basename**, which for
+   `book`/`series` aggregates across chapters and attempts whose basenames repeat — so an entry can be marked
+   **false-fresh on a collision** (`agents/characters.md:89`, `agents/steps/scene-knowledge-update.md:71`).
+   M16 is the first step to make `knowledge/` an authoritative input for cross-chapter findings, so relying on
+   the broken predicate would let prose be checked against a belief from a superseded draft. This Sprint
+   therefore applies the **same fix M15 shipped for `continuity/`**: qualify the knowledge entry's provenance
+   and freshness resolution by the **full attempt-qualified draft path**
+   (`<chapter-folder>/drafts/<attemptNN>/draft-vNN.md`), so an entry names one specific draft across chapters
+   *and* attempts (`agents/characters.md`'s temporal-state model and `agents/steps/scene-knowledge-update.md`'s
+   predicate are updated; the M14 templates gain the full-path `committed-in`/evidence form). This is the
+   minimal, already-specified repair — not a re-opening of M14 — and it de-risks M16's core dependency; the
+   consumer-side belt-and-suspenders (ambiguous entry → missing-context) in item 4 still holds if any entry
+   predates the repair.
 5. **`storyboard_review` reasons across chapters against the reveals ledger** (M16.3, M16.6). Its
    within-chapter-only scoping of the reveal-setup check (`agents/steps/storyboard-review.md:78`,`:115`) is
-   replaced: it gains a `required: false` `reveals.md` input and, for each `beat_type: reveal` (or
-   takeaway-depends-on-prior-understanding) block, checks setup against the ledger by **targeted lookup** of
-   the reveal's `setup:` positions — never a full prior-storyboard rescan — and confirms nothing before
-   `concealed-until:` discloses it. Findings cite the ledger entry (`reveals.md#rv-NN`) as the referent and
-   declare context consulted; a ledger that under-specifies a reveal is labeled a **reveals-ledger defect**,
-   not a storyboard defect. The step stays advisory / report-only (no fix step), and its within-chapter
-   takeaway-support and takeaway/concealment checks are unchanged.
+   replaced by a `required: false` `reveals.md` input and **two distinct, complementary checks**, so the
+   review is not blind to either direction of a reveal failure:
+   - **Setup sufficiency (targeted).** For each `beat_type: reveal` (or takeaway-depends-on-prior-understanding)
+     block, confirm its ledger entry's `setup:` positions are established, by **targeted lookup** of exactly
+     those positions — never a full prior-storyboard rescan.
+   - **Premature-disclosure guard (whole-range, every block).** A `concealed-until:` is an **active constraint
+     over a story-position range**, so it must be applied to **every reviewed block** whose position precedes
+     it — not only reveal-tagged blocks, and **not** by trusting a secret to have been redundantly copied into
+     that block's local `concealment_from_reader`. For each ledger secret still active at the current block
+     (position `< concealed-until:`), check whether the block discloses it; an ordinary beat that leaks a
+     ledger secret early is a finding even though the block is not itself a reveal. This is the story-level
+     analog of M14's "prohibited from knowing" active reveal constraint, and it is bounded — O(active secrets ×
+     blocks), not a corpus rescan.
+   Findings cite the ledger entry (`reveals.md#rv-NN`) as the referent and declare context consulted; a ledger
+   that under-specifies a reveal is labeled a **reveals-ledger defect**, not a storyboard defect. The step
+   stays advisory / report-only (no fix step), and its within-chapter takeaway-support and takeaway/concealment
+   checks are unchanged.
 6. **`compliance_fix` routes remediation by defect type** (M16.7). Its `ESCALATE` handling
    (`agents/steps/compliance-fix.md:71-80`) is extended so a finding labeled state / storyboard / canon /
    missing-context defect is directed to its authoritative artifact (the strengthened "Suggested upstream
@@ -434,10 +465,11 @@ per file.
 - [ ] Todo
 
 **Goal.** Reframe `compliance_report` into the bounded relational review reading prose against `continuity/` +
-`knowledge/` + canon with precedence, cited referents, declared context, and defect labels; teach
-`storyboard_review`'s reveal-setup check to reason across chapters against `reveals.md`; route
-`compliance_fix` remediation by defect type; keep the change additive to the review-artifact grammar. Closes
-**M16.3**, **M16.6**, and the retrofit half of **M16.7**.
+`knowledge/` + canon with precedence, cited referents, declared context, and defect labels (resolving
+`knowledge/` by unambiguous provenance — the folded-in M14 repair); teach `storyboard_review`'s reveal check
+to reason across chapters against `reveals.md` in both directions (setup sufficiency + premature-disclosure
+guard); route `compliance_fix` remediation by defect type; keep the change additive to the review-artifact
+grammar. Closes **M16.3**, **M16.6**, and the retrofit half of **M16.7**.
 
 **Requirements.**
 
@@ -462,11 +494,20 @@ per file.
     chapters / files read.
   - Leave `review_required: true`, the `reviewer-actions.md` output path, and the `Reviewed-draft:` freshness
     stamp unchanged.
-- **Retrofit `agents/steps/storyboard-review.md`** per Definition-of-done item 5: replace the
+- **Fold in the M14 knowledge-provenance repair** per Definition-of-done item 4a: qualify the knowledge
+  freshness/provenance resolution by the **full attempt-qualified draft path** (mirroring M15's `continuity/`
+  `evidence:` fix) in `agents/characters.md`'s temporal-state model and
+  `agents/steps/scene-knowledge-update.md`'s predicate, and update the M14 knowledge templates' `committed-in`
+  form. This changes the freshness-predicate *provenance wording* and templates only — **not**
+  `scene_knowledge_update`'s reconcile/write behavior, which stays M14's. It is the minimal fix already
+  specified on the Deferred list; remove that Deferred item at closeout. per Definition-of-done item 5: replace the
   within-chapter-only scoping of the reveal-setup check (`:78`,`:115`) with a `required: false` `reveals.md`
-  input and cross-chapter checking by **targeted lookup** of each reveal's `setup:` positions (never a full
-  prior-storyboard rescan), confirming nothing before `concealed-until:` discloses it. Cite the ledger entry
-  (`reveals.md#rv-NN`) and declare context consulted; label a under-specified ledger a **reveals-ledger
+  input and the **two complementary checks** of item 5 — (i) **setup sufficiency**, by targeted lookup of each
+  reveal's `setup:` positions (never a full prior-storyboard rescan); and (ii) a **premature-disclosure
+  guard**, applying each active `concealed-until:` constraint to **every** reviewed block preceding it (not
+  only reveal-tagged blocks, and not by trusting the block's local `concealment_from_reader` to redundantly
+  carry the secret), so an ordinary beat that leaks a ledger secret early is caught. Cite the ledger entry
+  (`reveals.md#rv-NN`) and declare context consulted; label an under-specified ledger a **reveals-ledger
   defect**. Keep the takeaway-support and takeaway/concealment checks and the advisory/report-only nature
   unchanged.
 - **Route `agents/steps/compliance-fix.md` by defect type** per Definition-of-done item 6: extend the
@@ -485,11 +526,14 @@ per file.
   the `compliance-report.md` / `storyboard-review.md` step descriptions. Add no step; change no recipe.
 
 **Done when.** `compliance_report` reads prose against `continuity/` + `knowledge/` + named canon via targeted
-retrieval with precedence, emits per-block relational findings citing referents and defect types, and declares
-`## Context consulted`; `storyboard_review` checks cross-chapter reveal setup against `reveals.md` by targeted
-lookup; `compliance_fix` routes non-prose defects to their authoritative artifact; the validator accepts the
-updated fixture with at most additive grammar changes; `agents/workflows.md` and the `AGENTS.md` catalogs
-reflect the retrofit; the three local/bounded-window reviews and the recipe/CI surfaces are untouched.
+retrieval with precedence, resolves `knowledge/` by unambiguous full-path provenance (ambiguous →
+missing-context), emits per-block relational findings citing referents and defect types, and declares
+`## Context consulted`; the M14 knowledge freshness predicate and templates carry the full attempt-qualified
+path; `storyboard_review` checks reveal setup *and* premature disclosure against `reveals.md` (every block in
+an active `concealed-until:` range guarded); `compliance_fix` routes non-prose defects to their authoritative
+artifact; the validator accepts the updated fixture with at most additive grammar changes; `agents/workflows.md`
+and the `AGENTS.md` catalogs reflect the retrofit; the three local/bounded-window reviews and the recipe/CI
+surfaces are untouched.
 
 ---
 
@@ -530,9 +574,9 @@ of **M16**.
   drift, no restated model or grammar; the demonstration and smoke fixtures match the template shapes and the
   `compliance:` family grammar.
 - Update `ROADMAP.md`: check M16.1–M16.9 only after Tasks 1–2 pass verification; **remove** the "story-level
-  reveals ledger with buildup" and "continuity review step" Deferred items (realized here); add any
-  newly-surfaced follow-up to the Deferred list. Check this SPRINT.md's per-task boxes (Tasks 1–3) only after
-  their acceptance conditions hold.
+  reveals ledger with buildup", "continuity review step", and "M14 knowledge-freshness per source chapter and
+  attempt" Deferred items (realized/folded-in here); add any newly-surfaced follow-up to the Deferred list.
+  Check this SPRINT.md's per-task boxes (Tasks 1–3) only after their acceptance conditions hold.
 
 **Done when.** The demonstration catches all five `NOTES.md` failure types as per-block relational findings
 with cited referents, defect labels, and a `## Context consulted` record, and shows one non-prose defect
@@ -561,10 +605,13 @@ M16.1–M16.9, the removed Deferred items, and the SPRINT task boxes reflect com
   across books via maintained state + targeted retrieval, but resolving `scene_knowledge_update`'s cross-book
   `truth: continuity/book-M.md#co-NN` write remains the Deferred series-only refinement (`ROADMAP.md` Deferred);
   this Sprint changes no knowledge-step write behavior.
-- **The book-level freeform `continuity.md` and the derived `continuity/`/`knowledge/` writers.** `continuity.md`
-  risk notes (`agents/books.md:59-66`) stay freeform, book-level, distinct from `reveals.md`; the M15
-  `continuity_update` and M14 `scene_knowledge_update` writers are unchanged (M16 is their *reader*, not their
-  writer).
+- **The book-level freeform `continuity.md` and the derived `continuity/`/`knowledge/` write behavior.**
+  `continuity.md` risk notes (`agents/books.md:59-66`) stay freeform, book-level, distinct from `reveals.md`;
+  the M15 `continuity_update` writer is unchanged, and `scene_knowledge_update`'s **reconcile/write behavior**
+  is unchanged — M16 is their *reader*. The one exception is narrow and named: the folded-in M14
+  knowledge-provenance repair (item 4a) qualifies `scene_knowledge_update`'s **freshness-predicate provenance
+  wording** and the M14 knowledge templates by the full attempt-qualified path, so a `knowledge/` entry
+  M16 consumes cannot be false-fresh. It changes no `knowledge/` *write* behavior.
 - **Dispatcher-level scope/context enforcement.** The retrieval and precedence live in the step bodies and
   `agents/review-context.md`; lifting any of it into the dispatcher is a deferred follow-on, exactly as
   dispatcher-level artifact staleness is (`agents/orchestrator.md:187`).
