@@ -8,6 +8,7 @@ The three project types are `short_story`, `book`, and `series`.
 
 - `open-questions.md` always lives at the project root, regardless of `project_type`. Steps that block write to this file.
 - `pipeline-state.md` and `amanuensis-project.yaml` also live at the project root.
+- `reveals.md` — the story-level reveals ledger (`agents/reveals.md`) — lives at the project root, regardless of `project_type`, alongside `open-questions.md`. It is human-authored planning with no pipeline writer; one ledger per work (spanning books for `series` via book-qualified positions).
 - **Folder paths replace filename prefixes.** Older convention used numeric prefixes like `01-01-summary.md` to encode book and chapter. The new convention uses folder structure: `<book-folder>/<chapter-folder>/summary.md`. Files inside a chapter folder use unprefixed canonical names; book and chapter identity come from the folder path, not the filename.
 - `<latest-attempt>` resolves to the highest-numbered `attemptNN` directory under the chapter's `drafts/`. If none exists and the step expects one, the step creates `attempt01`.
 - `<latest-draft>` resolves to the draft named by the attempt manifest's `Active-head: draft-vNN.md` pointer (see "Attempt-level provenance" below), read at step start. When the manifest has no `Active-head:` line — or no manifest exists — `<latest-draft>` falls back to the highest-numbered `draft-vNN.md` file in the current `<latest-attempt>` directory. The fallback is the no-migration path for pre-M8 attempts: existing projects resolve exactly as before, and no manifest edit is required to keep them working. A read-from override passed to the dispatcher (`run-step <step_id> from <draft-vNN>`) substitutes the named draft for `<latest-draft>` for that one invocation only.
@@ -107,6 +108,7 @@ story-project/
   amanuensis-project.yaml
   pipeline-state.md
   open-questions.md
+  reveals.md
   canon/
     core/
     world/
@@ -139,6 +141,7 @@ Resolution rules:
 - `<book-folder>` is undefined. Steps that reference book-level files must either handle the absence gracefully or be inapplicable to short stories.
 - `<latest-attempt>` in the example above resolves to `attempt02`.
 - The maintained objective-continuity file (`agents/continuity.md`) is `continuity/story.md`.
+- `reveals.md` is the story-level reveals ledger at the project root (`agents/reveals.md`), one per work.
 
 ## book
 
@@ -150,6 +153,7 @@ book-project/
   amanuensis-project.yaml
   pipeline-state.md
   open-questions.md
+  reveals.md
   canon/
     core/
     world/
@@ -198,6 +202,7 @@ Resolution rules:
 - `<chapter-folder>` resolves to `plot/<book-id>/<chapter-id>/` (e.g., `plot/book1/chapter02/`).
 - `<latest-attempt>` for `chapter02` in the example above resolves to `attempt02`.
 - The maintained objective-continuity file (`agents/continuity.md`) is `continuity/book-N.md`, one per book (e.g., `continuity/book-1.md`).
+- `reveals.md` is the story-level reveals ledger at the project root (`agents/reveals.md`), one per work.
 
 ## series
 
@@ -209,6 +214,7 @@ series-project/
   amanuensis-project.yaml
   pipeline-state.md
   open-questions.md
+  reveals.md
   canon/
     core/
     world/
@@ -263,3 +269,4 @@ Resolution rules:
 - `<chapter-folder>` resolves to `plot/<book-id>/<chapter-id>/`.
 - `<latest-attempt>` for `book2/chapter01` in the example above resolves to `attempt02`.
 - The maintained objective-continuity file (`agents/continuity.md`) is `continuity/book-N.md`, one per book (e.g., `continuity/book-1.md`, `continuity/book-2.md`).
+- `reveals.md` is the story-level reveals ledger at the project root (`agents/reveals.md`), one per work, spanning books via book-qualified positions.
