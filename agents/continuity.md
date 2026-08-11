@@ -164,7 +164,13 @@ temporal-state files (`knowledge/`, `timeline.md`, `relationships.md`).
   drafts are its record — so the entry is **corrected in place**, keeping its `id`, with its
   `committed-in`/`evidence:` moved to the draft that now carries the fact. **`revise` owns the human
   case; `continuity_update`'s rerun-reconcile owns the draft-correction case.** A transition here would
-  fabricate an in-story change that never happened.
+  fabricate an in-story change that never happened. **The same in-place restamp — no transition —
+  applies when a redraft re-commits a fact whose *value is unchanged* but whose entry was stamped in a
+  now-superseded attempt:** rerun-reconcile re-confirms the fact against the current active head and
+  moves the entry's `committed-in`/`evidence:` to the current draft (a pure **provenance refresh**,
+  keeping the `id`), which is what restores freshness under the latest-attempt-qualified predicate
+  (below) without recording a change that did not happen. The value was never in question; only the
+  draft carrying it advanced.
 
 This mirrors how `revise` already edits the active-head draft in place while leaving superseded
 drafts as the record (`agents/revision.md`). Current-state entries carry current truth — edit them

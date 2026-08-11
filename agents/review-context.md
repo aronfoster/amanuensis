@@ -163,8 +163,10 @@ These surface forms are canonical (downstream files agree on them):
 
 - A relational finding rides on the existing `^- ` violation line and appends a greppable trailing
   tag: `[defect: <type>] [ref: <referent>]`, where `<type>` ∈ {prose, storyboard, state, canon,
-  missing-context} and `<referent>` is one of `continuity/book-N.md#co-NN`,
-  `characters/<id>/knowledge/book-N.md#kn-NN`, `reveals.md#rv-NN`, or `canon/<file>` + a quote.
+  missing-context} and `<referent>` is one of `continuity/book-N.md#co-NN` (or `continuity/story.md#co-NN`
+  for a `short_story`), `characters/<id>/knowledge/book-N.md#kn-NN` (or `characters/<id>/knowledge/story.md#kn-NN`
+  for a `short_story`), `reveals.md#rv-NN`, or `canon/<file>` + a quote. The `book-N.md` forms are the
+  `book`/`series` shape; a `short_story` cites the `story.md` file it actually maintains.
 - Every relational report declares a report-level section headed exactly `## Context consulted`, a
   bulleted list naming the specific state entries / chapters / files actually read — e.g.
   `- continuity/book-1.md#co-03 (chronology anchor)`.
