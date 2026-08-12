@@ -399,7 +399,7 @@ extends `/revise` and retrofits the two compliance steps against Task 1's defini
 
 ### Task 1 — Define the confirmation lifecycle
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** State once, authoritatively, how an `unreviewed` entry becomes `confirmed` across all
 five destinations (`canon/generated/*`, `characters/<id>/timeline.md`, `characters/<id>/
@@ -436,7 +436,7 @@ one place; nothing downstream needs to re-derive them.
 
 ### Task 2 — Extend `/revise`; retrofit `compliance_report` and `compliance_fix`
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Give `/revise` a confirm-only path and a marker-flipping side effect on both paths,
 reachable through both installed host adapters; teach `compliance_report` to tag a finding when
@@ -595,7 +595,7 @@ behavior; all four `examples/review/` fixtures validate identically to before th
 
 ### Task 3 — Demonstration, verification, and close-out
 
-- [ ] Todo
+- [x] Todo
 
 **Goal.** Prove the round trip end-to-end against a synthetic fixture, run the verification
 sweep, and close the milestone. Closes **M18.5** and the residual of **M18**.
