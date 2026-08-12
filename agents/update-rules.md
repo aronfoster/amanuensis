@@ -26,6 +26,44 @@ guess and becomes reviewable truth (the capture mechanism is defined in the draf
 workflow). An invention that no one can see or review is a silent invention and is
 not permitted.
 
+### Confirmation
+
+Capture is not the end of the story: an entry captured under this rule starts
+`unreviewed` and moves to **`confirmed`** once a human has reviewed it. That is one
+terminal state, reached whether the entry was left exactly as written or corrected
+first — there is no separate state for "confirmed as-is" versus "corrected, then
+confirmed," since the entry's own stored content already shows which happened.
+
+The marker's surface form differs by destination, though its two values do not:
+
+- **`canon/generated/*`** — the **per-entry inline tag** only, e.g. `invented,
+  unreviewed` → `invented, confirmed`. The file-level `status:` frontmatter, written
+  once at file creation (`agents/capture/capture-agent.md:62-76`), is never read or
+  written by this lifecycle, for any entry, confirmed or not.
+- **`characters/<id>/timeline.md`** (fact-type `event`) and
+  **`characters/<id>/profile.md`** (fact-type `identity`) — the same per-entry
+  inline tag shape the capture agent writes for these targets
+  (`agents/capture/capture-agent.md`'s Write discipline: an `invented, unreviewed`
+  marker riding alongside the entry).
+- **`continuity/`** and **`knowledge/`** — the `- **review:** unreviewed` field
+  becomes `- **review:** confirmed` (`agents/steps/continuity-update.md:65`,
+  `agents/steps/scene-knowledge-update.md:61`).
+
+Confirmation is performed by `/revise`, and only `/revise` — either its confirm-only
+path (mark reviewed, no content change) or its correct-and-confirm path (fix the
+entry, then mark it reviewed) — across all five destinations above; the mechanics of
+those paths are `/revise`'s own contract (`agents/revision.md`) to define, not this
+rule's.
+
+`compliance_report` cites this state where it can, not everywhere: a finding is
+tagged `[premise: unreviewed]` only when the check actually resolved a
+marker-bearing source — a named `canon/**` file, reached via either check's
+canon-file escalation path, or a `continuity/`/`knowledge/` entry, reached via
+Check 4's resolution. A bare `canon_active` comparison and a `timeline.md`/
+`profile.md` citation are both out of this detection's reach this Sprint (M18) —
+the tag marks what these checks already resolve, not every unreviewed citation that
+could exist, and should not be read as comprehensive.
+
 ## Rule 2: protect reveal timing
 A character must not know something before the story allows it.
 
