@@ -14,9 +14,15 @@ Reviewed-draft: draft-v01.md
      carried through compliance_fix: because `[premise: unreviewed]` is checked before
      the defect-label rule (agents/steps/compliance-fix.md), both `FIX` decisions route
      upstream via `Escalated:` blocks instead of a prose edit — the core safety property
-     this fixture demonstrates. See the README for the confirm/correct-and-confirm
-     `/revise` passes each Escalated: block's target routes to, and for the actual
-     `validate-review-artifact.sh` output captured against this file. -->
+     this fixture demonstrates. No FIX decision reaches prose, but compliance_fix still
+     mints draft-v02.md (an unedited copy of draft-v01.md) and repoints Active-head: to
+     it, per its completion contract — see draft-manifest.md. That leaves this file's
+     `Reviewed-draft: draft-v01.md` stamp above STALE against the new active head, which
+     is why the closing-step compliance_report re-run in the README is a regenerated
+     (fresh-stamp, full-overwrite) run rather than an appended one. See the README for
+     the confirm/correct-and-confirm `/revise` passes each Escalated: block's target
+     routes to, and for the actual `validate-review-artifact.sh` output captured against
+     this file. -->
 
 ## Compliance Report — Scene scene01, 2026-08-12
 

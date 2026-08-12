@@ -56,6 +56,12 @@ The prose and plans under review:
   carried through `compliance_fix`: two findings, two `Decision: FIX` calls, two
   `Escalated:` blocks. It validates `proceed` (exit 0) — see
   [Validating the report](#validating-the-report).
+- `plot/drafts/attempt01/draft-v02.md` — `compliance_fix`'s output. Neither `FIX`
+  decision reaches prose (both route upstream), so this is a byte-for-byte copy of
+  `draft-v01.md` — but `compliance_fix` still mints it and repoints `Active-head:` to
+  it, per its unconditional completion contract (`agents/steps/compliance-fix.md`).
+  That leaves `reviewer-actions.md`'s `draft-v01.md` stamp **stale** against the new
+  active head — see [Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run).
 
 ## 1 — `canon/generated/`: Check 3's escalation path, and a confirm-only `/revise` pass
 
@@ -120,9 +126,15 @@ guarantee: without it, this exact `FIX` would have silently baked an unconfirmed
   copied verbatim from the violation line's [ref:] tag.
 ```
 
-The prose was never touched — `draft-v01.md` still reads "every two days," and no
-`draft-v02.md` was minted this run (see the manifest's HTML comment). No prose-defect
-`FIX` occurred, so `compliance_fix` had nothing to apply.
+The prose was never touched by a `FIX`: no unit's decision reached the prose-edit path,
+so `compliance_fix` had nothing to apply. It still completes normally, though — a
+successful run's completion contract is unconditional (`agents/steps/compliance-fix.md`:
+"the step's final action is to repoint the manifest's `Active-head:` to the `<next-draft>`
+it just wrote") — so it mints `draft-v02.md`, a byte-for-byte copy of `draft-v01.md`
+("Everything not touched by a `FIX` decision is copied through verbatim"), and repoints
+`Active-head:` to it. Block 002 still reads "every two days" in `draft-v02.md`, unchanged
+text under a new version number. See [Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run)
+for what this means for the next `compliance_report` run.
 
 ### The confirm-only `/revise` pass
 
@@ -155,33 +167,11 @@ per-entry-only scope, not just claimed in prose.
 
 ### This is not the end of the round trip
 
-The marker flip fixes the *premise*, not the *prose*. `draft-v01.md` still says "every
-two days" — `/revise`'s edit scope for a confirm-only pass on a `canon/generated/`
-entry is the entry itself; it does not by itself rewrite prose that merely echoed the
-old uncertainty (there is no correction to sweep for, since nothing about the entry's
-*value* changed — only its review state). The human closes the loop by re-running
-`compliance_report` — the existing recipe step, not a new mechanism — against the same,
-still-uncorrected `draft-v01.md`. Illustratively, that re-run would emit:
-
-```markdown
-<!-- review-id: compliance:scene01:block-002-v01 -->
-- INCONSISTENT (canon): Frost-ward duration — "every two days, same as always" violates
-  rule: "a chalked frost-ward holds a sealed crate for three days before it must be
-  recast; past that, the verglass begins to sweat and crack" [ref:
-  canon/generated/frost-wards.md#scene01-beat01-attempt01 "holds a sealed crate for
-  three days before it must be recast"]
-  - Decision:
-```
-
-The **same contradiction**, the **same `[ref:]` locator** (Check 3 still escalates and
-still writes it, regardless of confirmation state) — but this time **without**
-`[premise: unreviewed]`, since Entry A's marker now reads `confirmed`. Without the tag,
-`compliance_fix`'s override never triggers: this is a local unit carrying no
-`[defect: …]` tag (the pre-M16 shape), so a human `Decision: FIX` this time reaches an
-ordinary `Applied:` prose edit through `compliance_fix` — actually correcting "two
-days" to "three days." This is not a new committed artifact in this fixture (fabricating
-a second draft/report would fight `compliance_report`'s own overwrite-on-newer-draft
-contract); it is narrated here as the illustrative next step.
+The marker flip fixes the *premise*, not the *prose* — `draft-v02.md`'s block 002 still
+says "every two days." See [Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run)
+below (after §2's correction) for what re-running `compliance_report` actually produces —
+it's not a simple append, because `compliance_fix`'s completion already moved the active
+head out from under this report (see above).
 
 **Check 4 covers the same ground, redundantly.** `compliance_report`'s Check 4 has its
 own, separate Canon-consistency sub-check that reaches a named canon file on its own
@@ -276,16 +266,77 @@ requires.
 
 Unlike §1, the corrected value happens to **already match** the prose — the entry, not
 the draft, was the error. In a live run, `/revise`'s Sweep (step 4) + Apply (step 6)
-would also check for a matching prose echo in `<latest-draft>` per its Edit scope; here
-there is none to correct, since `draft-v01.md`'s block 003 already said "nine days." A
-`compliance_report` re-run against the unedited `draft-v01.md` would therefore most
-likely find **no violation** on block 003 at all — the confirmed-and-corrected premise
-now matches the prose outright.
+would also check for a matching prose echo in `<latest-draft>` (now `draft-v02.md`, the
+active head after `compliance_fix`'s run) per its Edit scope; here there is none to
+correct, since block 003 already said "nine days." See
+[Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run) for what
+this means once both §1's and §2's `/revise` passes are in.
 
-Put together, §1 and §2 are the two real outcomes of the same closing step: **either no
-finding, or a fresh, untagged finding** the human can `FIX` normally. Neither is "the
-tag silently disappears while the underlying problem persists" — the round trip
-actually closes one way or the other.
+## Closing the loop: a regenerated `compliance_report` re-run
+
+Both `/revise` passes above (§1's confirm-only, §2's correct-and-confirm) are done. The
+human now closes the loop the same way for both: re-run `compliance_report` — the
+existing recipe step, not a new mechanism. But this re-run is not a simple append.
+
+`compliance_fix`'s run (§1) already minted `draft-v02.md` and repointed `Active-head:`
+to it, while `reviewer-actions.md`'s top-of-file stamp is still `Reviewed-draft:
+draft-v01.md` — untouched, since `compliance_fix` "only appends"
+(`agents/steps/compliance-fix.md`) and never rewrites the stamp. So `<latest-draft>` now
+resolves to `draft-v02.md`, which does **not** equal the existing stamp. Per
+`compliance_report`'s own freshness contract (`agents/steps/compliance-report.md`,
+"Output file format"): *"If the file exists and its top-of-file stamp does not equal
+`<latest-draft>` — the recovery path when the human is regenerating after a stale-report
+blocker — the report is `regenerated`: overwrite the whole file with a fresh top-of-file
+stamp, and the prior run's findings against the superseded draft are `discarded`."* This
+is exactly the state the shared validator reports for the committed
+`reviewer-actions.md` once the manifest is checked — see
+[Validating the report](#validating-the-report).
+
+So the re-run **overwrites** `reviewer-actions.md` with a fresh `Reviewed-draft:
+draft-v02.md` stamp, discarding the prior findings (`Escalated:` blocks included) and
+re-evaluating both blocks from scratch against `draft-v02.md`, whose text is identical
+to `draft-v01.md`'s. Because it's a fresh file, there is no ordinal to continue — the new
+findings legitimately start again at `v01`:
+
+```markdown
+Reviewed-draft: draft-v02.md
+
+## Compliance Report — Scene scene01, 2026-08-12
+
+### Block 001 — CLEAN
+
+### Block 002
+<!-- review-id: compliance:scene01:block-002-v01 -->
+- INCONSISTENT (canon): Frost-ward duration — "every two days, same as always" violates
+  rule: "a chalked frost-ward holds a sealed crate for three days before it must be
+  recast; past that, the verglass begins to sweat and crack" [ref:
+  canon/generated/frost-wards.md#scene01-beat01-attempt01 "holds a sealed crate for
+  three days before it must be recast"]
+  - Decision:
+
+### Block 003 — CLEAN
+
+### Block 004 — CLEAN
+```
+
+**Block 002** — the same contradiction, the same `[ref:]` locator (Check 3 still
+escalates and still writes it, regardless of confirmation state) — but this time
+**without** `[premise: unreviewed]`, since Entry A's marker now reads `confirmed`.
+Without the tag, `compliance_fix`'s override never triggers: this is a local unit
+carrying no `[defect: …]` tag (the pre-M16 shape), so a human `Decision: FIX` this time
+reaches an ordinary `Applied:` prose edit through `compliance_fix` — actually correcting
+"two days" to "three days," this time for real.
+
+**Block 003** — clean. `co-01` is now confirmed **and** corrected to "nine days," which
+is what the prose already said, so there is nothing left to find.
+
+Put together, §1 and §2 are the two real outcomes of the same closing step, landing in
+the **same** re-run: **either no finding (block 003), or a fresh, untagged finding
+(block 002)** the human can `FIX` normally. Neither is "the tag silently disappears
+while the underlying problem persists" — the round trip actually closes one way or the
+other. This is illustrative, not a new committed artifact in this fixture — the actual
+regenerated file isn't added here, since it would immediately supersede and orphan the
+`reviewer-actions.md` this fixture's earlier sections walk through in detail.
 
 ## 3 — `characters/dessa/timeline.md`: `/revise`'s extended scope, no compliance finding involved
 
@@ -375,7 +426,11 @@ regardless of what the step body does with it afterward. The `[premise: unreview
 and `[ref: …]` tags ride inside the existing violation line's free text, exactly as
 M16's `[defect:][ref:]` tag does, so they raise no structural or grammar defect either.
 
-Passing the attempt's manifest additionally exercises the freshness (state) layer:
+Passing the attempt's manifest additionally exercises the freshness (state) layer — and
+here it matters: `draft-manifest.md` shows `Active-head: draft-v02.md` (`compliance_fix`
+minted it and repointed the head, per its completion contract — see
+[Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run)), while
+this file is still stamped `Reviewed-draft: draft-v01.md`:
 
 ```sh
 sh scripts/validate-review-artifact.sh \
@@ -384,11 +439,26 @@ sh scripts/validate-review-artifact.sh \
   examples/unreviewed-confirmation/plot/drafts/attempt01/draft-manifest.md
 ```
 
-Actual captured output (only the `state:` line differs):
+Actual captured output:
 
 ```
-state: fresh (Reviewed-draft: draft-v01.md equals Active-head: draft-v01.md)
+state: STALE — Reviewed-draft: draft-v01.md does not equal Active-head: draft-v02.md
+ledger:
+  total: 2
+  pending: 0
+  decided: 2
+  inherited-by-bulk: 0
+  skipped: 0
+  escalated: 0
+  invalid: 0
+  stale: 1
+verdict: stale (exit 5)
 ```
 
-— everything else (ledger, verdict, exit code) is identical to the no-manifest run
-above.
+The ledger's per-unit counts are unchanged (`decided: 2`, both `FIX`), but the
+file-level `state:` axis now reports `STALE` and the verdict flips to `stale` (exit 5) —
+the validator's own confirmation of exactly the mechanism
+[Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run) narrates:
+this committed `reviewer-actions.md` is a real, validator-confirmed stale artifact
+against the post-`compliance_fix` manifest, which is why the next `compliance_report`
+run regenerates it rather than appending to it.
