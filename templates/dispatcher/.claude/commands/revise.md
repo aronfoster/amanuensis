@@ -8,11 +8,11 @@ A revision is not a pipeline step: it has no step_id, appears in no recipe, and 
 
 The arguments are: $ARGUMENTS
 
-`$ARGUMENTS` carries the change description in prose: what is wrong and what should be true instead. If it asks for a new draft version — "as a new draft", "make a new version", or equivalent, anywhere in the request — run in new-draft mode; otherwise revise the active head in place. Parse tolerantly — the human is describing a change, not writing a strict CLI. If no change description was given, ask the human what to revise and stop.
+`$ARGUMENTS` carries the change description in prose: what is wrong and what should be true instead. A request may instead be confirm-only — naming an entry and stating it is correct as written, with no proposed change — a distinct, legal shape; see `amanuensis/agents/revision.md`'s `## Invocation` section for it. If it asks for a new draft version — "as a new draft", "make a new version", or equivalent, anywhere in the request — run in new-draft mode; otherwise revise the active head in place. Parse tolerantly — the human is describing a change, not writing a strict CLI. If no change description was given, ask the human what to revise and stop.
 
 ## Procedure (summary — the contract governs)
 
-1. Restate the change as old truth → new truth before editing anything; if the request is ambiguous, ask the human directly, in-session.
+1. Restate the change as old truth → new truth before editing anything — or, for a confirm-only request, restate what is being confirmed instead; if the request is ambiguous, ask the human directly, in-session.
 2. Read `amanuensis-project.yaml` for `project_type`; resolve `<chapter-folder>`, `<latest-attempt>`, `<latest-draft>`, and (new-draft mode) `<next-draft>` per `amanuensis/agents/project-layouts.md`.
 3. Fix the canonical source of the fact first; then sweep the whole project for the old shape, including paraphrases and echoes a keyword search misses.
 4. Edit in place: character files, canon files, the active storyboards, and — default mode — `<latest-draft>`. In new-draft mode, write `<next-draft>` instead, append its manifest entry (`produced_by: revision`), and repoint `Active-head:`.
