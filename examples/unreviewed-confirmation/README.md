@@ -137,12 +137,17 @@ guarantee: without it, this exact `FIX` would have silently baked an unconfirmed
 ```markdown
 #### Escalated: Frost-ward duration (review-id: compliance:scene01:block-002-v01)
 - Reason: the violation line carries [premise: unreviewed] — the cited entry
-  (canon/generated/frost-wards.md#scene01-beat01-attempt01) is itself unconfirmed, so a
-  FIX cannot be applied to prose against an unconfirmed guess, regardless of the unit's
-  (absent) defect label.
+  (canon/generated/frost-wards.md#scene01-beat01-attempt01 "holds a sealed crate for
+  three days before it must be recast") is itself unconfirmed, so a FIX cannot be
+  applied to prose against an unconfirmed guess, regardless of the unit's (absent)
+  defect label.
 - Suggested upstream target: /revise against
-  canon/generated/frost-wards.md#scene01-beat01-attempt01 — the self-contained locator,
-  copied verbatim from the violation line's [ref:] tag.
+  canon/generated/frost-wards.md#scene01-beat01-attempt01 "holds a sealed crate for
+  three days before it must be recast" — the self-contained locator, copied verbatim
+  from the violation line's [ref:] tag, quote included: both entries in
+  frost-wards.md share the same scene01-beat01-attempt01 provenance, so the quote is
+  what disambiguates the frost-ward duration entry from the sibling ward-sigil-chalk
+  entry.
 ```
 
 The prose was never touched by a `FIX`: no unit's decision reached the prose-edit path,

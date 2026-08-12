@@ -62,8 +62,8 @@ both carry `[premise: unreviewed]`. See `## Context consulted` below and the
 - continuity/story.md#co-01 (chronology — day-count anchor out of Last Well)
 
 #### Escalated: Frost-ward duration (review-id: compliance:scene01:block-002-v01)
-- Reason: the violation line carries [premise: unreviewed] — the cited entry (canon/generated/frost-wards.md#scene01-beat01-attempt01) is itself unconfirmed, so a FIX cannot be applied to prose against an unconfirmed guess, regardless of the unit's (absent) defect label.
-- Suggested upstream target: /revise against canon/generated/frost-wards.md#scene01-beat01-attempt01 — the self-contained locator, copied verbatim from the violation line's [ref:] tag.
+- Reason: the violation line carries [premise: unreviewed] — the cited entry (canon/generated/frost-wards.md#scene01-beat01-attempt01 "holds a sealed crate for three days before it must be recast") is itself unconfirmed, so a FIX cannot be applied to prose against an unconfirmed guess, regardless of the unit's (absent) defect label.
+- Suggested upstream target: /revise against canon/generated/frost-wards.md#scene01-beat01-attempt01 "holds a sealed crate for three days before it must be recast" — the self-contained locator, copied verbatim from the violation line's [ref:] tag, quote included: both entries in frost-wards.md share the same scene01-beat01-attempt01 provenance, so the quote is what disambiguates the frost-ward duration entry from the sibling ward-sigil-chalk entry.
 
 #### Escalated: elapsed time (review-id: compliance:scene01:block-003-v01)
 - Reason: the violation line carries [premise: unreviewed] — the cited entry (continuity/story.md#co-01) is itself unconfirmed, so a FIX cannot be applied to prose against an unconfirmed guess, even though its defect label reads prose.
