@@ -14,9 +14,9 @@ status: invented, unreviewed
      examples/unreviewed-confirmation/README.md.
 
      Agent-invented world facts captured by the capture agent
-     (agents/capture/capture-agent.md) out of scene01/beat01/attempt01 — the make-ready
-     beat where Iyo casts the frost-ward over the lashed verglass crate
-     (plot/drafts/attempt01/draft-v01.md, block 001). The file-level `status:` above is
+     (agents/capture/capture-agent.md) out of scene 1, beat 1, attempt01 — the
+     make-ready beat where Iyo casts the frost-ward over the lashed verglass crate
+     (plot/drafts/attempt01/draft-v01.md). The file-level `status:` above is
      written once at file creation and is never read or written by the confirmation
      lifecycle (agents/update-rules.md's Confirmation subsection) — only the per-entry
      inline tag on each entry below is.
@@ -30,11 +30,11 @@ status: invented, unreviewed
 ## Frost-ward duration
 
 A chalked frost-ward holds a sealed crate for three days before it must be recast; past
-that, the verglass begins to sweat and crack. (invented, confirmed — scene01, beat01,
-attempt01)
+that, the verglass begins to sweat and crack. *(invented, confirmed — scene 1, beat 1,
+attempt01)*
 
 ## Ward-sigil chalk
 
 The ward-sigil is chalked in blue ochre, not the caravan's usual white chalk, because
-the salt wind eats white chalk raw within a day. (invented, unreviewed — scene01,
-beat01, attempt01)
+the salt wind eats white chalk raw within a day. *(invented, unreviewed — scene 1,
+beat 1, attempt01)*

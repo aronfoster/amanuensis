@@ -20,8 +20,9 @@ Confirmation subsection, `agents/revision.md`'s confirm-only and correct-and-con
 `/revise` paths, and `agents/steps/compliance-report.md` / `compliance-fix.md`'s
 `[premise: unreviewed]` tagging and escalation-override. It is a `short_story`-project
 fixture slice (`agents/project-layouts.md`), the scale of `examples/relational-review/`
-but the `short_story` layout's simpler paths — one scene, four storyboard blocks, one
-draft, no book/chapter subdivision.
+but the `short_story` layout's simpler paths — one scene, four storyboard files (one per
+beat, per `agents/steps/drafting.md`: "Each file represents one beat"), one draft, no
+book/chapter subdivision.
 
 Three separate demonstrations, each proving a different piece of the mechanism:
 
@@ -29,33 +30,47 @@ Three separate demonstrations, each proving a different piece of the mechanism:
 | --- | --- | --- | --- | --- |
 | 1 | `canon/generated/frost-wards.md` | Check 3's Canon-check escalation | confirm-only | `canon/generated/<file>#<scene-beat-attempt> "<quote>"` (no minted id) |
 | 2 | `continuity/story.md` | Check 4's continuity resolution | correct-and-confirm | minted `co-NN` id |
-| 3 | `characters/dessa/timeline.md` | none — direct invocation | confirm-only | inline tag, no compliance finding involved |
+| 3 | `characters/dessa/timeline.md` | none — direct invocation | confirm-only | inline tag, no minted id, no compliance finding involved |
 
 The maintained/generated state the fixture carries:
 
 - `canon/generated/frost-wards.md` — two agent-invented world facts about the
   caravan's frost-ward, in the `agents/capture/capture-agent.md` Write-discipline
   shape: file-level `status: invented, unreviewed` frontmatter (untouched throughout)
-  plus a per-entry inline tag on each of the two entries.
+  plus a per-entry inline provenance tag on each of the two entries — `*(invented,
+  unreviewed — scene N, beat N, attemptNN)*`, italicized, space-separated, not
+  zero-padded, matching real capture-agent output.
 - `continuity/story.md` — one maintained chronology entry, `co-01`, in the
   `templates/continuity-book.md` shape (short_story: no `book_id`, story-position
   reduced to `<scene-id>`).
-- `characters/dessa/timeline.md` — one character-timeline entry, `tl-01`, carrying the
-  same per-entry inline tag shape as `canon/generated/`.
+- `characters/dessa/timeline.md` — one character-timeline entry, carrying the same
+  per-entry inline provenance tag shape as `canon/generated/` — a flat, provenance-tagged
+  bullet under a loose chronological header, not the fuller `id`/`story-position`/
+  `committed-in` scaffold `templates/timeline.md` documents for the full M14 model;
+  real capture-agent output for this destination is simpler than that template (see
+  section 3 below).
 
 The prose and plans under review:
 
-- `plot/storyboards/scene01-storyboard.md` — the four storyboard blocks. Block 002's
-  `## Canon active` states the frost-ward rule only generically (no specific recast
-  interval); block 003's `## Must Preserve` states the day-count constraint generically
-  too — both deliberately insufficient, forcing each check to escalate to the named
-  maintained-state file rather than resolve locally.
+- `plot/storyboards/scene01-beat01-storyboard.md` through `scene01-beat04-storyboard.md`
+  — one file per beat, all sharing `scene_ref: "plot/scene-list.md#scene01"`
+  (`agents/steps/drafting.md`). Beat 2's `# Canon active` states the frost-ward rule
+  only generically (no specific recast interval); beat 3's `# Must Preserve` states the
+  day-count constraint generically too — both deliberately insufficient, forcing each
+  check to escalate to the named maintained-state file rather than resolve locally.
 - `plot/drafts/attempt01/draft-v01.md` — the draft under review, carrying two
-  deliberate contradictions (blocks 002 and 003) against the maintained/generated state.
+  deliberate contradictions (at scene 1, beats 2 and 3) against the
+  maintained/generated state. Uses the real scene/beat prose-marker convention
+  (`agents/steps/drafting.md`, `agents/steps/compliance-fix.md`): `<!-- scene 1, beat N
+  -->` / `<!-- end scene 1, beat N -->` around each beat, no gap between one beat's end
+  marker and the next's start marker (no `---` scene-break rule needed — this fixture
+  is a single scene).
 - `plot/drafts/attempt01/reviewer-actions.md` — the compliance report, shown already
-  carried through `compliance_fix`: two findings, two `Decision: FIX` calls, two
-  `Escalated:` blocks. It validates `proceed` (exit 0) — see
-  [Validating the report](#validating-the-report).
+  carried through `compliance_fix`: two findings (anchored to `compliance_report`'s own
+  `### Block 002` / `### Block 003` review-unit numbering, which tracks storyboard
+  `beat_index` — "block" is the review-artifact's term, "beat" is the storyboard file's),
+  two `Decision: FIX` calls, two `Escalated:` blocks. It validates `proceed` (exit 0) —
+  see [Validating the report](#validating-the-report).
 - `plot/drafts/attempt01/draft-v02.md` — `compliance_fix`'s output. Neither `FIX`
   decision reaches prose (both route upstream), so this is a byte-for-byte copy of
   `draft-v01.md` — but `compliance_fix` still mints it and repoints `Active-head:` to
@@ -70,19 +85,19 @@ originally `invented, unreviewed`:
 
 - **Entry A — Frost-ward duration** (load-bearing): *"A chalked frost-ward holds a
   sealed crate for three days before it must be recast; past that, the verglass begins
-  to sweat and crack."* Tagged `(invented, unreviewed — scene01, beat01, attempt01)` in
-  its pre-confirmation state.
+  to sweat and crack."* Tagged `*(invented, unreviewed — scene 1, beat 1, attempt01)*`
+  in its pre-confirmation state.
 - **Entry B — Ward-sigil chalk** (sibling, unrelated): *"The ward-sigil is chalked in
   blue ochre, not the caravan's usual white chalk, because the salt wind eats white
   chalk raw within a day."* Stays `invented, unreviewed` for the whole fixture — its
   job is to prove per-entry-only scope, not to be checked against anything.
 
-Block 002's storyboard `## Canon active` states only *"frost-wards on sealed cargo
-degrade over time and must be recast before they fail"* — no specific interval. The
-draft's block 002 asserts a specific, checkable recast cadence: *"Every two days, same
-as always."* `canon_active` doesn't cover that claim, so Check 3 escalates past it to
-the named `canon/generated/frost-wards.md` file — and finds Entry A's three-day figure
-instead.
+Beat 2's storyboard (`plot/storyboards/scene01-beat02-storyboard.md`) `# Canon active`
+states only *"frost-wards on sealed cargo degrade over time and must be recast before
+they fail"* — no specific interval. The draft's scene 1, beat 2 asserts a specific,
+checkable recast cadence: *"Every two days, same as always."* `canon_active` doesn't
+cover that claim, so Check 3 escalates past it to the named
+`canon/generated/frost-wards.md` file — and finds Entry A's three-day figure instead.
 
 ### The finding
 
@@ -100,10 +115,14 @@ Note what is **absent**: no `[defect: …]` tag. Check 3's escalation path never
 one (`agents/steps/compliance-report.md`: "never a `[defect:]` tag, which Check 3 never
 carries"). Exactly one `[ref:]` tag, appended fresh at report time — Check 3 carries no
 `[ref:]` tag on its ordinary path, so this is a new tag, not an enrichment (that's
-Check 4's job, see §2). The `[ref:]` locator is self-contained — file path + the
-entry's own scene/beat/attempt provenance + a short quote — because `canon/generated/`
-mints no id and `compliance_fix` is forbidden from reading canon files to reconstruct
-one later.
+Check 4's job, see §2). The `[ref:]` locator is the compact anchor form
+`agents/steps/compliance-report.md` specifies for `canon/generated/` — file path + a
+hyphenated `sceneNN-beatNN-attemptNN` provenance segment + a short quote — distinct from
+the human-readable, space-separated provenance prose on the entry itself (`scene 1, beat
+1, attempt01`); the two serve different readers (a greppable machine anchor vs. prose a
+human reads in place) and are not required to share punctuation. It's self-contained
+because `canon/generated/` mints no id and `compliance_fix` is forbidden from reading
+canon files to reconstruct one later.
 
 ### The safety property: `FIX` still routes upstream
 
@@ -132,9 +151,10 @@ successful run's completion contract is unconditional (`agents/steps/compliance-
 "the step's final action is to repoint the manifest's `Active-head:` to the `<next-draft>`
 it just wrote") — so it mints `draft-v02.md`, a byte-for-byte copy of `draft-v01.md`
 ("Everything not touched by a `FIX` decision is copied through verbatim"), and repoints
-`Active-head:` to it. Block 002 still reads "every two days" in `draft-v02.md`, unchanged
-text under a new version number. See [Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run)
-for what this means for the next `compliance_report` run.
+`Active-head:` to it. Scene 1, beat 2 still reads "every two days" in `draft-v02.md`,
+unchanged text under a new version number. See
+[Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run) for what
+this means for the next `compliance_report` run.
 
 ### The confirm-only `/revise` pass
 
@@ -150,7 +170,7 @@ the named entry:
 > no change." The human confirms.
 >
 > **`/revise` (step 4, Sweep):** read-only here — no downstream echo needs surfacing
-> beyond the one draft block already reviewed.
+> beyond the one draft beat already reviewed.
 >
 > **`/revise` (step 6, Apply):** flips Entry A's per-entry inline tag `invented,
 > unreviewed` → `invented, confirmed`. Confirm-only skips only step 3 (there is no
@@ -159,17 +179,18 @@ the named entry:
 
 The committed `canon/generated/frost-wards.md` in this folder **is** that
 post-confirmation state. The diff against the pre-confirmation text quoted above is
-visible in the file itself: Entry A's tag now reads `(invented, confirmed — scene01,
-beat01, attempt01)` — text unchanged, tag flipped. Entry B's tag still reads
-`(invented, unreviewed — scene01, beat01, attempt01)`, and the file-level frontmatter
+visible in the file itself: Entry A's tag now reads `*(invented, confirmed — scene 1,
+beat 1, attempt01)*` — text unchanged, tag flipped. Entry B's tag still reads
+`*(invented, unreviewed — scene 1, beat 1, attempt01)*`, and the file-level frontmatter
 still reads `status: invented, unreviewed` — both genuinely untouched, proving
 per-entry-only scope, not just claimed in prose.
 
 ### This is not the end of the round trip
 
-The marker flip fixes the *premise*, not the *prose* — `draft-v02.md`'s block 002 still
-says "every two days." See [Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run)
-below (after §2's correction) for what re-running `compliance_report` actually produces —
+The marker flip fixes the *premise*, not the *prose* — `draft-v02.md`'s scene 1, beat 2
+still says "every two days." See
+[Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run) below
+(after §2's correction) for what re-running `compliance_report` actually produces —
 it's not a simple append, because `compliance_fix`'s completion already moved the active
 head out from under this report (see above).
 
@@ -198,7 +219,7 @@ fixture surface without adding a new mechanism to see.
 - **review:** unreviewed
 ```
 
-A different block of the same draft — block 003, not block 002 — has Senna reckon the
+A different beat of the same draft — scene 1, beat 3, not beat 2 — has Senna reckon the
 day-count: *"nine days out of Last Well."* Check 4 resolves `co-01`'s provenance,
 reads its `unreviewed` marker, and finds a contradiction: six days maintained, nine
 days claimed.
@@ -268,7 +289,7 @@ Unlike §1, the corrected value happens to **already match** the prose — the e
 the draft, was the error. In a live run, `/revise`'s Sweep (step 4) + Apply (step 6)
 would also check for a matching prose echo in `<latest-draft>` (now `draft-v02.md`, the
 active head after `compliance_fix`'s run) per its Edit scope; here there is none to
-correct, since block 003 already said "nine days." See
+correct, since scene 1, beat 3 already said "nine days." See
 [Closing the loop](#closing-the-loop-a-regenerated-compliance_report-re-run) for what
 this means once both §1's and §2's `/revise` passes are in.
 
@@ -340,19 +361,26 @@ regenerated file isn't added here, since it would immediately supersede and orph
 
 ## 3 — `characters/dessa/timeline.md`: `/revise`'s extended scope, no compliance finding involved
 
-`characters/dessa/timeline.md` originally carried one capture-agent-style entry from an
-earlier, unmodeled drafting pass (the drafting apparatus that produced it isn't built
-here — only the resulting file is):
+`characters/dessa/timeline.md` originally carried one capture-agent-style invention
+(fact-type `event`), sourced from this same draft's scene 1, beat 4 — where Dessa's
+apprenticeship habit shows in how she reads the ridge on the way down:
 
 ```markdown
-### Apprenticed to a salt-diviner in Drybone Market
-- **id:** tl-01
-- **story-position:** pre-story
-- **committed-in:** —
-- **event:** Before joining Torrin's crew, Dessa spent a season apprenticed to a
-  salt-diviner in Drybone Market, learning to read wind-scour patterns for weather
-  sign. (invented, unreviewed — scene00, beat01, attempt01)
+## Pre-story
+
+- Before joining Torrin's crew, spent a season apprenticed to a salt-diviner in Drybone
+  Market, learning to read wind-scour patterns for weather sign — the habit that shows
+  in how she reads the ridge on the way down at scene 1, beat 4. *(invented, unreviewed
+  — scene 1, beat 4, attempt01)*
 ```
+
+This is a flat, provenance-tagged bullet under a loose chronological header — not the
+`id` / `story-position` / `committed-in` structured-entry shape `templates/timeline.md`
+documents for the fuller M14 temporal model. Real capture-agent output for this
+destination is simpler: `agents/capture/capture-agent.md`'s Write discipline says only
+"an inline note or trailing tag riding alongside the new entry," with no per-entry id
+minted for `timeline.md`/`profile.md` — the same no-minted-id shape `canon/generated/`
+has, and unlike `continuity/`/`knowledge/`'s minted `co-NN`/`kn-NN`.
 
 No compliance finding reaches this entry — `compliance_report` has no input reading
 `timeline.md` or `profile.md` at all. This is a documented, tracked gap, not silently
@@ -364,12 +392,17 @@ Sprint's retrofit-of-existing-resolution scope.
 
 ### The direct `/revise` invocation
 
+Because there is no minted id, the human targets the entry by describing it directly —
+the same locator shape §1's `canon/generated/` confirm-only pass uses, just without a
+routing `Escalated:` block to source it from:
+
 > **Human**, outside any compliance flow: "The Dessa apprenticeship entry in her
 > timeline — that's right as written, mark it reviewed."
 >
 > **`/revise` (step 1, confirm-only invocation):** restates what is being confirmed:
-> "`characters/dessa/timeline.md#tl-01` — Dessa's season apprenticed to a salt-diviner
-> in Drybone Market — confirmed as written, no change." The human confirms.
+> "`characters/dessa/timeline.md`'s Dessa-apprenticeship entry — a season apprenticed to
+> a salt-diviner in Drybone Market — confirmed as written, no change." The human
+> confirms.
 >
 > **`/revise` (step 6, Apply):** flips the inline tag `invented, unreviewed` →
 > `invented, confirmed`. No other edit; character files are already in `/revise`'s
@@ -377,7 +410,7 @@ Sprint's retrofit-of-existing-resolution scope.
 > confirm-or-correct mechanism to this destination cost nothing extra.
 
 The committed `characters/dessa/timeline.md` **is** that post-confirmation state: the
-tag now reads `(invented, confirmed — scene00, beat01, attempt01)`.
+tag now reads `*(invented, confirmed — scene 1, beat 4, attempt01)*`.
 
 This proves `/revise`'s extended confirm-or-correct scope **independent of**
 `compliance_report`'s detection gap for these two destinations: the marker vocabulary,
