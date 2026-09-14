@@ -39,7 +39,7 @@ Use this step only after the chapter's storyboard files are complete. This step 
 ### Coordinator responsibilities
 
 1. Identify all storyboard files in `<chapter-folder>/storyboards/`.
-2. Group storyboard files by scene using their `scene_ref` frontmatter value. Within each scene, order files by `beat_index` and identify the lowest-`beat_index` file as the first block. Verify that first block contains exactly one `Reader state in` section and exactly one `Since previous scene` section. If filenames and `beat_index` disagree, use `beat_index` and record the mismatch in `notes.md`. If either scene-entry section is missing, duplicated, or present only in a later block, take the Failure handling path rather than repairing the storyboard during drafting.
+2. Group storyboard files by scene using their `scene_ref` frontmatter value. Within each scene, order files by `beat_index` and identify the lowest-`beat_index` file as the first block. Verify that first block contains exactly one `Reader state in` section and exactly one `Since previous scene` section, and that neither section appears in a later block. If filenames and `beat_index` disagree, use `beat_index` and record the mismatch in `notes.md`. If either scene-entry section is missing, duplicated, misplaced, or repeated in a later block, take the Failure handling path rather than repairing the storyboard during drafting.
 3. Resolve `<latest-attempt>`. If no `attemptNN` directory exists under `<chapter-folder>/drafts/`, create `attempt01`. Otherwise create the next-numbered `attemptNN` directory for this run. The created directory is `<latest-attempt>` for the rest of the step.
 4. Create `<chapter-folder>/drafts/<latest-attempt>/notes.md` recording the attempt name, date, model if known, chapter path, and which storyboard files were assigned to each scene.
 5. Dispatch one subagent per scene, in parallel where the host supports it. Give each subagent only the allowed inputs for its assigned scene (see Subagent prompt contract), with the ordered first block carrying the already-resolved scene-entry context. The coordinator does not derive, rewrite, or supplement that context during drafting.
@@ -91,7 +91,7 @@ The subagent must:
 - read all storyboard files assigned to its scene, in beat order
 - read `Reader state in` and `Since previous scene` from the first block before composing the opening
 - treat the assigned storyboard files as production notes for one continuous dramatic arc; pace against the scene arc, not against individual beat boundaries
-- use `Reader state in` as already-established reader context: keep listed conditions consistent and normally implicit rather than explaining them again
+- use `Reader state in` as the reader's already-established baseline: keep it normally implicit and do not contradict it unless a current beat deliberately changes or corrects it
 - use `Since previous scene` to begin from the correct changed and unchanged conditions; reflect the resulting entry state without automatically narrating the transition
 - restate prior information only when the current scene's `Beat`, `Must Preserve`, `Reader takeaway`, or `Craft signal` gives the repetition a new dramatic purpose such as contrast, correction, deliberate reminder, or changed significance
 - write prose only to its assigned `sceneNN.md` file
@@ -147,7 +147,7 @@ Write generation notes only to:
 
 Treat the storyboard files as production notes for one continuous dramatic arc. Pace against the arc, not against beat boundaries.
 
-Before writing, read Reader state in and Since previous scene from the first storyboard block. Reader state in describes context the reader already has: keep it consistent and normally implicit; do not recap, reintroduce, or mention an item merely because it is listed. Since previous scene describes the changed and unchanged conditions at this scene's entry: begin from those conditions without automatically narrating the transition or explaining every delta.
+Before writing, read Reader state in and Since previous scene from the first storyboard block. Reader state in describes the reader's already-established baseline: keep it normally implicit and do not contradict it unless a current beat deliberately changes or corrects it; do not recap, reintroduce, or mention an item merely because it is listed. Since previous scene describes the changed and unchanged conditions at this scene's entry: begin from those conditions without automatically narrating the transition or explaining every delta.
 
 Restate prior information only when the current scene's Beat, Must Preserve, Reader takeaway, or Craft signal gives the repetition a new dramatic purpose such as contrast, correction, deliberate reminder, or changed significance. The scene-entry fields are context, not Must Preserve requirements.
 
@@ -202,7 +202,7 @@ Scene notes capture generation-relevant information only: what was generated, co
 
 ### Failure handling
 
-If the first block lacks either scene-entry section, places it ambiguously, or gives scene-entry context that conflicts internally or with the scene's beat-level requirements, the subagent stops and reports the problem instead of reconstructing prior context, silently choosing a side, or drafting an accidental recap. Likewise, if a subagent otherwise cannot draft from the storyboard files alone, it stops and reports the missing requirement to the coordinator instead of reading extra files or guessing. The coordinator records the blocker in `notes.md`. The fix belongs outside this step, usually by improving the storyboard files.
+If the first block lacks either scene-entry section, places it ambiguously, repeats it in a later block, or gives scene-entry context that conflicts internally or with the scene's beat-level requirements, the subagent stops and reports the problem instead of reconstructing prior context, silently choosing a side, or drafting an accidental recap. Likewise, if a subagent otherwise cannot draft from the storyboard files alone, it stops and reports the missing requirement to the coordinator instead of reading extra files or guessing. The coordinator records the blocker in `notes.md`. The fix belongs outside this step, usually by improving the storyboard files.
 
 If two scene files conflict in tone, continuity, or repeated exposition, the coordinator records the issue in `notes.md`. The coordinator must not silently solve continuity problems by adding new canon or changing reveal timing.
 
