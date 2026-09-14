@@ -24,8 +24,8 @@ trusted:
 - **bounded-window** — whole-chapter prose-quality checks evaluated over a span (register, voice, POV,
   pacing across a chapter). Minimum context: **the current chapter**.
 - **relational** — prose checked against facts established **elsewhere**: continuity,
-  character-knowledge, reveal-timing, chronology, recollection, quotation, summary, and recap
-  fidelity. Minimum context: the **maintained state** (`continuity/`, `characters/<id>/knowledge/`,
+  character-knowledge, reveal-timing, chronology, recollection, quotation, summary, recap
+  fidelity, and prose checked against explicit prior-reader scene-entry context. Minimum context: the **maintained state** (`continuity/`, `characters/<id>/knowledge/`,
   `reveals.md`) **plus targeted retrieval** of the named source evidence the prose invokes, tiered by
   check type. The tiers are stated once in `NOTES.md:74-79`: intra-chapter continuity → the whole
   current chapter; cross-chapter / cross-book → maintained state + targeted retrieval, **never** a
@@ -45,8 +45,8 @@ Every current review step, its class, and a one-line justification:
 | `anti_ai_report` | local | context-free by design (`agents/steps/anti-ai-report.md:29`) |
 | `metaphor_identify` | local | figures only; "Do not read canon files, the scene list, or any other file" (`agents/steps/metaphor-identify.md` Inputs) |
 | `prose_pass` | bounded-window | storyboards + `voice.md` for register, not diffed (`agents/steps/prose-pass.md:52-53`) |
-| `compliance_report` | relational | reads prose against `continuity/` + `knowledge/` + canon (retrofit, M16.3/M16.6) |
-| `storyboard_review` | mixed — reveal-setup **relational**; takeaway-support + takeaway/concealment **bounded-window** | reveal-setup reasons across chapters against `reveals.md` (retrofit); the other two checks stay within the storyboard set |
+| `compliance_report` | relational | reads prose against `continuity/` + `knowledge/` + canon and each scene's explicit prior-reader entry context; catches redundant re-establishment as well as factual inconsistency |
+| `storyboard_review` | mixed — reveal-setup **relational**; takeaway-support + takeaway/concealment + scene-entry validation **bounded-window** | reveal-setup reasons across chapters against `reveals.md`; scene-entry validation reasons across the ordered current-chapter storyboard set and declared first-scene boundary planning inputs |
 
 A review's class is set by the **defect it checks**, not by convenience — a local check may stay
 block/scene-local, a relational check may not.
@@ -60,11 +60,12 @@ fetches only what those names require.
   recollection **names its referent** — the earlier event, line, or scene it recalls. A continuity
   claim **names its fact-class and subject** — a chronology anchor for a named day, a possession for a
   named holder, a role at a named post, a location for a named party. A reveal or a
-  takeaway-depends-on-prior-understanding beat names the reveal it builds toward. That naming is
-  exactly what tells the review which referent to fetch.
+  takeaway-depends-on-prior-understanding beat names the reveal it builds toward. A scene's
+  `Reader state in` names the reader context already established, while `Since previous scene`
+  names the boundary delta. That naming is exactly what tells the review which referent to fetch.
 - **Targeted retrieval.** Having named the referents, the review obtains **only** the maintained-state
   entries and named source evidence needed to judge them — the specific `continuity/` / `knowledge/` /
-  `reveals.md` entries, the named canon file, or the specific prior scene — never a full re-read. The
+  `reveals.md` entries, the named canon file, the specific prior scene, or the scene-entry storyboard field — never a full re-read. The
   cost is O(facts + back-references), not O(corpus).
 
 A maintained-state entry is used **only when its currency can be unambiguously resolved** by its full
@@ -165,11 +166,15 @@ These surface forms are canonical (downstream files agree on them):
   tag: `[defect: <type>] [ref: <referent>]`, where `<type>` ∈ {prose, storyboard, state, canon,
   missing-context} and `<referent>` is one of `continuity/book-N.md#co-NN` (or `continuity/story.md#co-NN`
   for a `short_story`), `characters/<id>/knowledge/book-N.md#kn-NN` (or `characters/<id>/knowledge/story.md#kn-NN`
-  for a `short_story`), `reveals.md#rv-NN`, or `canon/<file>` + a quote. The `book-N.md` forms are the
+  for a `short_story`), `reveals.md#rv-NN`, `canon/<file>` + a quote, or `<storyboard-file>#reader-state-in` /
+  `<storyboard-file>#since-previous-scene`. The storyboard-field locator is used when a relational
+  finding turns on explicit scene-entry context; its finding text names the earlier established
+  item or scene/block when available. The `book-N.md` forms are the
   `book`/`series` shape; a `short_story` cites the `story.md` file it actually maintains.
 - Every relational report declares a report-level section headed exactly `## Context consulted`, a
   bulleted list naming the specific state entries / chapters / files actually read — e.g.
-  `- continuity/book-1.md#co-03 (chronology anchor)`.
+  `- continuity/book-1.md#co-03 (chronology anchor)` or
+  `- plot/storyboards/scene02-beat01-storyboard.md#reader-state-in (prior-reader baseline)`.
 
 The M14/M15 temporal-state model (`agents/characters.md`, `agents/continuity.md`) and the worked
 example that grounds this whole strategy (`NOTES.md:24-46`, `:82-100`) are referenced, not restated.
