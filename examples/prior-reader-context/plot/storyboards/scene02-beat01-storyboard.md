@@ -16,7 +16,7 @@ Reader already knows: *Wayfinder* is a survey brig running east; the steady nort
 
 ## Since previous scene
 
-Elapsed: dawn watch to afternoon watch. Changed: Eda's unfinished calculation work has accumulated and Hale now brings it to her. Unchanged: ship, eastward course, northwest wind, starboard-quarter point of sail, following swell, Eda's role, and her flare unease.
+Elapsed: dawn watch to afternoon watch. Changed: Eda's unfinished calculation work has accumulated. Unchanged: ship, eastward course, northwest wind, starboard-quarter point of sail, following swell, Eda's role, and her flare unease.
 
 ## Character state in
 

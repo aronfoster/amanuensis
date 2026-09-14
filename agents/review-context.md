@@ -152,10 +152,11 @@ The relational review scales by tiering context to project type, never by readin
 - **`book`** → the whole current chapter + prior maintained state.
 - **`series`** → maintained state + targeted retrieval, **never a full-corpus reread**.
 
-New relational inputs are **`required: false` and project-type-aware**: prior-chapter material,
+New relational inputs are **`required: false` and project-type-aware**: `<prior-scene-storyboards>`,
 `continuity/`, and `reveals.md` exist meaningfully only for `book` / `series`, so a `short_story` must
-not block on their absence (`NOTES.md:103-107`). This project-type-aware, targeted-retrieval bounding
-is the mechanism that makes the review scale to a series.
+not block on their absence (`NOTES.md:103-107`). The prior-scene placeholder resolves only the single
+scene immediately before the current chapter, never a prior-storyboard scan. This project-type-aware,
+targeted-retrieval bounding is the mechanism that makes the review scale to a series.
 
 ## The finding contract
 

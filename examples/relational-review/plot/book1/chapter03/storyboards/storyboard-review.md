@@ -3,7 +3,8 @@
      storyboards PRE-DRAFT against `reveals.md`. It is report-only: no `<!-- review-id: -->` anchors,
      no `Decision:` fields, no draft-version stamp (there is no draft yet). This excerpt shows the
      reveal-timing failure — the fifth of the five demonstrated failures — as a PREMATURE (reveal)
-     finding. Blocks with no finding are shown CLEAN; unrelated scene-2 blocks are elided. -->
+     finding. Blocks with no finding are shown CLEAN; unrelated scene-2 blocks are elided.
+     This is a focused legacy excerpt, not a complete current-format chapter report. -->
 
 ## Storyboard Review — book1/chapter03, 2026-08-11
 
@@ -22,6 +23,10 @@
 - Reveals without setup: 0
 - Premature disclosures: 1
 - Takeaway/concealment contradictions: 0
+- Scene-entry structure violations: 0
+- Reader-state inconsistencies / premature claims / unverifiable claims: 0
+- Cross-scene delta inconsistencies / omissions: 0
+- Overloaded scene-entry fields: 0
 - Blocks fully clean: 3 of 4
 
 The single premature disclosure is the reveal-timing failure. By the reveal-timing carve-out (canon > `reveals.md` > storyboard > prose), the leaking *storyboard* is the defect — the ledger is not relaxed to accommodate it — so the label is `[defect: storyboard]`, routed to the human revising the storyboard, not a "ledger is wrong" defect.
@@ -29,3 +34,6 @@ The single premature disclosure is the reveal-timing failure. By the reveal-timi
 ## Context consulted
 
 - reveals.md#rv-01 (lands book1/chapter04/scene02:block-005; setup book1/chapter02/scene03:block-002, book1/chapter03/scene01:block-002; concealed-until book1/chapter04/scene02:block-005)
+- plot/book1/chapter02/storyboards/scene06-beat01-storyboard.md (targeted preceding-scene close for chapter03 scene01)
+- plot/book1/chapter03/summary.md (current chapter boundary plan)
+- plot/book1/chapter03/scene-list.md#scene-001 (current first-scene plan)

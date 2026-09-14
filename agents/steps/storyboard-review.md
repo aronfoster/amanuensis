@@ -6,6 +6,7 @@ inputs:
   - <chapter-folder>/scene-list.md
   - <chapter-folder>/summary.md
   - <chapter-folder>/storyboards-planning.md
+  - <prior-scene-storyboards>
   - reveals.md
 outputs:
   - <chapter-folder>/storyboards/storyboard-review.md
@@ -23,6 +24,10 @@ preconditions:
     required: true
     review_sensitive: false
   - path: <chapter-folder>/storyboards-planning.md
+    kind: source
+    required: false
+    review_sensitive: false
+  - path: <prior-scene-storyboards>
     kind: source
     required: false
     review_sensitive: false
@@ -46,9 +51,10 @@ Flag where a chapter's storyboard blocks under-serve the reader: takeaways the s
 - `<chapter-folder>/scene-list.md` — read for canonical scene/beat ordering, scene-level reveal intent, and scene-boundary intent.
 - `<chapter-folder>/summary.md` — the declared chapter-level planning source used to assess the first planned scene's entry context when the work began earlier.
 - `<chapter-folder>/storyboards-planning.md` — optional planning notes used for the same first-scene boundary check when present.
+- `<prior-scene-storyboards>` — for the first planned scene of a continuing `book` or `series`, the same immediately preceding planned scene that `storyboarding` used to seed entry context, resolved by `agents/project-layouts.md`. `required: false` for work openings and `short_story`; retrieval is limited to that one scene.
 - `reveals.md` — the project-root, human-authored, story-level reveals ledger (`agents/reveals.md`): the `id`-bearing index of forward reveals with their `lands:` / `setup:` / `concealed-until:` block-qualified positions. Consumed **read-only** by the two reveal checks (Check 2) via targeted lookup of named entries and positions, per `agents/review-context.md` — not a corpus scan. `required: false` and project-type-aware: a story-level ledger exists meaningfully only where reveals span the work, so a project without one does not block.
 
-Beyond these, do not read a draft — none exists at this stage — and do not consult source canon files. Checks 1–3 use the current chapter's storyboard fields, the ledger, and targeted retrieval of exactly the positions a ledger `setup:` entry names. Check 4 uses the current chapter's ordered storyboard set plus the declared summary and optional storyboard-planning notes for the first planned scene. A field that is missing, unparseable, or unverifiable from those declared inputs is a storyboard defect to note, not a reason to reach for prior prose, prior chapters, or source files.
+Beyond these, do not read a draft — none exists at this stage — and do not consult source canon files. Checks 1–3 use the current chapter's storyboard fields, the ledger, and targeted retrieval of exactly the positions a ledger `setup:` entry names. Check 4 uses the same boundary inputs as `storyboarding`: the current chapter's ordered storyboard set, summary, scene list, optional storyboard-planning notes, and the targeted `<prior-scene-storyboards>` when the chapter continues an existing work. A field that is missing, unparseable, or unverifiable from those declared inputs is a storyboard defect to note, not a reason to reach for prior prose, other prior scenes, or source files.
 
 ## Behavior
 
@@ -77,6 +83,7 @@ If a block has any finding, record only the findings — not the passing checks:
 - PREMATURE (reveal): [beat] — block discloses reveal rv-NN before its `concealed-until:` [pos]. [defect: storyboard] [ref: reveals.md#rv-NN]
 - CONTRADICTION (reader_takeaway vs concealment_from_reader): [beat] — takeaway "[…]" requires naming what concealment forbids "[…]"
 - MISSING (reader_state_in): [scene] — first block has no `Reader state in` section
+- MISSING (since_previous_scene): [scene] — first block has no `Since previous scene` section
 - MISPLACED (scene_entry): [scene] — scene-entry section appears outside the first block
 - INCONSISTENT (reader_state_in): [scene] — entry claim "[…]" conflicts with the preceding scene's reader-visible close at [scene/block]
 - PREMATURE (reader_state_in): [scene] — entry claim "[…]" is first established in the current or a future block
@@ -117,16 +124,16 @@ For each block, confirm its `reader_takeaway` does not require the reader to gra
 
 #### Check 4: Scene-entry context
 
-Source fields: `Reader state in` and `Since previous scene` in each scene's first block; the ordered storyboard blocks for the preceding scene; `scene-list.md`; and, for the first planned scene when the work began earlier, the declared chapter summary and optional storyboard-planning notes.
+Source fields: `Reader state in` and `Since previous scene` in each scene's first block; the ordered storyboard blocks for the preceding scene; `scene-list.md`; and, for the first planned scene when the work began earlier, the same declared boundary set used by `storyboarding`: `<prior-scene-storyboards>`, chapter summary, scene list, and optional storyboard-planning notes.
 
 Review scene-entry context by scene, while emitting any finding on the specific block that carries or should carry the field:
 
-1. **Placement and cardinality.** The lowest-`beat_index` block must contain exactly one of each scene-entry section, and neither may appear in a later block. Record `MISSING` or `MISPLACED` as applicable. The exact opening sentinels are valid only for the opening scene of the entire work; using them at a chapter or planning-batch boundary is `INCONSISTENT`.
+1. **Placement and cardinality.** The lowest-`beat_index` block must contain exactly one of each scene-entry section, and neither may appear in a later block. Identify a section by its normalized Markdown heading text, regardless of heading depth; the canonical producer emits `##`, while legacy fixtures may use `#`. Record `MISSING (reader_state_in)`, `MISSING (since_previous_scene)`, or `MISPLACED` as applicable. The exact opening sentinels are valid only for the opening scene of the entire work; using them at a chapter or planning-batch boundary is `INCONSISTENT`.
 2. **Reader-state correctness.** For each later scene, compare `Reader state in` with the preceding scene's `reader_takeaway` fields and reader-visible beat outcomes. The field may select only relevant already-established context. Record `INCONSISTENT` for a contradiction, `PREMATURE` for information first established in the current or a future block, and `UNVERIFIABLE` when the claimed prior state cannot be supported from the declared inputs. Do not treat objective canon or character-only knowledge as reader knowledge.
 3. **Cross-scene delta.** Compare `Since previous scene` with the preceding scene's close and the current scene's planned opening: final character states, elapsed time, location, environment or staging, roles, relationships, dangers, objectives, and emotional carryover where relevant. Record `INCONSISTENT` for a wrong delta and `INCOMPLETE` when omission of a relevant change or material non-change would invite a fresh establishing treatment or continuity drift. Do not admit developments that occur during the current scene.
 4. **Context discipline.** Both fields must be compact specifications, not prior-scene summaries, prose samples, or instructions to repeat the listed content. Record `OVERLOADED` when a field copies irrelevant prior material or converts context into recap requirements.
 
-For the first planned scene of a continuing work, assess the fields only against the boundary information in the declared summary and optional storyboard-planning notes. If those sources do not establish the claimed reader state or prior-scene delta, record `UNVERIFIABLE`; do not scan prior chapters or prose. For the work's true opening scene, validate the exact sentinels and perform only the placement/cardinality and context-discipline checks.
+For the first planned scene of a continuing work, assess the fields against `<prior-scene-storyboards>` plus the boundary information in the declared summary, scene list, and optional storyboard-planning notes — exactly the producer's declared boundary set. If those sources do not establish the claimed reader state or prior-scene delta, record `UNVERIFIABLE`; do not scan other prior scenes or prose. For the work's true opening scene, validate the exact sentinels and perform only the placement/cardinality and context-discipline checks.
 
 Do not flag every carried-forward fact or unchanged condition. The defect is an incorrect, missing, future-leaking, or unusably broad entry briefing — not the mere existence of cross-scene context.
 
@@ -180,7 +187,7 @@ If no ledger, preceding scene, or boundary planning source was consulted — pos
 
 **Treating all carry-forward as a defect.** `Reader state in` is supposed to carry relevant context across scenes, and `Since previous scene` may explicitly record material non-change. Flag incorrect, omitted, future-leaking, or bloated context — not concise context that does its job.
 
-**Scanning prior prose to verify scene entry.** For later scenes in the current chapter, use the preceding scene's planned blocks already in hand. For the first planned scene in a continuing work, use only the declared summary and storyboard-planning boundary sources. If they are insufficient, record `UNVERIFIABLE`; do not expand the input boundary.
+**Scanning prior prose to verify scene entry.** For later scenes in the current chapter, use the preceding scene's planned blocks already in hand. For the first planned scene in a continuing work, use only `<prior-scene-storyboards>` and the declared current-chapter boundary sources. If they are insufficient, record `UNVERIFIABLE`; do not expand the input boundary.
 
 **Adding a draft-version stamp or annotation grammar.** Neither applies to a pre-draft advisory report: there is no draft to stamp against, and no fix step exists to consume annotations.
 

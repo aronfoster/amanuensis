@@ -48,6 +48,7 @@ Reviewed-draft: draft-v01.md
 - Must-Not-Contain violations: 0
 - Canon violations: 1
 - Relational violations: 1
+- Redundant prior-context re-establishments: 0
 - Blocks fully clean: 2 of 4
 - Review units emitted: 2
 
@@ -58,6 +59,8 @@ both carry `[premise: unreviewed]`. See `## Context consulted` below and the
 
 ## Context consulted
 
+- plot/storyboards/scene01-beat01-storyboard.md#reader-state-in (work-opening sentinel)
+- plot/storyboards/scene01-beat01-storyboard.md#since-previous-scene (work-opening sentinel)
 - canon/generated/frost-wards.md#scene01-beat01-attempt01 (canon escalation — frost-ward recast duration; block 002's `canon_active` states the rule only generically)
 - continuity/story.md#co-01 (chronology — day-count anchor out of Last Well)
 

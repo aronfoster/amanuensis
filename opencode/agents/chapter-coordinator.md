@@ -25,7 +25,7 @@ Responsibilities:
 - Identify all storyboard files for the requested chapter.
 - Group storyboard files by `scene_ref`.
 - Order files within each scene by `beat_index`; the lowest-`beat_index` file is the first block.
-- Before dispatching a scene, verify that its first block contains exactly one `Reader state in` section and exactly one `Since previous scene` section, and that neither section appears in a later block. If either is missing, duplicated, misplaced, or repeated later, stop and record a blocker rather than repairing the storyboard during drafting.
+- Before dispatching a scene, verify that its first block contains exactly one `Reader state in` section and exactly one `Since previous scene` section, and that neither section appears in a later block. Match normalized Markdown heading text at any heading depth; `##` is canonical for new storyboards, while legacy `#` headings remain valid input. If either is missing, duplicated, misplaced, or repeated later, stop and record a blocker rather than repairing the storyboard during drafting.
 - Create a new `attemptXX` folder under the chapter's `drafts/` directory.
 - Create or update `notes.md` in the attempt folder.
 - Dispatch one subagent per scene. Use `scene-drafter-opus` or `scene-drafter` for all scenes in the run, as specified by the user. Do not mix drafters within a single run.

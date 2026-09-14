@@ -5,6 +5,7 @@ inputs:
   - <chapter-folder>/scene-list.md
   - <chapter-folder>/summary.md
   - <chapter-folder>/storyboards-planning.md
+  - <prior-scene-storyboards>
   - characters/<character-id>/knowledge/*.md
   - canon/**/*.md
 outputs:
@@ -19,6 +20,10 @@ preconditions:
     required: true
     review_sensitive: false
   - path: <chapter-folder>/storyboards-planning.md
+    kind: source
+    required: false
+    review_sensitive: false
+  - path: <prior-scene-storyboards>
     kind: source
     required: false
     review_sensitive: false
@@ -45,6 +50,7 @@ Translates scene-level intent into ordered sets of beat-level plans that the dra
 - `<chapter-folder>/scene-list.md` — scene list for the chapter.
 - `<chapter-folder>/summary.md` — chapter summary.
 - `<chapter-folder>/storyboards-planning.md` — storyboard planning notes (if present).
+- `<prior-scene-storyboards>` — for the first planned scene of a continuing `book` or `series`, the immediately preceding scene's planned blocks, resolved by `agents/project-layouts.md`. `required: false` because it is undefined for a work opening and for `short_story`; when it exists, read only this targeted scene, never prior prose or the prior storyboard corpus.
 - character knowledge files under `characters/<character-id>/knowledge/` — applicable information covering what each character knows in the scene.
 - Any canon or character reference files linked from the scene list.
 
@@ -73,7 +79,7 @@ For the opening scene of the entire work, put the schema's exact opening sentine
 - `Reader state in`: `Opening scene — no prior reader state.`
 - `Since previous scene`: `Opening scene — no previous scene.`
 
-A chapter or planning-batch boundary is not an opening scene. For the first scene in a continuing work, seed the rolling state from the relevant boundary information present in the declared summary, scene-list, storyboard-planning, character-knowledge, and canon inputs. Distinguish what the reader has actually learned from objective canon and character-only knowledge. If those declared inputs do not establish enough prior-reader or transition context to make the scene independently draftable, record a blocker; do not use the opening sentinels, guess, or read prior prose outside the declared inputs.
+A chapter or planning-batch boundary is not an opening scene. For the first scene in a continuing work, seed the rolling state from `<prior-scene-storyboards>` — the immediately preceding planned scene's reader takeaways, reader-visible outcomes, final character states, and staging — together with the current summary, scene-list, and optional storyboard-planning boundary notes. Character knowledge and canon may constrain the current beats, but they do not prove what the reader already experienced and must not seed these fields unless the declared planned boundary sources establish the same reader-visible fact. If the declared boundary inputs do not establish enough prior-reader or transition context to make the scene independently draftable, record a blocker; do not use the opening sentinels, guess, scan earlier storyboards, or read prior prose.
 
 For every later scene, derive the two first-block fields before writing that scene's beat-level details:
 

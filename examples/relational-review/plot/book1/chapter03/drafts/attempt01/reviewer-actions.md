@@ -45,6 +45,7 @@ Reviewed-draft: draft-v02.md
 - Must-Not-Contain violations: 0
 - Canon violations: 0
 - Relational violations: 5
+- Redundant prior-context re-establishments: 0
 - Blocks fully clean: 2 of 7
 - Review units emitted: 5
 
@@ -52,6 +53,8 @@ All five findings are relational. Four are prose defects (blocks 002–005); one
 
 ## Context consulted
 
+- plot/book1/chapter03/storyboards/scene02-storyboard.md#reader-state-in (scene-2 prior-reader baseline)
+- plot/book1/chapter03/storyboards/scene02-storyboard.md#since-previous-scene (scene-2 boundary delta)
 - continuity/book-1.md#co-02 (chronology — Day 1 departure anchor)
 - continuity/book-1.md#co-05 (chronology — Day 12 anchor at chapter 2's close)
 - continuity/book-1.md#co-03 (event staging — the longboat cut loose and lost)

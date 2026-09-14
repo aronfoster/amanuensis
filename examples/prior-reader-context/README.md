@@ -26,9 +26,11 @@ unchanged conditions that the first scene has already established.
 - `plot/drafts/attempt01/draft-v01.md` is deliberately noncompliant. Scene 2
   opens by establishing the same ship, wind, and swell again before reaching
   its actual action.
-- `plot/drafts/attempt01/reviewer-actions.md` shows the assembled-draft safeguard:
-  `compliance_report` emits one `REDUNDANT (reader_state_in)` prose finding,
-  cited to the scene-2 entry field. Its decision is filled so the checked-in
+- `plot/drafts/attempt01/reviewer-actions.md` shows the chapter-wide
+  assembled-draft safeguard: scene 1's block is `CLEAN`, and scene 2 carries one
+  `REDUNDANT (reader_state_in)` prose finding cited to its entry field. The
+  summary reports one of two blocks clean and counts the redundant finding as a
+  subset of the relational total. Its decision is filled so the checked-in
   artifact validates as ready to proceed.
 
 The two review stages protect different boundaries. `storyboard_review` checks

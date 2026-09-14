@@ -3,6 +3,10 @@ Reviewed-draft: draft-v01.md
 <!-- ILLUSTRATIVE EXAMPLE — NOT REAL PROJECT CANON OR STATE. See examples/prior-reader-context/README.md.
      The human decision is filled so this checked-in artifact validates `proceed`. -->
 
+## Compliance Report — Scene scene01, 2026-09-14
+
+### Block 001 — CLEAN
+
 ## Compliance Report — Scene scene02, 2026-09-14
 
 ### Block 001
@@ -17,13 +21,16 @@ Reviewed-draft: draft-v01.md
 - Must-Not-Contain violations: 0
 - Canon violations: 0
 - Relational violations: 1
-- Blocks fully clean: 0 of 1
+- Redundant prior-context re-establishments: 1
+- Blocks fully clean: 1 of 2
 - Review units emitted: 1
 
 The sole finding is purposeless re-establishment. The unchanged sailing conditions may remain implicit or appear through natural action; they do not need another introduction.
 
 ## Context consulted
 
+- plot/storyboards/scene01-beat01-storyboard.md#reader-state-in (work-opening sentinel)
+- plot/storyboards/scene01-beat01-storyboard.md#since-previous-scene (work-opening sentinel)
 - plot/storyboards/scene02-beat01-storyboard.md#reader-state-in (prior-reader baseline established by scene01)
 - plot/storyboards/scene02-beat01-storyboard.md#since-previous-scene (material non-change across the scene boundary)
 - plot/storyboards/scene01-beat01-storyboard.md (earlier establishing treatment)

@@ -51,7 +51,7 @@ outputs:
 
 **`review_required`** indicates whether the human is expected to review the step's output before a consuming step runs. Nothing enforces this — on successful completion the step body records its own completion regardless. `review_required: true` is a signal to the human reading the state file that a later dispatcher invocation consuming this output will assume the artifact has been reviewed. If the human invokes the dispatcher without reviewing, the consuming step runs against unreviewed output and the consequences are the human's problem.
 
-**`inputs`** lists the files the step reads. Path conventions use `<chapter-folder>` and `<latest-attempt>` placeholders that the step body resolves based on project_type and current state. The list is descriptive; nothing enforces it. Its purpose is documentation and review.
+**`inputs`** lists the files the step reads. Path conventions use the placeholders defined in `agents/project-layouts.md` (including `<chapter-folder>`, `<prior-scene-storyboards>`, and `<latest-attempt>`), which the step body resolves based on project type and current state. The list is descriptive; nothing enforces it. Its purpose is documentation and review.
 
 **`outputs`** lists the files the step writes. Same conventions as inputs.
 

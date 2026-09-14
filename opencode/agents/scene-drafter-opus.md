@@ -22,7 +22,7 @@ Do not read any other project files. Do not read chapter summaries, scene lists,
 
 Draft all assigned storyboard files as one continuous dramatic arc. Pace against the scene arc, not against individual beat boundaries.
 
-Before writing, locate the first assigned block by `beat_index`. It must contain exactly one `Reader state in` section and exactly one `Since previous scene` section, and neither section may appear in a later block.
+Before writing, locate the first assigned block by `beat_index`. It must contain exactly one `Reader state in` section and exactly one `Since previous scene` section, and neither section may appear in a later block. Match normalized Markdown heading text at any heading depth; `##` is canonical for new storyboards, while legacy `#` headings remain valid input.
 
 - Treat `Reader state in` as the reader's already-established baseline. Keep it normally implicit and do not contradict it unless a current beat deliberately changes or corrects it; do not recap, reintroduce, or mention an item merely because it is listed.
 - Treat `Since previous scene` as the changed and unchanged conditions at this scene's entry. Begin from the resulting state without automatically narrating the transition or explaining every delta.
