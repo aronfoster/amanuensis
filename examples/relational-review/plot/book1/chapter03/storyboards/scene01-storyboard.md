@@ -19,6 +19,14 @@ beat_type: interiority
 pace: measured
 ---
 
+## Reader state in
+
+Reader already knows: the *Cormorant* is outbound from Kettle Cove; the crossing has reached Day 12; a storm off the Teeth cost the ship its longboat and spare water breaker; the crew and ship are worn but still under way.
+
+## Since previous scene
+
+Elapsed: about two days. Changed: the storm has passed; the ship remains battered and the crew tired. Unchanged: the voyage continues aboard the *Cormorant* with Wick serving as navigator.
+
 ## Beat
 
 Open on Wick at the chart table after the storm, re-tallying the manifest against the hold. Establish his method and his temperament: he trusts his own count.

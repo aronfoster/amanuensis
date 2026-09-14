@@ -14,6 +14,14 @@ pace: measured
      share a scene_ref value when they belong to the same scene."), sharing
      scene_ref: "plot/scene-list.md#scene01" across all four beats of this scene. -->
 
+# Reader state in
+
+Opening scene — no prior reader state.
+
+# Since previous scene
+
+Opening scene — no previous scene.
+
 # Character state in
 
 - Senna: alert, watching the caravan's make-ready with the ordinary attention of someone about to travel. Knowledge: the standard picture — the ward gets recast on a schedule, nothing more specific. Objective: see the crate lashed and warded before the caravan pulls out.

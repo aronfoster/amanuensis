@@ -23,6 +23,14 @@ beat_type: action
 pace: measured
 ---
 
+## Reader state in
+
+Reader already knows: Wick keeps independent tallies; the manifest is short by four casks; he currently reads the discrepancy as a Kettle Cove loading error but remains uneasy; he has left the chart cabin to find Fenn on deck.
+
+## Since previous scene
+
+Elapsed: immediate continuation. Changed: location moves from the chart cabin to the weather deck and Wick now intends to question Fenn. Unchanged: the post-storm morning, the crew's fatigue, the four-cask shortfall, and Wick's belief that it may be an honest error.
+
 ## Beat
 
 Wick comes on deck and finds Fenn at the rail. Establish the morning after the storm; the crew is worn.

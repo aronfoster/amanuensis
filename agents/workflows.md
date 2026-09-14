@@ -36,6 +36,8 @@ Follow `steps/storyboarding.md`.
 
 Before storyboarding a scene, read the current knowledge files for all characters who appear in it. These are the inputs that determine what each character can plausibly know, suspect, or believe at scene-start.
 
+Process the chapter's scenes in declared order. In the first block of each scene, derive `Reader state in` from reader-visible outcomes of the preceding planned scene and derive `Since previous scene` from the boundary between that close and the current opening. Carry forward relevant material non-changes explicitly when omission would invite re-establishment or drift. These fields make each scene independently draftable; they are entry context, not recap requirements. The opening scene of the entire work uses the exact sentinels in `storyboard-schema.md`, while chapter boundaries retain real prior-reader context.
+
 After completing all storyboard blocks for a scene, produce a **knowledge delta** — a compact list of facts that at least one character has newly learned, confirmed, or falsely come to believe by the scene's end. Format one line per item:
 
 ```
@@ -49,11 +51,11 @@ Use the folder-style scene citation: `[from <book-id>/<chapter-id>/<scene-id>]` 
 
 ## Workflow: drafting
 
-Follow `steps/drafting.md`. The drafting step is a chapter coordinator: it dispatches per-scene subagents (each treating its storyboard blocks as production notes for a single dramatic arc and pacing against the arc, not beat boundaries), then assembles their per-scene files into one chapter draft and one notes file for the attempt.
+Follow `steps/drafting.md`. The drafting step is a chapter coordinator: it validates that each scene's first block carries exactly one `Reader state in` and `Since previous scene`, then dispatches per-scene subagents (each treating its storyboard blocks as production notes for a single dramatic arc and pacing against the arc, not beat boundaries), then assembles their per-scene files into one chapter draft and one notes file for the attempt. Scene drafters receive the entry fields as context but keep already-established material implicit unless the current beat gives repetition a new dramatic purpose.
 
 ## Workflow: compliance pass
 
-Review the drafted prose and fix any deviations from storyboard requirements (especially Must Preserve) and `canon/`. See [steps/compliance-report.md](steps/compliance-report.md) for the report phase and [steps/compliance-fix.md](steps/compliance-fix.md) for the apply phase.
+Review the assembled draft and fix deviations from storyboard requirements (especially Must Preserve) and `canon/`. The report also compares each scene's prose with its explicit entry context and flags purposeless re-establishment of already-known material while allowing natural mentions, changed conditions, contrast, correction, and deliberate reminders. See [steps/compliance-report.md](steps/compliance-report.md) for the report phase and [steps/compliance-fix.md](steps/compliance-fix.md) for the apply phase.
 
 ## Workflow: continuity review
 
