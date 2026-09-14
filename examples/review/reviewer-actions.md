@@ -44,7 +44,9 @@ Reviewed-draft: draft-v02.md
 - Must-Not-Contain violations: 2
 - Canon violations: 1
 - Relational violations: 1
+- Redundant prior-context re-establishments: 0
 - Blocks fully clean: 1 of 4
+- Review units emitted: 7
 
 Violations cluster in blocks 011 and 014; block 007 carries a relational chronology finding cited to co-03.
 
@@ -53,7 +55,10 @@ Violations cluster in blocks 011 and 014; block 007 carries a relational chronol
 - continuity/story.md#co-03 (chronology — day-count anchor)
 
 <!-- Fixture expectation (see examples/review/README.md).
-This is the adopted family, so the validator parses and counts it. The
+This is a deliberately incomplete grammar specimen, not a generated complete
+compliance run; no corresponding storyboards exist here, so its Context
+consulted section intentionally names only the relational continuity referent
+instead of fabricating scene-entry locators. This is the adopted family, so the validator parses and counts it. The
 CLEAN block (002) carries no anchor and no fields and must not appear in
 any count. Block 007 is the M16 relational specimen: a valid, decided
 (FIX) review unit whose violation line carries the greppable

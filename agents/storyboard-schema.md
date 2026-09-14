@@ -2,9 +2,17 @@
 
 Examples in this document are illustrative. Some use names and constraints from the project that originally produced the workflow; replace them with project-local equivalents when applying the schema elsewhere.
 
-Each storyboard file contains one or more blocks. Each block is independently
-draftable — it should contain everything an LLM needs to write its prose without
-access to any other file.
+Each storyboard file contains one block. The independent drafting unit is a
+**scene**: the drafter receives every block with the same `scene_ref`, ordered by
+`beat_index`, plus the selected voice file. That ordered block set must contain
+everything the drafter needs to write the scene without access to any other
+project file.
+
+Most fields describe one beat and therefore appear in every block. The two
+scene-entry fields — `Reader state in` and `Since previous scene` — appear only
+in the first block of each scene. They supply the cross-scene context that an
+isolated scene drafter cannot obtain from prior prose. Later blocks rely on the
+first block's scene-entry fields and carry their own beat-level state.
 
 Structure: YAML frontmatter containing only short structured fields, followed by
 markdown sections for all text content.
@@ -61,6 +69,32 @@ pace: measured
 YAML values stay short. No colons, no special characters, no prose fragments. All narrative content belongs in the markdown sections below.
 
 ---
+
+## Reader state in
+
+Required once per scene, in the scene's first block (the lowest `beat_index`). Omit this section from later blocks in the same scene.
+
+Give a compact scene-entry briefing of what the reader already knows, understands, or has just experienced that is relevant to drafting this scene. Include an established condition only when carrying it forward matters to how the scene opens or prevents accidental re-establishment: time and location, environment or staging, roles and relationships, active dangers or unresolved questions, and emotional or interpretive carryover.
+
+This field reports prior reader experience. It is not objective canon the reader has not learned, a character-knowledge inventory, a recap to place in the prose, or a list of facts the scene must mention. The drafter may leave every item implicit when the current beat does not call attention to it.
+
+- **Specification:** "Reader already knows: Mercy is an East Indiaman in the South Indian Ocean, ten days out from the Cape; Larkin is a sixteen-year-old midshipman; the fresh westerly on the larboard quarter and long following swell are established; Lévesque's reputation has become personally unsettling to Larkin."
+- **Prose (do not use):** "The reader returns to Mercy ten days beyond the Cape, the same westerly wind and following swell beneath her, with young Larkin still troubled by what he has heard of Lévesque."
+
+For the opening scene of the entire work, write exactly: `Opening scene — no prior reader state.` Do not use the opening sentinel merely because a scene begins a new chapter or planning batch; relevant reader state still crosses those boundaries.
+
+## Since previous scene
+
+Required beside `Reader state in`, once per scene in the first block only. State what has changed between the previous scene's close and this scene's entry. Cover only changes that affect the scene's execution or interpretation: elapsed time, location, environment or physical staging, roles and relationships, active dangers, objectives, and emotional carryover.
+
+Record a material **non-change** when silence would invite the isolated drafter to establish the condition again or accidentally alter it. Name it as unchanged rather than dramatizing it. This field is directional across the scene boundary: it does not list changes that will occur during the current scene, and it is not a full continuity diff.
+
+- **Specification:** "Elapsed: morning/noon to afternoon watch. Unchanged: wind, sea, point of sail. Changed: Larkin's unfinished workload has accumulated; he carries the new Lévesque unease into the Crowther conversation."
+- **Prose (do not use):** "By the afternoon watch the wind still pressed Mercy onward, while Larkin approached Crowther with both his unfinished work and Lévesque's shadow weighing on him."
+
+For the opening scene of the entire work, write exactly: `Opening scene — no previous scene.` As with `Reader state in`, chapter boundaries do not reset this field.
+
+`Reader state in` is the scene-level entry counterpart to the beat-level `Reader takeaway`: one records relevant understanding already established before the scene; the other records the understanding a particular beat must produce. `Since previous scene` is likewise distinct from `Character state in`: it records the relevant cross-scene delta once, while character state records each participating character's status at the opening of each beat.
 
 ## Character state in
 
@@ -167,6 +201,13 @@ All anti-patterns below are specific instances of the governing discipline above
 - **Prose in any field.** If a field reads as prose — atmosphere, sensory work, sentence rhythm carrying meaning — rewrite it as specification. This applies to every field, not just Beat.
 - **Craft signal as prose sample.** Craft signal is a note to the drafter, not a demonstration of the register the drafter should use.
 - **File paths in Canon active.** Extract the content. The drafter has no access to those files.
+- **Missing scene-entry fields.** The first block of every scene must contain both `Reader state in` and `Since previous scene`; the opening scene uses their explicit sentinels.
+- **Scene-entry fields repeated in every beat.** They describe the scene boundary once. Put them in the first block only; later blocks carry beat-level state.
+- **Reader state in as mandatory recap.** This field tells the drafter what not to re-establish by default. It does not require any listed fact to be mentioned again.
+- **Reader state in containing unrevealed or future information.** Record only what the reader already knows before the scene opens. Do not copy objective canon, character-only knowledge, or the current scene's intended reveals into it.
+- **Since previous scene as an in-scene delta.** Record changes across the preceding scene boundary, not developments planned for the current scene.
+- **Silence about a material non-change.** If an unchanged condition matters to the opening and omission would invite re-establishment or drift, say explicitly that it is unchanged.
+- **Opening sentinel at a chapter boundary.** A new chapter or planning batch does not erase the reader's state or the previous scene.
 - **Empty Concealment from reader.** Re-read the scene list's canon guardrails before leaving this blank. Default to filling it.
 - **Empty Reader takeaway.** Default to filling it. Leave it blank only after confirming the beat genuinely asks nothing of the reader's understanding.
 - **Reader takeaway as prose sample.** It is a specification of what the reader should grasp, not a sample of the sentences that will make them grasp it.

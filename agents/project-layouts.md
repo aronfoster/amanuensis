@@ -18,6 +18,7 @@ The three project types are `short_story`, `book`, and `series`.
   - `book`: `plot/<book-folder>/overview.md`
   - `series`: `plot/<book-folder>/overview.md` (per book in flight)
   Consuming projects may override this resolution in their local `AGENTS.md` if the project keeps its planning file elsewhere.
+- `<prior-scene-storyboards>` resolves to the storyboard files for the single scene immediately preceding the current chapter's first scene in work order. For `book` and `series`, resolve the preceding chapter (or, at a book boundary, the preceding book's final chapter) from the ordered `plot/` folders, read that chapter's `scene-list.md` only to identify its final scene, then select only that scene's storyboard files in `beat_index` order. It is undefined for the true opening scene and for `short_story`, whose preceding scenes are already inside the current `<chapter-folder>/storyboards/` input. This is a targeted planned-state boundary input, never permission to scan prior prose or all prior storyboards.
 
 ### Attempt-level provenance: `draft-manifest.md`
 

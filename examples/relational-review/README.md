@@ -22,6 +22,18 @@ whose chapter 3, scene 2 draft carries the `NOTES.md:24-46` failure set, and it
 catches every one as a **per-block relational finding with a cited referent and a
 defect-type label**, backed by a report-level **`## Context consulted`** record.
 
+### Legacy fixture shape
+
+This M16 fixture predates the current one-file-per-beat storyboard layout. Its
+`scene01-storyboard.md` and `scene02-storyboard.md` files intentionally aggregate
+multiple `<!-- block NNN -->` sections so the long-form explanation and stable
+review citations below remain readable. Treat them as compact review excerpts,
+not as current `storyboarding` or `drafting` output. The canonical schema remains
+one storyboard file per beat; the current-format FOS-41 example in
+`examples/prior-reader-context/` demonstrates that shape. Migrating this legacy
+fixture's eleven blocks and every explanatory citation is separate cleanup, not
+part of the scene-entry contract change.
+
 The maintained state the review reads:
 
 - `continuity/book-1.md` — the objective-continuity state
@@ -39,18 +51,25 @@ The maintained state the review reads:
 
 The prose and plans under review:
 
+- `plot/book1/chapter02/scene-list.md` and
+  `plot/book1/chapter02/storyboards/scene06-beat01-storyboard.md` — the targeted
+  prior-chapter final-scene plan used to verify chapter 3's first scene without
+  reading prior prose.
+- `plot/book1/chapter03/summary.md` and `scene-list.md` — the current chapter's
+  required storyboarding and storyboard-review planning inputs.
 - `plot/book1/chapter03/storyboards/scene01-storyboard.md`,
-  `scene02-storyboard.md` — the storyboard blocks. Scene 2's blocks drive the
-  compliance findings; scene 1's block 003 carries the premature-disclosure
-  storyboard defect.
+  `scene02-storyboard.md` — legacy aggregated storyboard excerpts. Scene 2's
+  blocks drive the compliance findings; scene 1's block 003 carries the
+  premature-disclosure storyboard defect.
 - `plot/book1/chapter03/drafts/attempt01/draft-v02.md` — the **accepted draft**,
   carrying the five prose contradictions.
-- `plot/book1/chapter03/drafts/attempt01/reviewer-actions.md` — the produced
-  **compliance report**: five relational findings, a `### Summary`, and the
+- `plot/book1/chapter03/drafts/attempt01/reviewer-actions.md` — the focused
+  legacy **compliance-report excerpt**: five relational findings, a `### Summary`, and the
   `## Context consulted` record. It validates `proceed` (exit 0) — see
   [Validating the report](#validating-the-report).
-- `plot/book1/chapter03/storyboards/storyboard-review.md` — the produced
-  **storyboard-review** excerpt: the reveal-timing finding and its own
+- `plot/book1/chapter03/storyboards/storyboard-review.md` — the focused legacy
+  **storyboard-review excerpt**: the reveal-timing finding, the chapter-boundary
+  input it consulted, and its own
   `## Context consulted`.
 
 ### The five failures, and where each surfaces
@@ -272,6 +291,8 @@ surface (`agents/review-context.md`). The compliance report's record:
 ```markdown
 ## Context consulted
 
+- plot/book1/chapter03/storyboards/scene02-storyboard.md#reader-state-in (scene-2 prior-reader baseline)
+- plot/book1/chapter03/storyboards/scene02-storyboard.md#since-previous-scene (scene-2 boundary delta)
 - continuity/book-1.md#co-02 (chronology — Day 1 departure anchor)
 - continuity/book-1.md#co-05 (chronology — Day 12 anchor at chapter 2's close)
 - continuity/book-1.md#co-03 (event staging — the longboat cut loose and lost)
@@ -288,6 +309,9 @@ reveal check consulted:
 ## Context consulted
 
 - reveals.md#rv-01 (lands book1/chapter04/scene02:block-005; setup book1/chapter02/scene03:block-002, book1/chapter03/scene01:block-002; concealed-until book1/chapter04/scene02:block-005)
+- plot/book1/chapter02/storyboards/scene06-beat01-storyboard.md (targeted preceding-scene close for chapter03 scene01)
+- plot/book1/chapter03/summary.md (current chapter boundary plan)
+- plot/book1/chapter03/scene-list.md#scene-001 (current first-scene plan)
 ```
 
 ## The bounding cost — O(facts + back-references), not O(corpus)
