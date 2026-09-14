@@ -52,13 +52,13 @@ Translates scene-level intent into ordered sets of beat-level plans that the dra
 
 Process scenes in the canonical order declared by `<chapter-folder>/scene-list.md`; within each scene, process beats in their declared order. Produce one storyboard file per storyboard block at `<chapter-folder>/storyboards/<scene-id>-<beat-id>-storyboard.md`.
 
-Scene-entry derivation is sequential even if the host later parallelizes other storyboard work. A coordinator may compute and freeze the scene-entry fields for all scenes in one canonical-order pass and then dispatch block elaboration in parallel. It must not ask isolated scene workers to infer their own prior-reader context independently.
+Scene-entry derivation is sequential even if the host later parallelizes file creation. Before resolving scene N+1, the coordinator must plan the reader-visible outcomes and exit state of scene N. Any parallel worker receives the two scene-entry fields already frozen by that canonical-order pass; it must not infer prior-reader context independently.
 
 ### What a Storyboard Block Is
 
-A storyboard block is YAML frontmatter followed by a beat description paragraph.
+A storyboard block is YAML frontmatter followed by markdown field sections, ending with the `Beat` production-notes paragraph.
 
-The YAML frontmatter carries all structured information the LLM needs to make decisions about character behavior, concealment, pacing, and canon constraints. The beat description paragraph captures dramatic intent that the structured fields cannot hold. Neither is sufficient alone.
+The YAML frontmatter carries short structured values used for grouping, ordering, point of view, beat type, and pace. The markdown sections carry the planning information the LLM needs to make decisions about prior-reader context, character behavior, concealment, canon constraints, and dramatic intent. Neither part is sufficient alone.
 
 For field definitions see `agents/storyboard-schema.md`.
 
