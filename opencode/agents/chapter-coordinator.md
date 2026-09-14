@@ -25,7 +25,7 @@ Responsibilities:
 - Identify all storyboard files for the requested chapter.
 - Group storyboard files by `scene_ref`.
 - Order files within each scene by `beat_index`; the lowest-`beat_index` file is the first block.
-- Before dispatching a scene, verify that its first block contains exactly one `Reader state in` section and exactly one `Since previous scene` section. If either is missing, duplicated, or present only in a later block, stop and record a blocker rather than repairing the storyboard during drafting.
+- Before dispatching a scene, verify that its first block contains exactly one `Reader state in` section and exactly one `Since previous scene` section, and that neither section appears in a later block. If either is missing, duplicated, misplaced, or repeated later, stop and record a blocker rather than repairing the storyboard during drafting.
 - Create a new `attemptXX` folder under the chapter's `drafts/` directory.
 - Create or update `notes.md` in the attempt folder.
 - Dispatch one subagent per scene. Use `scene-drafter-opus` or `scene-drafter` for all scenes in the run, as specified by the user. Do not mix drafters within a single run.
@@ -38,7 +38,7 @@ Responsibilities:
 - Delete the scene-drafter's scene and notes files once their entire contents are in the chapter draft and notes files, **and** after the capture dispatch above has run (so no recommendation is lost). The per-scene scene and notes fragments are transient and removed after assembly, while the chapter draft and run notes (and later review/report files) persist — see the persist-vs-delete distinction documented in the Amanuensis `chapters.md` (via the workflow paths in the project's `AGENTS.md`).
 - Use `wc` and print the chapter word count in your completion report.
 
-The scene-entry fields are context, not prose requirements. Require the scene-drafter to use `Reader state in` as already-established reader context that normally remains implicit, and to use `Since previous scene` as the changed and unchanged conditions at the opening without automatically narrating the transition. Prior information is restated only when the current scene's `Beat`, `Must Preserve`, `Reader takeaway`, or `Craft signal` assigns the repetition a new dramatic purpose.
+The scene-entry fields are context, not prose requirements. Require the scene-drafter to use `Reader state in` as the reader's already-established baseline, normally implicit and contradicted only when a current beat deliberately changes or corrects it, and to use `Since previous scene` as the changed and unchanged conditions at the opening without automatically narrating the transition. Prior information is restated only when the current scene's `Beat`, `Must Preserve`, `Reader takeaway`, or `Craft signal` assigns the repetition a new dramatic purpose.
 
 Do not include storyboarding, compliance review, continuity review, metaphor checks, anti-AI passes, character knowledge updates, or aftermath updates in this workflow.
 
