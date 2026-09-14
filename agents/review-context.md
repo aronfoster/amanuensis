@@ -111,8 +111,10 @@ the artifact that owns the fix:
 
 - **prose** — the prose is the wrong one. This includes the common case where the **storyboard intent
   and the maintained state agree** and only the prose diverges: that is a prose defect, and
-  `compliance_fix` edits the prose.
-- **storyboard** — the beat's own spec under-specifies or misstates the fact, **including a storyboard
+  `compliance_fix` edits the prose. It also includes unnecessary re-establishment when the scene's
+  entry context and current beat-level intent agree that repetition has no new dramatic purpose but
+  the prose presents already-known context as new.
+- **storyboard** — the beat's own spec under-specifies or misstates the fact, or demands purposeless repetition inconsistent with its own `Reader state in`, **including a storyboard
   block that discloses a ledger secret before its `concealed-until:`** (it violates the
   higher-precedence reveal plan, per the carve-out above).
 - **state** — a maintained-state entry itself is at fault: it is **derived-stale**, or (for the
@@ -128,8 +130,9 @@ the artifact that owns the fix:
   the prose exposes as needing revision — routed to the canon file / the human, never edited in prose.
   Prose that merely contradicts *valid* settled canon is **not** a canon defect but a **prose** defect
   (canon outranks, so the prose is the wrong one and `compliance_fix` corrects the prose to conform).
-- **missing-context** — the fact needed to judge is absent from every consulted source (surface as an
-  open question).
+- **missing-context** — the fact needed to judge is absent from every consulted source, including an
+  absent or ambiguous scene-entry field that prevents a prior-reader judgment (surface as an open
+  question).
 
 Because the label routes remediation, **`compliance_fix` routes on the label for every decision —
 `FIX` included, not only `ESCALATE`** — so a mislabeled `FIX` cannot edit prose for a non-prose
