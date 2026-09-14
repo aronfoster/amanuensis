@@ -66,7 +66,7 @@ Reviewed-draft: draft-vNN.md
 ## Compliance Report — Scene [scene-id], [date]
 ```
 
-If a block is fully clean across all three checks, record a single line:
+If a block is fully clean across all four checks, record a single line:
 
 ```markdown
 ### Block NNN — CLEAN
@@ -185,7 +185,7 @@ After all blocks, append a summary:
 
 Do not propose fixes. The summary observation is a diagnostic, not a recommendation.
 
-After the summary, append a report-level section — headed exactly `## Context consulted` — naming the specific maintained-state entries, chapters, and files this run actually read for its relational checks. It is a report-level `##` section (neither a `### Block ` container nor a `- ` review unit), the canonical audit surface defined in `agents/review-context.md`: at series scale the consulted set is a small named subset, and naming it is what makes the bounded relational check reproducible and auditable.
+After the summary, append a report-level section — headed exactly `## Context consulted` — naming the specific maintained-state entries, chapters, files, and scene-entry storyboard fields this run actually read for its relational checks. It is a report-level `##` section (neither a `### Block ` container nor a `- ` review unit), the canonical audit surface defined in `agents/review-context.md`: at series scale the consulted set is a small named subset, and naming it is what makes the bounded relational check reproducible and auditable.
 
 ```markdown
 ## Context consulted
@@ -196,11 +196,11 @@ After the summary, append a report-level section — headed exactly `## Context 
 - plot/storyboards/scene02-beat01-storyboard.md#reader-state-in (prior-reader baseline for scene02)
 ```
 
-If the relational check consulted nothing (e.g. a `short_story` with no maintained state present), record a single `## Context consulted` heading with a `- none` line.
+Always list each scene-entry field locator consulted by the prior-reader sub-check, even when no maintained state or canon file exists. If no other relational source was consulted, the section contains only those storyboard-field locators; do not write `- none` after running the prior-reader sub-check.
 
 ## Outputs
 
-- `<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md` — the compliance report. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers — the draft this run actually read; subsequent runs against the same draft append below, runs against a newer draft (recovery path) overwrite the file with a fresh stamp (the report is `regenerated`, the prior findings `discarded`). Then one `## Compliance Report — Scene [scene-id], [date]` header per scene-run, one `### Block NNN` entry per storyboard block (either a single `CLEAN` line — no anchor, no fields, not a review unit — or a list of violations, each carrying its `<!-- review-id: ... -->` anchor immediately above the violation line and blank `- Decision:` / `- Decision-note:` fields nested below it; relational violations carry the ` [defect: <type>] [ref: <referent>]` tag on their violation line), a `### Summary` block per run tallying violations by check type (local and relational, including redundant prior-context re-establishments), reporting the review units emitted this run, and noting any pattern-level observation, and a report-level `## Context consulted` section naming the maintained-state entries / chapters / files the relational checks read. The `Reviewed-draft` stamp is required so `compliance_fix` can detect stale annotations against a newer draft. The file is the human review artifact: the human records decisions in each unit's `Decision:` field per the `compliance:` family grammar in `agents/review-grammars.yaml` before `compliance_fix` runs.
+- `<chapter-folder>/drafts/<latest-attempt>/reviewer-actions.md` — the compliance report. Begins with a single top-of-file `Reviewed-draft: draft-vNN.md` line naming the `<latest-draft>` this report covers — the draft this run actually read; subsequent runs against the same draft append below, runs against a newer draft (recovery path) overwrite the file with a fresh stamp (the report is `regenerated`, the prior findings `discarded`). Then one `## Compliance Report — Scene [scene-id], [date]` header per scene-run, one `### Block NNN` entry per storyboard block (either a single `CLEAN` line — no anchor, no fields, not a review unit — or a list of violations, each carrying its `<!-- review-id: ... -->` anchor immediately above the violation line and blank `- Decision:` / `- Decision-note:` fields nested below it; relational violations carry the ` [defect: <type>] [ref: <referent>]` tag on their violation line), a `### Summary` block per run tallying violations by check type (local and relational, including redundant prior-context re-establishments), reporting the review units emitted this run, and noting any pattern-level observation, and a report-level `## Context consulted` section naming the maintained-state entries / chapters / files / scene-entry storyboard fields the relational checks read. The `Reviewed-draft` stamp is required so `compliance_fix` can detect stale annotations against a newer draft. The file is the human review artifact: the human records decisions in each unit's `Decision:` field per the `compliance:` family grammar in `agents/review-grammars.yaml` before `compliance_fix` runs.
 
 ## Anti-Patterns
 
