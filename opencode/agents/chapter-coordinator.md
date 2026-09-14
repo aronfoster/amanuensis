@@ -24,11 +24,12 @@ Responsibilities:
 
 - Identify all storyboard files for the requested chapter.
 - Group storyboard files by `scene_ref`.
-- Order files within each scene by `beat_index`.
+- Order files within each scene by `beat_index`; the lowest-`beat_index` file is the first block.
+- Before dispatching a scene, verify that its first block contains exactly one `Reader state in` section and exactly one `Since previous scene` section. If either is missing, duplicated, or present only in a later block, stop and record a blocker rather than repairing the storyboard during drafting.
 - Create a new `attemptXX` folder under the chapter's `drafts/` directory.
 - Create or update `notes.md` in the attempt folder.
 - Dispatch one subagent per scene. Use `scene-drafter-opus` or `scene-drafter` for all scenes in the run, as specified by the user. Do not mix drafters within a single run.
-- Give each subagent only the selected voice file or profile and the storyboard files assigned to that scene.
+- Give each subagent only the selected voice file or profile and the storyboard files assigned to that scene, in `beat_index` order, with the already-resolved scene-entry context in the first block. Do not derive, rewrite, or supplement that context during drafting.
 - Ensure each subagent writes exactly one scene file and one scene notes file in the attempt folder.
 - Mechanically assemble scene files into the attempt's combined chapter draft.
 - Mechanically assemble scene notes files into the attempt's `notes.md`, broken out by scene.
@@ -37,8 +38,10 @@ Responsibilities:
 - Delete the scene-drafter's scene and notes files once their entire contents are in the chapter draft and notes files, **and** after the capture dispatch above has run (so no recommendation is lost). The per-scene scene and notes fragments are transient and removed after assembly, while the chapter draft and run notes (and later review/report files) persist — see the persist-vs-delete distinction documented in the Amanuensis `chapters.md` (via the workflow paths in the project's `AGENTS.md`).
 - Use `wc` and print the chapter word count in your completion report.
 
+The scene-entry fields are context, not prose requirements. Require the scene-drafter to use `Reader state in` as already-established reader context that normally remains implicit, and to use `Since previous scene` as the changed and unchanged conditions at the opening without automatically narrating the transition. Prior information is restated only when the current scene's `Beat`, `Must Preserve`, `Reader takeaway`, or `Craft signal` assigns the repetition a new dramatic purpose.
+
 Do not include storyboarding, compliance review, continuity review, metaphor checks, anti-AI passes, character knowledge updates, or aftermath updates in this workflow.
 
-Do not silently invent canon. Invention is governed by Rule 1 in the Amanuensis `update-rules.md` (via the workflow paths in the project's `AGENTS.md`): a permitted non-load-bearing detail may be supplied under that rule, but it must be captured (the scene-drafters surface it as an invention recommendation in their notes, and the capture agent records it), never hidden. A reveal- or knowledge-load-bearing fact, or anything that would conflict with existing canon, is never invented — if such information is missing from the storyboard files, record the blocker in `notes.md` and stop rather than guessing.
+Do not silently invent canon or reconstruct prior-reader context. Invention is governed by Rule 1 in the Amanuensis `update-rules.md` (via the workflow paths in the project's `AGENTS.md`): a permitted non-load-bearing detail may be supplied under that rule, but it must be captured (the scene-drafters surface it as an invention recommendation in their notes, and the capture agent records it), never hidden. A reveal- or knowledge-load-bearing fact, or anything that would conflict with existing canon, is never invented. Missing or internally conflicting `Reader state in` / `Since previous scene` is likewise a storyboard blocker: record it in `notes.md` and stop rather than reading prior prose, inferring from other scenes, or guessing.
 
 The `task` permission block above must allow the `capture-agent` subagent so this coordinator can dispatch it after assembly.
