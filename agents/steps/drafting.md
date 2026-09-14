@@ -31,7 +31,7 @@ Use this step only after the chapter's storyboard files are complete. This step 
 
 ## Inputs
 
-- **`<chapter-folder>/storyboards/*-storyboard.md`** — every storyboard file for the chapter being drafted. Each file represents one beat. Multiple beat files share a `scene_ref` value when they belong to the same scene; the coordinator groups by that value. Each file's frontmatter also carries `beat_index`, used to order beats within a scene.
+- **`<chapter-folder>/storyboards/*-storyboard.md`** — every storyboard file for the chapter being drafted. Each file represents one beat. Multiple beat files share a `scene_ref` value when they belong to the same scene; the coordinator groups by that value. Each file's frontmatter also carries `beat_index`, used to order beats within a scene. The lowest-`beat_index` block in each scene must carry the scene-entry `Reader state in` and `Since previous scene` sections; later blocks omit them.
 - **`voice.md`** — the project-root voice file. The coordinator reads `voice.md` from the consuming project's root (a sibling of `pipeline-state.md`), not from inside the `amanuensis/` submodule. A project may override the location by pointing at a different voice file in its top-level `AGENTS.md`; the coordinator passes whichever path is in effect to every subagent. Subagents place the full contents of the voice file in their LLM system message so it can be cached. If no voice file can be found, see Open questions handling.
 
 ## Behavior
@@ -39,10 +39,10 @@ Use this step only after the chapter's storyboard files are complete. This step 
 ### Coordinator responsibilities
 
 1. Identify all storyboard files in `<chapter-folder>/storyboards/`.
-2. Group storyboard files by scene using their `scene_ref` frontmatter value. Within each scene, order files by `beat_index`. If filenames and `beat_index` disagree, use `beat_index` and record the mismatch in `notes.md`.
+2. Group storyboard files by scene using their `scene_ref` frontmatter value. Within each scene, order files by `beat_index` and identify the lowest-`beat_index` file as the first block. Verify that first block contains exactly one `Reader state in` section and exactly one `Since previous scene` section. If filenames and `beat_index` disagree, use `beat_index` and record the mismatch in `notes.md`. If either scene-entry section is missing, duplicated, or present only in a later block, take the Failure handling path rather than repairing the storyboard during drafting.
 3. Resolve `<latest-attempt>`. If no `attemptNN` directory exists under `<chapter-folder>/drafts/`, create `attempt01`. Otherwise create the next-numbered `attemptNN` directory for this run. The created directory is `<latest-attempt>` for the rest of the step.
 4. Create `<chapter-folder>/drafts/<latest-attempt>/notes.md` recording the attempt name, date, model if known, chapter path, and which storyboard files were assigned to each scene.
-5. Dispatch one subagent per scene, in parallel where the host supports it. Give each subagent only the allowed inputs for its assigned scene (see Subagent prompt contract).
+5. Dispatch one subagent per scene, in parallel where the host supports it. Give each subagent only the allowed inputs for its assigned scene (see Subagent prompt contract), with the ordered first block carrying the already-resolved scene-entry context. The coordinator does not derive, rewrite, or supplement that context during drafting.
 6. Wait for all subagents to write their scene file (`sceneNN.md`) and scene notes file (`sceneNN-notes.md`) into `<chapter-folder>/drafts/<latest-attempt>/`.
 7. Assemble the scene files in scene order into `<chapter-folder>/drafts/<latest-attempt>/draft-v01.md` (see Assembly rules).
 8. Assemble the scene notes files into `<chapter-folder>/drafts/<latest-attempt>/notes.md`, broken out by scene (see Notes assembly).
@@ -75,6 +75,12 @@ The coordinator may inspect storyboard frontmatter to group files and determine 
 
 Storyboard filenames represent beats, not scenes. Do not assume one file equals one scene. Group files by the `scene_ref` field in each storyboard's frontmatter; draft all storyboard files with the same `scene_ref` as one scene.
 
+### Scene-entry context gate
+
+Before dispatch, locate the first block by `beat_index` and confirm it contains `Reader state in` and `Since previous scene`. These sections are authoritative planning context for how this isolated scene follows what the reader has already experienced. They are not prose requirements and do not join `must_preserve`.
+
+The coordinator checks presence and placement only. It must not reconstruct missing context from other scenes, prior prose, summaries, canon, or character files; doing so would bypass the storyboarding boundary. Missing or structurally ambiguous scene-entry context blocks that scene and therefore the assembly.
+
 ### Subagent responsibilities
 
 Each subagent drafts one scene from the storyboard files for that scene plus the voice file. Nothing else.
@@ -83,7 +89,11 @@ The subagent must:
 
 - read the voice file passed in by the coordinator
 - read all storyboard files assigned to its scene, in beat order
+- read `Reader state in` and `Since previous scene` from the first block before composing the opening
 - treat the assigned storyboard files as production notes for one continuous dramatic arc; pace against the scene arc, not against individual beat boundaries
+- use `Reader state in` as already-established reader context: keep listed conditions consistent and normally implicit rather than explaining them again
+- use `Since previous scene` to begin from the correct changed and unchanged conditions; reflect the resulting entry state without automatically narrating the transition
+- restate prior information only when the current scene's `Beat`, `Must Preserve`, `Reader takeaway`, or `Craft signal` gives the repetition a new dramatic purpose such as contrast, correction, deliberate reminder, or changed significance
 - write prose only to its assigned `sceneNN.md` file
 - write generation notes only to its assigned `sceneNN-notes.md` file
 - preserve required facts, concealments, forms of address, character state, and craft signals from the storyboard files
@@ -91,7 +101,9 @@ The subagent must:
 
 The subagent must not:
 
-- read chapter summaries, scene lists, canon files, character files, or any file outside the inputs handed in by the coordinator
+- read chapter summaries, scene lists, canon files, character files, prior prose, other scene files, or any file outside the inputs handed in by the coordinator
+- treat an item in `Reader state in` as something the prose must recap, reintroduce, or mention merely because it is listed
+- turn `Since previous scene` into an automatic transition paragraph or explain every listed change and non-change
 - dump full canon files or other reference files into the prompt — anything the prose needs from canon must already be in a storyboard block's `canon_active` field
 - invent a load-bearing reveal/knowledge fact — what a character knows, suspects, falsely believes, or does not know, or any fact that controls reveal timing, is never invented (a hard line; record it as a blocker in `sceneNN-notes.md` instead). A permitted non-load-bearing detail may be supplied in the scene prose under Rule 1 in `agents/update-rules.md`, but it is surfaced as an invention recommendation in `sceneNN-notes.md` (see Invention recommendations); the subagent never writes canon or character files itself
 - move facts across scenes
@@ -133,9 +145,15 @@ Write prose only to:
 Write generation notes only to:
 [attempt folder]/sceneNN-notes.md
 
-Treat the storyboard files as production notes for one continuous dramatic arc. Pace against the arc, not against beat boundaries. Preserve Must Preserve, Concealment from reader, Concealment from characters, Canon active, Character state in / Character state out, and Craft signal constraints.
+Treat the storyboard files as production notes for one continuous dramatic arc. Pace against the arc, not against beat boundaries.
 
-Place the full contents of the voice file in your LLM system message. Place the storyboard blocks for the scene, in beat order, in your user message. Do not paste canon files, scene lists, or summaries into the user message.
+Before writing, read Reader state in and Since previous scene from the first storyboard block. Reader state in describes context the reader already has: keep it consistent and normally implicit; do not recap, reintroduce, or mention an item merely because it is listed. Since previous scene describes the changed and unchanged conditions at this scene's entry: begin from those conditions without automatically narrating the transition or explaining every delta.
+
+Restate prior information only when the current scene's Beat, Must Preserve, Reader takeaway, or Craft signal gives the repetition a new dramatic purpose such as contrast, correction, deliberate reminder, or changed significance. The scene-entry fields are context, not Must Preserve requirements.
+
+Preserve Must Preserve, Concealment from reader, Concealment from characters, Canon active, Character state in / Character state out, and Craft signal constraints.
+
+Place the full contents of the voice file in your LLM system message. Place the storyboard blocks for the scene, in beat order, in your user message. Do not paste canon files, scene lists, prior prose, other scenes, or summaries into the user message.
 
 Do not include planning notes, summaries, commentary, or markdown headings in the scene prose file. Do not assemble the chapter.
 
@@ -184,7 +202,7 @@ Scene notes capture generation-relevant information only: what was generated, co
 
 ### Failure handling
 
-If a subagent cannot draft from the storyboard files alone, it stops and reports the missing requirement to the coordinator instead of reading extra files or guessing. The coordinator records the blocker in `notes.md`. The fix belongs outside this step, usually by improving the storyboard files.
+If the first block lacks either scene-entry section, places it ambiguously, or gives scene-entry context that conflicts internally or with the scene's beat-level requirements, the subagent stops and reports the problem instead of reconstructing prior context, silently choosing a side, or drafting an accidental recap. Likewise, if a subagent otherwise cannot draft from the storyboard files alone, it stops and reports the missing requirement to the coordinator instead of reading extra files or guessing. The coordinator records the blocker in `notes.md`. The fix belongs outside this step, usually by improving the storyboard files.
 
 If two scene files conflict in tone, continuity, or repeated exposition, the coordinator records the issue in `notes.md`. The coordinator must not silently solve continuity problems by adding new canon or changing reveal timing.
 
@@ -214,4 +232,4 @@ The per-scene `sceneNN.md` and `sceneNN-notes.md` files are transient working fi
 
 ## Open questions handling
 
-If the step cannot complete because of missing or ambiguous inputs — for example, the chapter has no storyboard files, storyboards are missing `scene_ref` or `beat_index` frontmatter required to group and order them, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) does not exist, or a subagent reports that its storyboard files do not contain enough to draft from — append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write a partial `draft-v01.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker (typically by editing storyboards). On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
+If the step cannot complete because of missing or ambiguous inputs — for example, the chapter has no storyboard files, storyboards are missing `scene_ref` or `beat_index` frontmatter required to group and order them, a scene's first block lacks unambiguous `Reader state in` or `Since previous scene`, the project-root `voice.md` (or the override named in the project's `AGENTS.md`) does not exist, or a subagent reports that its storyboard files do not contain enough to draft from — append the blocker to the project root `open-questions.md` and exit without recording completion in `pipeline-state.md`. Do not fabricate inputs and do not write a partial `draft-v01.md`. The next dispatcher invocation will re-run this step after the human resolves the blocker (typically by editing storyboards). On a successful run, the step's final action is to mark its own step line `[x]` in `pipeline-state.md` and update `last_updated`.
