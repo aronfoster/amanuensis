@@ -22,9 +22,9 @@ Do not read any other project files. Do not read chapter summaries, scene lists,
 
 Draft all assigned storyboard files as one continuous dramatic arc. Pace against the scene arc, not against individual beat boundaries.
 
-Before writing, locate the first assigned block by `beat_index`. It must contain exactly one `Reader state in` section and exactly one `Since previous scene` section.
+Before writing, locate the first assigned block by `beat_index`. It must contain exactly one `Reader state in` section and exactly one `Since previous scene` section, and neither section may appear in a later block.
 
-- Treat `Reader state in` as context the reader already has. Keep the listed facts and conditions consistent and normally implicit; do not recap, reintroduce, or mention an item merely because it is listed.
+- Treat `Reader state in` as the reader's already-established baseline. Keep it normally implicit and do not contradict it unless a current beat deliberately changes or corrects it; do not recap, reintroduce, or mention an item merely because it is listed.
 - Treat `Since previous scene` as the changed and unchanged conditions at this scene's entry. Begin from the resulting state without automatically narrating the transition or explaining every delta.
 - Restate prior information only when the current scene's `Beat`, `Must Preserve`, `Reader takeaway`, or `Craft signal` gives the repetition a new dramatic purpose such as contrast, correction, deliberate reminder, or changed significance. Without that purpose, do not produce a fresh establishing treatment of context the reader already has.
 
@@ -49,4 +49,4 @@ If you supplied any permitted non-load-bearing detail under Rule 1 in the Amanue
 
 Do not include markdown headings, planning notes, summaries, commentary, explanations, or metadata in the scene prose file. Do not assemble the chapter draft. Do not revise another scene file.
 
-If the first block lacks either scene-entry section, places it ambiguously, or gives scene-entry context that conflicts internally or with the beat-level requirements, stop and report the storyboard blocker rather than reconstructing context, reading prior prose or other scenes, silently choosing a side, or drafting an accidental recap. If the assigned storyboard files are otherwise not sufficient to draft the scene without reading other files, stop and report the missing requirement to the coordinator instead of guessing.
+If the first block lacks either scene-entry section, places it ambiguously, repeats it in a later block, or gives scene-entry context that conflicts internally or with the beat-level requirements, stop and report the storyboard blocker rather than reconstructing context, reading prior prose or other scenes, silently choosing a side, or drafting an accidental recap. If the assigned storyboard files are otherwise not sufficient to draft the scene without reading other files, stop and report the missing requirement to the coordinator instead of guessing.
