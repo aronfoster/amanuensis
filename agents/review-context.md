@@ -25,8 +25,11 @@ trusted:
   pacing across a chapter). Minimum context: **the current chapter**.
 - **relational** — prose checked against facts established **elsewhere**: continuity,
   character-knowledge, reveal-timing, chronology, recollection, quotation, summary, recap
-  fidelity, and prose checked against explicit prior-reader scene-entry context. Minimum context: the **maintained state** (`continuity/`, `characters/<id>/knowledge/`,
-  `reveals.md`) **plus targeted retrieval** of the named source evidence the prose invokes, tiered by
+  fidelity, and explicit prior-reader scene-entry context. Minimum context is the authoritative
+  state for the relation — `continuity/`, `characters/<id>/knowledge/`, or `reveals.md` for
+  maintained facts and reveal intent; the first storyboard block's `Reader state in` /
+  `Since previous scene` for prior-reader treatment — **plus targeted retrieval** of the named
+  source evidence the prose invokes, tiered by
   check type. The tiers are stated once in `NOTES.md:74-79`: intra-chapter continuity → the whole
   current chapter; cross-chapter / cross-book → maintained state + targeted retrieval, **never** a
   full re-read; canon → the block's `canon_active` first, escalating to *named* canon files only when
