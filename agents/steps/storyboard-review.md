@@ -80,13 +80,14 @@ If a block has any finding, record only the findings — not the passing checks:
 - MISPLACED (scene_entry): [scene] — scene-entry section appears outside the first block
 - INCONSISTENT (reader_state_in): [scene] — entry claim "[…]" conflicts with the preceding scene's reader-visible close at [scene/block]
 - PREMATURE (reader_state_in): [scene] — entry claim "[…]" is first established in the current or a future block
+- UNVERIFIABLE (reader_state_in): [scene] — declared inputs do not establish claimed prior context "[…]"
 - INCOMPLETE (since_previous_scene): [scene] — relevant change or material non-change […] is omitted
 - OVERLOADED (scene_entry): [scene] — section copies irrelevant prior content or dictates recap prose rather than supplying compact context
 ```
 
 Use only the finding types that apply. Do not record passing checks alongside findings. Do not include a draft-version stamp of any kind (there is no draft to stamp) and do not add any FIX/SKIP/ESCALATE annotation grammar or `<!-- review-id: ... -->` anchors — this report is advisory-only and no consumer for annotations exists.
 
-A reveal finding (Check 2) carries the greppable trailing tag ` [defect: <type>] [ref: reveals.md#rv-NN]` on its finding line (the canonical surface form of `agents/review-context.md`): a leaking or ill-ordered *storyboard* is `[defect: storyboard]` (it violates the higher-precedence reveal plan — never a "ledger is wrong" defect), and only the *plan itself* being wrong — a ledger entry internally inconsistent or contradicting canon — is `[defect: state]` (the `reveals.md` member of the maintained-state type), routed to the human who maintains the ledger. The takeaway checks (1 and 3) do not carry the tag.
+A reveal finding (Check 2) carries the greppable trailing tag ` [defect: <type>] [ref: reveals.md#rv-NN]` on its finding line (the canonical surface form of `agents/review-context.md`): a leaking or ill-ordered *storyboard* is `[defect: storyboard]` (it violates the higher-precedence reveal plan — never a "ledger is wrong" defect), and only the *plan itself* being wrong — a ledger entry internally inconsistent or contradicting canon — is `[defect: state]` (the `reveals.md` member of the maintained-state type), routed to the human who maintains the ledger. The takeaway checks (1 and 3) and scene-entry check (4) do not carry the tag. Scene-entry findings are necessarily about the storyboard contract being reviewed and have no annotation consumer; they cite the preceding scene/block or boundary input directly in the finding text and `## Context consulted` section.
 
 Work block by block. Do not collapse findings across blocks.
 
@@ -165,7 +166,7 @@ If no ledger, preceding scene, or boundary planning source was consulted — pos
 
 ## Outputs
 
-- `<chapter-folder>/storyboards/storyboard-review.md` — the advisory report. One `## Storyboard Review — [chapter/scene id], [date]` header per run, one `### Block NNN` entry per storyboard block (either a single `CLEAN` line or a list of findings; reveal findings carry the ` [defect: <type>] [ref: reveals.md#rv-NN]` tag and reason cross-chapter against the ledger; scene-entry findings validate placement, prior-reader correctness, cross-scene delta, and context discipline), a `### Summary` block per run tallying findings by check and noting any pattern-level observation, and a report-level `## Context consulted` section naming the `reveals.md` entries the reveal checks consulted. It is written beside the storyboards it reviews because no `drafts/<latest-attempt>/` folder exists yet — the other report steps write into a draft attempt folder because they review a draft; this step runs before any draft attempt exists. The file is the human review artifact: the human reads it and revises the storyboards by hand before `drafting`.
+- `<chapter-folder>/storyboards/storyboard-review.md` — the advisory report. One `## Storyboard Review — [chapter/scene id], [date]` header per run, one `### Block NNN` entry per storyboard block (either a single `CLEAN` line or a list of findings; reveal findings carry the ` [defect: <type>] [ref: reveals.md#rv-NN]` tag and reason cross-chapter against the ledger; scene-entry findings validate placement, prior-reader correctness, cross-scene delta, and context discipline), a `### Summary` block per run tallying findings by check and noting any pattern-level observation, and a report-level `## Context consulted` section naming the `reveals.md` entries, preceding-scene storyboard positions, and first-scene boundary inputs the checks consulted. It is written beside the storyboards it reviews because no `drafts/<latest-attempt>/` folder exists yet — the other report steps write into a draft attempt folder because they review a draft; this step runs before any draft attempt exists. The file is the human review artifact: the human reads it and revises the storyboards by hand before `drafting`.
 
 ## Anti-Patterns
 
