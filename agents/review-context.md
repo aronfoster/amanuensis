@@ -71,6 +71,18 @@ fetches only what those names require.
   `reveals.md` entries, the named canon file, the specific prior scene, or the scene-entry storyboard field — never a full re-read. The
   cost is O(facts + back-references), not O(corpus).
 
+**Reader establishment has a narrower evidence boundary.** For the prior-reader sub-check,
+`compliance_report` Check 4 requires reader-sufficient enactment **per item**, in a strictly earlier
+scene of the same resolved assembled draft. Planning intent does not prove enactment, and objective
+continuity / character knowledge does not by itself prove reader knowledge. For pre-chapter origins
+in any current scene, no prior-prose or prior-storyboard search is authorized by this sub-check:
+the current contract defines no durable reader-establishment carrier. A qualifying maintained
+source would need to be already declared and fresh, explicitly attest the same reader-facing
+establishment, and carry credible accepted-prose provenance. Without it, only a purposeless **full
+re-establishment** receives targeted `missing-context`, never `REDUNDANT`; passing or purposeful
+use stays clean. See that step for the omission, mixed-item, and citation rules. The general
+retrieval tiers above do not expand this sub-check's inputs.
+
 A maintained-state entry is used **only when its currency can be unambiguously resolved** by its full
 attempt-qualified provenance: its `story-position` for point-in-time reconstruction, and its full
 attempt-qualified draft path for freshness. An entry whose currency **cannot** be unambiguously
@@ -135,7 +147,8 @@ the artifact that owns the fix:
   (canon outranks, so the prose is the wrong one and `compliance_fix` corrects the prose to conform).
 - **missing-context** — the fact needed to judge is absent from every consulted source, including an
   absent or ambiguous scene-entry field that prevents a prior-reader judgment (surface as an open
-  question).
+  question). This includes unproved pre-chapter reader establishment under the narrow candidate
+  threshold above; it never licenses deleting the reader's first establishment.
 
 Because the label routes remediation, **`compliance_fix` routes on the label for every decision —
 `FIX` included, not only `ESCALATE`** — so a mislabeled `FIX` cannot edit prose for a non-prose
@@ -178,6 +191,12 @@ These surface forms are canonical (downstream files agree on them):
   finding turns on explicit scene-entry context; its finding text names the earlier established
   item or scene/block when available. The `book-N.md` forms are the
   `book`/`series` shape; a `short_story` cites the `story.md` file it actually maintains.
+- A `REDUNDANT (reader_state_in)` finding, whether `prose` or `storyboard`, requires item-specific
+  earlier-enactment evidence. Keep exactly one scene-entry `[ref:]`; put `Earlier: <full draft
+  path>#<scene> "<exact establishing quote>"` in ordinary finding text, using the evidence-pointer
+  style from `agents/continuity.md`. List the draft locator and consulted takeaway/entry fields in
+  `## Context consulted`. An unsupported adjacent item is explicitly retained, not swept into the
+  redundancy finding. A takeaway-only omission diagnostic has no actionable review unit.
 - Every relational report declares a report-level section headed exactly `## Context consulted`, a
   bulleted list naming the specific state entries / chapters / files actually read — e.g.
   `- continuity/book-1.md#co-03 (chronology anchor)` or
