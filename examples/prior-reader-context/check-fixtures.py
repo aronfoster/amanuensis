@@ -64,6 +64,18 @@ def scene_ranges(prose):
     return {scene: '\n'.join(parts) for scene, parts in ranges.items()}
 
 
+def check_witness(locator, quote, project, draft, scenes, current, context, direction):
+    """Check a specimen's quote provenance and scene order, not its meaning."""
+    path, witness = locator.split('#')
+    assert (project / path).resolve() == draft.resolve(), 'wrong draft witness'
+    assert witness in scenes, 'unknown witness scene'
+    order = list(scenes)
+    delta = order.index(witness) - order.index(current)
+    assert delta * direction > 0, 'wrong witness scene order'
+    assert quote in scenes[witness], 'quote mismatch'
+    assert locator in context, 'missing context witness'
+
+
 def check_case(relative, expected):
     attempt = FIXTURE / relative
     project = FIXTURE / relative.split('/plot/')[0] if '/plot/' in relative else FIXTURE
@@ -92,6 +104,7 @@ def check_case(relative, expected):
             locator = f'{chapter}/storyboards/{scene}-beat01-storyboard.md#{field}'
             assert locator in context, (relative, locator)
     current = None
+    later_count = 0
     for line in text.splitlines():
         if line.startswith('## Compliance Report — Scene '):
             current = re.search(r'Scene (\w+),', line)[1]
@@ -108,23 +121,55 @@ def check_case(relative, expected):
             witnesses = re.findall(r'Earlier: (\S+) "([^"]+)"', line)
             assert witnesses, relative
             for locator, quote in witnesses:
-                path, earlier = locator.split('#')
-                assert (project / path).resolve() == (attempt / head).resolve(), 'wrong draft witness'
-                assert earlier in scenes and order.index(earlier) < order.index(current), 'not an earlier scene'
-                assert quote in scenes[earlier], (relative, 'quote mismatch')
-                assert locator in context, (relative, 'missing context witness')
+                check_witness(locator, quote, project, attempt / head,
+                              scenes, current, context, -1)
+        if line.startswith(('- MISSING (must_preserve)', '- DEGRADED (must_preserve)')):
+            witnesses = re.findall(r'First enacted later: (\S+) "([^"]+)"', line)
+            # Every Check 1 omission in these specific specimens has a later
+            # establishment. This is not a requirement on arbitrary reports.
+            assert witnesses, (relative, 'missing later-establishment citation')
+            for locator, quote in witnesses:
+                check_witness(locator, quote, project, attempt / head,
+                              scenes, current, context, 1)
+                later_count += 1
     result = validate(report, manifest)
     assert result.returncode == expected[5], (relative, result.stdout, result.stderr)
     assert re.search(r'invalid:\s+0\b', result.stdout), result.stdout
     assert re.search(r'stale:\s+0\b', result.stdout), result.stdout
     print(f'PASS {relative}: {expected[4]} units, validator exit {expected[5]}')
+    return later_count
+
+
+def check_rejected_witnesses():
+    """Protect the checker against accepting broken later-establishment refs."""
+    draft = FIXTURE / 'plot/drafts/attempt02/draft-v01.md'
+    path = str(draft.relative_to(FIXTURE))
+    scenes = {'scene01': 'The gate opened.', 'scene02': 'The gate opened.'}
+    valid = f'{path}#scene02'
+    check_witness(valid, 'The gate opened.', FIXTURE, draft,
+                  scenes, 'scene01', valid, 1)
+    for locator, quote, current, error in (
+        ('plot/drafts/attempt01/draft-v01.md#scene02', 'The gate opened.', 'scene01', 'wrong draft witness'),
+        ('plot/drafts/attempt02/draft-v02.md#scene02', 'The gate opened.', 'scene01', 'wrong draft witness'),
+        (f'{path}#scene01', 'The gate opened.', 'scene01', 'wrong witness scene order'),
+        (f'{path}#scene01', 'The gate opened.', 'scene02', 'wrong witness scene order'),
+        (f'{path}#scene99', 'The gate opened.', 'scene01', 'unknown witness scene'),
+        (valid, 'An invented quote.', 'scene01', 'quote mismatch'),
+    ):
+        try:
+            check_witness(locator, quote, FIXTURE, draft, scenes, current, locator, 1)
+        except AssertionError as exc:
+            assert str(exc) == error, (locator, exc)
+        else:
+            raise AssertionError(f'accepted invalid witness: {locator}, {quote}')
+    print('PASS later-witness rejection controls: attempt, version, same/earlier scene, missing scene, quote')
 
 
 def main():
     actual = {str(p.parent.relative_to(FIXTURE)) for p in FIXTURE.rglob('reviewer-actions.md')}
     assert actual == set(CASES), 'unregistered fixture report'
-    for path, expected in CASES.items():
-        check_case(path, expected)
+    assert sum(check_case(path, expected) for path, expected in CASES.items()) == 6
+    check_rejected_witnesses()
     # Preserve the deliberately invalid pre-existing grammar specimen.
     result = validate(ROOT / 'examples/review/reviewer-actions.md', '-')
     assert result.returncode == 3, result.stdout
@@ -132,6 +177,11 @@ def main():
     attempt = ROOT / 'examples/relational-review/plot/book1/chapter03/drafts/attempt01'
     result = validate(attempt / 'reviewer-actions.md', attempt / 'draft-manifest.md')
     assert result.returncode == 0, result.stdout
+    # This already-applied example intentionally retains a v01 report after
+    # minting v02; preserve its stale state and explicit read-from behavior.
+    attempt = ROOT / 'examples/unreviewed-confirmation/plot/drafts/attempt01'
+    assert validate(attempt / 'reviewer-actions.md', attempt / 'draft-manifest.md').returncode == 5
+    assert validate(attempt / 'reviewer-actions.md', attempt / 'draft-manifest.md', 'draft-v01.md').returncode == 0
     # A fully decided report checks freshness against an explicit read-from, not
     # the manifest head. Temporary copies never mutate the checked-in specimens.
     with tempfile.TemporaryDirectory() as temp:

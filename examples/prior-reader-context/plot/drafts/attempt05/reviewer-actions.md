@@ -37,3 +37,6 @@ Decisions are blank, as emitted by compliance_report.
 - plot/drafts/attempt05/draft-v02.md#scene01 (inspected; no sufficient witness)
 - plot/drafts/attempt05/draft-v02.md#scene02 (first enacted information retained)
 - plot/storyboards/scene02-beat01-storyboard.md#reader-takeaway (planning context, not enactment proof)
+- Rejected witness (not consulted): plot/drafts/attempt05/draft-v01.md#scene01 — obsolete version; the selected draft is v02.
+- Rejected witness (not consulted): plot/drafts/attempt01/draft-v01.md#scene01 — another attempt, not the reviewed draft.
+- Rejected witness (invalid locator): plot/drafts/attempt05/draft-v02.md#scene99 — no such boundary in the inspected current draft.

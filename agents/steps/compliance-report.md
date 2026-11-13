@@ -79,11 +79,11 @@ If a block has any violation, record only the violations — not the passing ite
 ```markdown
 ### Block NNN
 <!-- review-id: compliance:[scene-id]:block-NNN-v01 -->
-- DEGRADED (must_preserve): [Item label] — [one sentence: what was required, what is wrong with what was written]. Prose: "[quote]"
+- DEGRADED (must_preserve): [Item label] — [one sentence: what was required, what is wrong with what was written]. Prose: "[quote]". First enacted later: <chapter-folder>/drafts/<attemptNN>/draft-vNN.md#sceneNN "<exact establishing quote>"; retain — first enacted establishment. Placement conflict: backfilling here would duplicate that later establishment; coordinated review required.
   - Decision:
   - Decision-note:
 <!-- review-id: compliance:[scene-id]:block-NNN-v02 -->
-- MISSING (must_preserve): [Item label] — not found in prose range
+- MISSING (must_preserve): [Item label] — not found in prose range. First enacted later: <chapter-folder>/drafts/<attemptNN>/draft-vNN.md#sceneNN "<exact establishing quote>"; retain — first enacted establishment. Placement conflict: backfilling here would duplicate that later establishment; coordinated review required.
   - Decision:
   - Decision-note:
 <!-- review-id: compliance:[scene-id]:block-NNN-v03 -->
@@ -112,7 +112,7 @@ If a block has any violation, record only the violations — not the passing ite
   - Decision-note:
 ```
 
-Use only the violation types that apply. Do not record passing items alongside violations.
+Use only the violation types that apply. Do not record passing items alongside violations. The `First enacted later:` and `Placement conflict:` clauses in the Check 1 examples are conditional ordinary text: include them only when a later establishment exists; otherwise omit them. They introduce no grammar tag. It stays on the original Check 1 unit with no `[defect:]` or additional `[ref:]` tag.
 
 A **relational** finding (Check 4) uses the same review-unit shape but its violation line carries the greppable trailing tag ` [defect: <type>] [ref: <referent>]` — `<type>` ∈ {prose, storyboard, state, canon, missing-context} and `<referent>` one of `continuity/book-N.md#co-NN`, `characters/<id>/knowledge/book-N.md#kn-NN`, `reveals.md#rv-NN`, or `canon/<file>` + a quote, or a scene-entry locator `<storyboard-file>#reader-state-in` / `<storyboard-file>#since-previous-scene` — the canonical surface form defined in `agents/review-context.md`. Checks 1–2 and Check 3's non-escalated common path (a bare `canon_active` comparison) do not carry the tag. Check 3's escalation path is the exception: when it resolves a marker-bearing `canon/**` entry, its violation line can carry a standalone `[premise: unreviewed]` tag and, for a `canon/generated/` referent, a freshly appended `[ref: <referent>]` tag — never a `[defect:]` tag, which Check 3 never carries (see Check 3, below). The anchor / `review-id` / `Decision:` scheme is identical for both (`agents/review-grammars.yaml` `compliance:` family).
 
@@ -125,6 +125,8 @@ Work block by block for the **local** checks (Must-Contain, Must-Not-Contain, Ca
 Source fields: `must_preserve`, `character_state_out`.
 
 For each item in `must_preserve`: locate the prose that enacts it. If absent or degraded, record a violation. If present, do not record it.
+
+Before finalizing the report, reconcile these units against the chapter-wide read, including Check 4: when the same omitted/degraded information is first enacted in a later scene of the resolved draft, enrich the **existing earlier unit** with the `First enacted later: <full draft path>#<scene> "<exact quote>"; retain — first enacted establishment. Placement conflict: ...` form above. Do this even if Check 1 was evaluated before the later scene, or the later treatment has a valid dramatic purpose and therefore no Check 4 violation. Keep the unit owned and counted by Check 1; do not mint a duplicate unit. List the later draft locator in `## Context consulted`.
 
 For each character in `character_state_out`: confirm the prose has moved that character to the stated closing state. If the closing state is not enacted, record a violation. If enacted, do not record it.
 
@@ -173,9 +175,11 @@ Run the relational sub-checks against the named referents:
 
   If the earlier promise was **takeaway-only** (not independently required by Check 1), emit **no actionable unit** for its absence. Instead enumerate the distinct items under the summary diagnostic `Unverified prior-reader establishments`, naming each planned earlier block/`#reader-takeaway`, the later scene, and “first enacted here; retain.” Count only takeaway-only cases encountered while evaluating a later establishing treatment, not every unused takeaway. A Check 1 omission is already counted there, not again in this diagnostic. Other independently applicable checks still run normally.
 
-  **Pre-chapter origin, in any current scene.** Determine origin per item, not by scene number: a pre-chapter item can first be re-explained in scene02 or later. If current-chapter earlier prose supplies proof, use it even for an item originally carried from prior chapters. Otherwise, this sub-check authorizes **no prior-chapter prose lookup, prior-storyboard search, or added `<prior-scene-storyboards>` input**. An objective `continuity/` fact with a fresh accepted-draft `evidence:` pointer, a character-knowledge record, or a planned prior storyboard does not by itself prove the reader encountered the specific explanation. Until an **already-declared, fresh maintained source explicitly attests that same reader-facing establishment with credible accepted-prose provenance**, emit no prose or storyboard `REDUNDANT` for an out-of-draft origin. FOS-83's future reader-state carrier is separate work, not an implicit input or prerequisite here.
+  **Pre-chapter origin, in any current scene.** Determine origin per item, not by scene number: a pre-chapter item can first be re-explained in scene02 or later. If current-chapter earlier prose supplies proof, use it even for an item originally carried from prior chapters. Otherwise, this sub-check authorizes **no prior-chapter prose lookup, prior-storyboard search, or added `<prior-scene-storyboards>` input**. An objective `continuity/` fact with a fresh accepted-draft `evidence:` pointer, a character-knowledge record, or a planned prior storyboard does not by itself prove the reader encountered the specific explanation. Until an **already-declared, fresh maintained source explicitly attests that same reader-facing establishment with credible accepted-prose provenance**, emit no prose or storyboard `REDUNDANT` for an out-of-draft origin. A future reader-state carrier is not yet defined by this contract and is not an implicit input or prerequisite here.
 
   Only when prose **fully re-establishes** a supposedly known pre-chapter item without new dramatic purpose and admissible proof is unavailable, emit one targeted relational unit on the **later current block**, e.g. `INCONSISTENT (reader_state_in): prior establishment unverified — ... [defect: missing-context] [ref: <later-scene-first-storyboard>#reader-state-in]`. Explain which explanation cannot be proved; route upstream as an open question, never a prose fix. Do not emit missing-context merely for nonempty entry fields, silence, passing references, or purposeful use. Absent/ambiguous scene-entry fields likewise warrant a targeted missing-context finding only when they prevent judging such a candidate treatment; do not reconstruct them by scanning the corpus.
+
+  **Resolution and recurrence.** The current contract supplies no durable pre-chapter reader-establishment carrier. Repeated missing-context units after a redraft are an accepted conservative tradeoff, not a request for an unauthorized lookup. A human who accepts retaining the passage can record `SKIP` for this report; `ESCALATE` routes the evidence question upstream. Neither decision supplies reader-facing proof or persists as an exemption in a regenerated report, and the reporter must not pre-fill either. A human can also clarify a genuine current purpose in the storyboard, which the next report evaluates normally; purposeful reminders never reach this evidence gate.
 
 Emit each relational finding as a per-block review unit on the existing `compliance:` grammar (the `- INCONSISTENT …` or `- REDUNDANT …` shape above), its violation line carrying the ` [defect: <type>] [ref: <referent>]` tag. If the fact needed to judge is absent from every consulted source, label it `missing-context` and surface it as an open question rather than fabricating a verdict.
 

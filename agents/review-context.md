@@ -76,8 +76,9 @@ fetches only what those names require.
 scene of the same resolved assembled draft. Planning intent does not prove enactment, and objective
 continuity / character knowledge does not by itself prove reader knowledge. For pre-chapter origins
 in any current scene, no prior-prose or prior-storyboard search is authorized by this sub-check:
-only an already-declared, fresh maintained source explicitly attesting the same reader-facing
-establishment with accepted-prose provenance could qualify. Without it, only a purposeless **full
+the current contract defines no durable reader-establishment carrier. A qualifying maintained
+source would need to be already declared and fresh, explicitly attest the same reader-facing
+establishment, and carry credible accepted-prose provenance. Without it, only a purposeless **full
 re-establishment** receives targeted `missing-context`, never `REDUNDANT`; passing or purposeful
 use stays clean. See that step for the omission, mixed-item, and citation rules. The general
 retrieval tiers above do not expand this sub-check's inputs.

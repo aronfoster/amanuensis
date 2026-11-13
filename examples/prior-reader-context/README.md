@@ -105,10 +105,15 @@ git diff --check
 The fixture checker invokes the **unchanged** shared review validator with each
 report's own manifest. It also verifies expected counts, single refs, quoted
 witness presence, exact draft path, canonical scene boundaries and scene order.
+Both `Earlier:` proof and all six `First enacted later:` cross-references are
+checked, with opposite strict scene-order requirements. Negative controls reject
+wrong attempts/versions, same or earlier scenes on a later reference, nonexistent
+scenes, and invented quotes.
 It preserves the intentionally invalid `examples/review/reviewer-actions.md`
 exit 3, checks the existing [relational-review](../relational-review/README.md)
-report with its manifest, and exercises stale-stamp/read-from controls in
-scratch copies. It validates specimen integrity, **not semantic sufficiency**.
+report with its manifest, preserves the already-applied
+`unreviewed-confirmation` report’s intentional stale state (and its v01
+read-from result), and exercises stale-stamp/read-from controls in scratch copies. It validates specimen integrity, **not semantic sufficiency**.
 
 For one report, the underlying command is:
 
@@ -118,3 +123,15 @@ sh scripts/validate-review-artifact.sh \
   agents/review-grammars.yaml \
   examples/prior-reader-context/plot/drafts/attempt01/draft-manifest.md
 ```
+
+## Review follow-up — 2026-11-13
+
+The Check 1 templates now show the conditional later-establishment cross-reference,
+and the report reconciles earlier omissions after reading the whole chapter.
+The fix-step walk-through for attempt02 was repeated with that cross-reference
+omitted: the named missing sailing claims still appear in scene02 of the same
+draft, so the independent later-scene check reaches the same no-write escalation.
+The pre-chapter README also records the dependent-fix boundary: changing scene01
+requires regenerating the report before relying on it to delete scene03’s claim.
+These are semantic walk-throughs; the mechanical checker does not execute an LLM
+fix step or prove its behavior.

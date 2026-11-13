@@ -17,3 +17,7 @@ Run the root fixture checker described in `examples/prior-reader-context/README.
 ## Fix safety walk-through
 
 The illustrative human decision is bare `FIX`. It is syntactically actionable, but does not authorize relocation. Run the placement guard: scene02 already establishes all omitted information, so append an `Escalated:` apply-log entry naming both scenes, with storyboard/human coordination as the target; leave both prose ranges unchanged. Do not silently insert a duplicate or delete scene02. A hypothetical later `FIX:` explicitly authorizing a rewrite of both scenes can resolve the pair while preserving all facts; record both ranges for the next compliance pass. A `SKIP` remains no-write, and a non-prose/premise override still routes upstream.
+
+## Missing-cross-reference variant
+
+For a second fix-step walk-through, temporarily omit the `First enacted later:` and placement-conflict explanation from this report in a scratch copy, leaving the MISSING item and illustrative bare FIX. The fixer must independently inspect the later scenes of the same current draft, find scene02's establishment, and produce the same no-write escalation as `expected-fix-log.md`. A missing cross-reference is not permission to backfill. This is a semantic walk-through, not something the grammar validator can prove.

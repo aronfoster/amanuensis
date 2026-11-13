@@ -17,3 +17,9 @@ Run the root fixture checker described in `examples/prior-reader-context/README.
 ## Fix routing
 
 The first unit’s illustrative FIX must append an Escalated block targeting an open question about prior reader establishment. It must not delete or rewrite scene01. Only scene03’s prose FIX can remove the repeated key sentence. A future reader-state carrier is not assumed.
+
+## Dependent fixes
+
+Scene03's redundancy proof depends on the scene01 sentence remaining intact. The checked-in missing-context FIX routes upstream and does not remove that witness. If human resolution instead cuts or rewrites scene01, regenerate the report against the resulting draft **before** applying the scene03 fix; scene03 may now be the first establishment and must be retained. Do not carry its old deletion decision across that evidence change.
+
+The current contract intentionally allows the pre-chapter question to recur after a redraft. A human SKIP can accept retaining the passage for the current report; neither SKIP nor ESCALATE creates durable reader proof or a future exemption. Purposeful chapter-opening reminders remain clean.

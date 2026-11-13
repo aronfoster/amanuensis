@@ -49,6 +49,7 @@ Reviewed-draft: draft-v01.md
 - Canon violations: 1
 - Relational violations: 1
 - Redundant prior-context re-establishments: 0
+- Unverified prior-reader establishments: 0
 - Blocks fully clean: 2 of 4
 - Review units emitted: 2
 
